@@ -19,7 +19,7 @@ contract Tournament {
     }
 
     // Game[] private games; // array containing all the matches in the tournament
-   mapping(uint256 => Game) public games;
+    mapping(uint256 => Game) public games;
 
     constructor(
         string memory _name,
@@ -51,19 +51,31 @@ contract Tournament {
         string memory away,
         uint32 _minEnd
     ) internal returns (bytes32) {
-        bytes32 questionID = realitio.askQuestion(
-            2,
-            string(
+        bytes32 delim = "\u241f";
+        string memory question = string(
                 abi.encodePacked(
-                    "Which is the result without penalties definition of the match between ",
+                    "Who has won (without considering penalties definition) the match between ",
                     home,
                     " (HOME) and ",
                     away,
                     " (AWAY) in the tournament ",
                     name,
-                    "?Tie,Home,AwaySportsen"
+                    "?",
+                    delim,
+                    "Tie",
+                    delim,
+                    "Home",
+                    delim,
+                    "Away",
+                    delim,
+                    "Sports",
+                    delim,
+                    "en"
                 )
-            ),
+            );
+        bytes32 questionID = realitio.askQuestion(
+            2,
+            question,
             arbitrator,
             1 days,
             _minEnd,
