@@ -6,46 +6,62 @@ import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 // all the questions and bets.
 
 contract Tournament {
+
+    struct Result {
+        address account;
+        uint88 points;
+        bool claimed;
+    }
+
+    uint256 public constant DIVISOR = 10000;
+
+    address immutable public owner;
+    RealityETH_v3_0 immutable public realitio; // Realitio v3
     string public name;
-    address public owner;
-    RealityETH_v3_0 public realitio; // Realitio v3
-    bool public started;
     bool public initialized;
     uint256 public resultSubmissionPeriodStart;
-    uint256 public minBet;
+    uint256 public price;
     uint256 public closingTime;
     uint256 public submissionTimeout;
+    uint256 private totalPrize;
 
     bytes32[] public questionIDs;
-    mapping(address => bytes32[][]) public bets;
-    mapping(address => uint256[]) public betsAmount;
+    uint16[] public prizeWeights;
+    mapping(address => bytes32[][]) public bets; // bets[account][betNumber]
+    mapping(uint256 => Result) public ranking; // ranking[index]
 
     constructor(
         string memory _name,
         address _realityETH,
-        uint256 _minBet,
+        uint256 _price,
         uint256 _closingTime,
         uint256 _submissionTimeout
     ) {
         name = _name;
         owner = msg.sender;
         realitio = RealityETH_v3_0(_realityETH);
-        minBet = _minBet;
+        price = _price;
         closingTime = _closingTime;
         submissionTimeout = _submissionTimeout;
     }
 
     // Link all Realitio questions.
-    // SHould we add a weight for each question/answer?
-    function initializeTournament(bytes32[] calldata _questionIDs) external {
+    // Should we add a weight for each question/answer?
+    function initializeTournament(bytes32[] calldata _questionIDs, uint16[] calldata _prizeWeights) external {
         require(msg.sender == owner, "Not authorized");
         require(!initialized, "Already initialized");
 
         for (uint256 i = 0; i < _questionIDs.length; i++) {
             require(realitio.getTimeout(_questionIDs[i]) > 0, "Question not created");
         }
-
         questionIDs = _questionIDs;
+
+        uint256 sumWeights;
+        for (uint256 i = 0; i < _prizeWeights.length; i++) {
+            sumWeights += uint256(_prizeWeights[i]);
+        }
+        require(sumWeights == DIVISOR, "Invalid weights");
+        prizeWeights = _prizeWeights;
 
         initialized = true;
     }
@@ -53,11 +69,10 @@ contract Tournament {
     function placeBet(bytes32[] calldata _results) external payable {
         require(initialized, "Not initialized");
         require(_results.length == questionIDs.length, "Results mismatch");
-        require(msg.value >= minBet, "Not enough funds");
+        require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
 
         bets[msg.sender].push(_results);
-        betsAmount[msg.sender].push(msg.value);
     }
 
     function registerAvailabilityOfResults() external {
@@ -69,6 +84,7 @@ contract Tournament {
         }
 
         resultSubmissionPeriodStart = block.timestamp;
+        totalPrize = address(this).balance;
     }
 
     function reopenQuestion(
@@ -101,9 +117,10 @@ contract Tournament {
         );
     }
 
-    function registerPoints(address _account, uint256 _betNumber) external {
+    function registerPoints(address _account, uint256 _betNumber, uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
+
         uint256 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
@@ -113,15 +130,50 @@ contract Tournament {
             }
         }
 
-        // Check if winner
-
-        // Register winner
+        if (totalPoints > ranking[_rankIndex].points && (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)) {
+            ranking[_rankIndex].points = uint88(totalPoints);
+            ranking[_rankIndex].account = _account;
+        } else if (ranking[_rankIndex].points == totalPoints) {
+            uint256 i = 1;
+            while (ranking[_rankIndex + i].points == totalPoints) {
+                i += 1;
+            }
+            ranking[_rankIndex + i].points = uint88(totalPoints);
+            ranking[_rankIndex + i].account = _account;
+        }
     }
 
-    function claimRewards(address _account, uint256 _betNumber) external {
+    function claimRewards(uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
         require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(!ranking[_rankIndex].claimed, "Already claimed");
 
+        uint88 points = ranking[_rankIndex].points;
+        uint256 numberOfPrizes = prizeWeights.length;
+        bool rankingFound = false;
+        uint256 rankingPosition = 0;
+
+        uint256 cumWeigths = 0;
+        uint256 shareBetween = 0;
+
+        while (!rankingFound) {
+            if (ranking[rankingPosition].points > points) {
+                rankingPosition += 1;
+            } else if (ranking[rankingPosition].points == points) {
+
+                if (rankingPosition < numberOfPrizes) {
+                    cumWeigths += prizeWeights[rankingPosition];
+                }
+                shareBetween += 1;
+                rankingPosition += 1;
+            } else {
+                rankingFound = true;
+            }
+        }
+
+        uint256 reward = totalPrize * cumWeigths / (DIVISOR * shareBetween);
+        ranking[_rankIndex].claimed = true;
+        payable(ranking[_rankIndex].account).send(reward);
     }
 
 }
