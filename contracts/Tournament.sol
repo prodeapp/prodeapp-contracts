@@ -15,14 +15,17 @@ contract Tournament {
 
     uint256 public constant DIVISOR = 10000;
 
-    address immutable public owner;
-    RealityETH_v3_0 immutable public realitio; // Realitio v3
+    address public owner;
+    address public manager;
+    RealityETH_v3_0 public realitio; // Realitio v3
     string public name;
     bool public initialized;
+    bool public tournamentInitialized;
     uint256 public resultSubmissionPeriodStart;
     uint256 public price;
     uint256 public closingTime;
     uint256 public submissionTimeout;
+    uint256 public managementFee;
     uint256 private totalPrize;
 
     bytes32[] public questionIDs;
@@ -30,26 +33,35 @@ contract Tournament {
     mapping(address => bytes32[][]) public bets; // bets[account][betNumber]
     mapping(uint256 => Result) public ranking; // ranking[index]
 
-    constructor(
+    function initialize(
         string memory _name,
+        address _owner,
         address _realityETH,
         uint256 _price,
         uint256 _closingTime,
-        uint256 _submissionTimeout
-    ) {
+        uint256 _submissionTimeout,
+        uint256 _managementFee,
+        address _manager
+    ) external {
+        require(!initialized, "Already initialized.");
+
         name = _name;
-        owner = msg.sender;
+        owner = _owner;
         realitio = RealityETH_v3_0(_realityETH);
         price = _price;
         closingTime = _closingTime;
         submissionTimeout = _submissionTimeout;
+        managementFee = _managementFee;
+        manager = _manager;
+
+        initialized = true;
     }
 
     // Link all Realitio questions.
     // Should we add a weight for each question/answer?
-    function initializeTournament(bytes32[] calldata _questionIDs, uint16[] calldata _prizeWeights) external {
+    function setTournament(bytes32[] calldata _questionIDs, uint16[] calldata _prizeWeights) external {
         require(msg.sender == owner, "Not authorized");
-        require(!initialized, "Already initialized");
+        require(!tournamentInitialized, "Already initialized");
 
         for (uint256 i = 0; i < _questionIDs.length; i++) {
             require(realitio.getTimeout(_questionIDs[i]) > 0, "Question not created");
@@ -63,16 +75,17 @@ contract Tournament {
         require(sumWeights == DIVISOR, "Invalid weights");
         prizeWeights = _prizeWeights;
 
-        initialized = true;
+        tournamentInitialized = true;
     }
 
-    function placeBet(bytes32[] calldata _results) external payable {
-        require(initialized, "Not initialized");
+    function placeBet(bytes32[] calldata _results) external payable returns(uint256 betIndex) {
+        require(tournamentInitialized, "Not initialized");
         require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
 
         bets[msg.sender].push(_results);
+        return bets[msg.sender].length - 1;
     }
 
     function registerAvailabilityOfResults() external {
@@ -84,7 +97,10 @@ contract Tournament {
         }
 
         resultSubmissionPeriodStart = block.timestamp;
-        totalPrize = address(this).balance;
+        uint256 poolBalance = address(this).balance;
+        uint256 managementReward = poolBalance * managementFee / DIVISOR;
+        payable(manager).send(managementReward);
+        totalPrize = poolBalance - managementReward;
     }
 
     function reopenQuestion(
@@ -117,7 +133,7 @@ contract Tournament {
         );
     }
 
-    function registerPoints(address _account, uint256 _betNumber, uint256 _rankIndex) external {
+    function registerPoints(address _account, uint256 _betIndex, uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
 
@@ -125,7 +141,7 @@ contract Tournament {
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
             bytes32 result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
-            if (result == bets[_account][_betNumber][i]) {
+            if (result == bets[_account][_betIndex][i]) {
                 totalPoints += 1;
             }
         }
@@ -175,5 +191,4 @@ contract Tournament {
         ranking[_rankIndex].claimed = true;
         payable(ranking[_rankIndex].account).send(reward);
     }
-
 }

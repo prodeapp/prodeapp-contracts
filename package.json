@@ -12,6 +12,7 @@
     "hardhat": "^2.9.2"
   },
   "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0",
     "@reality.eth/contracts": "^3.0.2",
     "hardhat": "^2.9.2"
   }
