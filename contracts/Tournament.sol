@@ -1,16 +1,40 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
+
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of
 // all the questions and bets.
 
-contract Tournament {
+interface IERC2981 {
 
+  // ERC165
+  // royaltyInfo(uint256,uint256) => 0x2a55205a
+  // IERC2981 => 0x2a55205a
+
+  // @notice Called with the sale price to determine how much royalty
+  //  is owed and to whom.
+  // @param _tokenId - the NFT asset queried for royalty information
+  // @param _salePrice - the sale price of the NFT asset specified by _tokenId
+  // @return receiver - address of who should be sent the royalty payment
+  // @return royaltyAmount - the royalty payment amount for _salePrice
+  // ERC165 datum royaltyInfo(uint256,uint256) => 0x2a55205a
+  function royaltyInfo(uint256 _tokenId, uint256 _salePrice) external view returns (address receiver, uint256 royaltyAmount);
+
+}
+
+contract Tournament is ERC721, IERC2981 {
+  
     struct Result {
         address account;
         uint88 points;
         bool claimed;
+    }
+
+    struct BetData {
+        uint256 count;
+        bytes32[] predictions;
     }
 
     uint256 public constant DIVISOR = 10000;
@@ -18,7 +42,9 @@ contract Tournament {
     address public owner;
     address public manager;
     RealityETH_v3_0 public realitio; // Realitio v3
-    string public name;
+    string public tournamentName;
+    string public tournamentSymbol;
+    uint256 public nextTokenID;
     bool public initialized;
     bool public tournamentInitialized;
     uint256 public resultSubmissionPeriodStart;
@@ -30,11 +56,15 @@ contract Tournament {
 
     bytes32[] public questionIDs;
     uint16[] public prizeWeights;
-    mapping(address => bytes32[][]) public bets; // bets[account][betNumber]
+    mapping(bytes32 => BetData) public bets; // bets[tokenHash]
     mapping(uint256 => Result) public ranking; // ranking[index]
+    mapping(uint256 => bytes32) public tokenIDtoTokenHash;
+
+    constructor() ERC721("", "") {}
 
     function initialize(
-        string memory _name,
+        string memory _tournamentName,
+        string memory _tournamentSymbol,
         address _owner,
         address _realityETH,
         uint256 _price,
@@ -45,7 +75,8 @@ contract Tournament {
     ) external {
         require(!initialized, "Already initialized.");
 
-        name = _name;
+        tournamentName = _tournamentName;
+        tournamentSymbol = _tournamentSymbol;
         owner = _owner;
         realitio = RealityETH_v3_0(_realityETH);
         price = _price;
@@ -84,8 +115,14 @@ contract Tournament {
         require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
 
-        bets[msg.sender].push(_results);
-        return bets[msg.sender].length - 1;
+        bytes32 tokenHash = keccak256(abi.encode(_results));
+        tokenIDtoTokenHash[nextTokenID] = tokenHash;
+        BetData storage bet = bets[tokenHash];
+        if (bet.count == 0) bet.predictions = _results;
+        bet.count += 1;
+
+        _safeMint(msg.sender, nextTokenID);
+        return nextTokenID++;
     }
 
     function registerAvailabilityOfResults() external {
@@ -133,29 +170,30 @@ contract Tournament {
         );
     }
 
-    function registerPoints(address _account, uint256 _betIndex, uint256 _rankIndex) external {
+    function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
 
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         uint256 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
             bytes32 result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
-            if (result == bets[_account][_betIndex][i]) {
+            if (result == predictions[i]) {
                 totalPoints += 1;
             }
         }
 
         if (totalPoints > ranking[_rankIndex].points && (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)) {
             ranking[_rankIndex].points = uint88(totalPoints);
-            ranking[_rankIndex].account = _account;
+            ranking[_rankIndex].account = ownerOf(_tokenID);
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 i = 1;
             while (ranking[_rankIndex + i].points == totalPoints) {
                 i += 1;
             }
             ranking[_rankIndex + i].points = uint88(totalPoints);
-            ranking[_rankIndex + i].account = _account;
+            ranking[_rankIndex + i].account = ownerOf(_tokenID);
         }
     }
 
@@ -191,4 +229,33 @@ contract Tournament {
         ranking[_rankIndex].claimed = true;
         payable(ranking[_rankIndex].account).send(reward);
     }
+
+    /**
+     * @dev See {IERC721Metadata-name}.
+     */
+    function name() public view override returns (string memory) {
+        return tournamentName;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-symbol}.
+     */
+    function symbol() public view override returns (string memory) {
+        return tournamentSymbol;
+    }
+
+    function royaltyInfo(
+        uint256 ,
+        uint256 _salePrice
+    ) external view override(IERC2981) returns (
+        address receiver,
+        uint256 royaltyAmount
+    ) {
+        receiver = manager;
+        // royalty fee = management fee
+        royaltyAmount = _salePrice * managementFee / DIVISOR;
+    }
+    
+    // For sponsors?
+    receive() external payable {}
 }
