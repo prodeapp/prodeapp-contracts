@@ -10,10 +10,11 @@ contract TournamentFactory {
     Tournament[] private _tournaments;
     address public tournament;
 
-    // address public arbitrator = "0xd47f72a2d1d0E91b0Ec5e5f5d02B2dc26d00A14D";  //mainnet
+    // address public arbitrator = "0x728cba71a3723caab33ea416cb46e2cc9215a596";  //mainnet
     address public arbitrator = address(0xDEd12537dA82C1019b3CA1714A5d58B7c5c19A04);  //kovan
-    // address public arbitrator = "0xe40DD83a262da3f56976038F1554Fe541Fa75ecd" // gnosis
+    // address public arbitrator = "0x29f39de98d750eb77b5fafb31b2837f079fce222" // gnosis
     address public realitio = address(0xcB71745d032E16ec838430731282ff6c10D29Dea);  // kovan
+    // address public realitio = address(0xE78996A233895bE74a66F451f1019cA9734205cc);  // gnosis
     uint256 public submissionTimeout = 7 days;
 
     /**
@@ -26,15 +27,17 @@ contract TournamentFactory {
 
     function createTournament(
         string memory name,
+        string memory symbol,
         address owner,
         uint256 closingTime,
         uint256 price,
         uint256 managementFee,
         address manager
     ) public {
-        Tournament instance = Tournament(tournament.clone());
+        Tournament instance = Tournament(payable(tournament.clone()));
         instance.initialize(
             name, 
+            symbol,
             owner,
             realitio,
             price,
