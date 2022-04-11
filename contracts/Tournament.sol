@@ -121,7 +121,7 @@ contract Tournament is ERC721, IERC2981 {
         if (bet.count == 0) bet.predictions = _results;
         bet.count += 1;
 
-        _safeMint(msg.sender, nextTokenID);
+        _mint(msg.sender, nextTokenID);
         return nextTokenID++;
     }
 
