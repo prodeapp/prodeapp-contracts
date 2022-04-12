@@ -37,7 +37,7 @@ contract Tournament is ERC1155, IERC2981 {
     address public owner;
     address public manager;
     RealityETH_v3_0 public realitio; // Realitio v3
-    uint256 public nextTokenID;
+    uint256 public tokenCount;
     bool public initialized;
     bool public tournamentInitialized;
     uint256 public resultSubmissionPeriodStart;
@@ -51,6 +51,7 @@ contract Tournament is ERC1155, IERC2981 {
     uint16[] public prizeWeights;
     mapping(uint256 => bytes32[]) public bets; // bets[tokenID]
     mapping(uint256 => Result) public ranking; // ranking[index]
+    mapping(bytes32 => uint256) public tokenHashToTokenID; // ranking[index]
 
     constructor() ERC1155("") {}
 
@@ -108,18 +109,24 @@ contract Tournament is ERC1155, IERC2981 {
         tournamentInitialized = true;
     }
 
-    function placeBet(bytes32[] calldata _results) external payable returns(uint256 betIndex) {
+    function placeBet(bytes32[] calldata _results) external payable returns(uint256) {
         require(tournamentInitialized, "Not initialized");
         require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
 
-        uint256 tokenID = uint256(keccak256(abi.encode(_results)));
-        bets[tokenID] = _results;
+        bytes32 tokenHash = keccak256(abi.encode(_results));
+        uint256 tokenID = tokenHashToTokenID[tokenHash];
+        if (tokenID == 0) {
+            // New set of predictions
+            tokenID = ++tokenCount;
+            tokenHashToTokenID[tokenHash] = tokenID;
+            bets[tokenID] = _results;
+        }
         
         // Non-compatible smart contracts (like gnosis safes) are not supported due to a ridiculous design choice of the ERC1155. Still using it for convenience.
         _mint(msg.sender, tokenID, 1, "");
-        return nextTokenID++;
+        return tokenID;
     }
 
     function registerAvailabilityOfResults() external {
