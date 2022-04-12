@@ -26,8 +26,7 @@ contract TournamentFactory {
     }
 
     function createTournament(
-        string memory name,
-        string memory symbol,
+        string memory uri,
         address owner,
         uint256 closingTime,
         uint256 price,
@@ -36,8 +35,7 @@ contract TournamentFactory {
     ) public {
         Tournament instance = Tournament(payable(tournament.clone()));
         instance.initialize(
-            name, 
-            symbol,
+            uri, 
             owner,
             realitio,
             price,
