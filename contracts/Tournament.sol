@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of
@@ -24,20 +24,28 @@ interface IERC2981 {
 
 }
 
-contract Tournament is ERC1155, IERC2981 {
+contract Tournament is ERC721, IERC2981 {
   
     struct Result {
-        address account;
-        uint88 points;
+        uint256 tokenID;
+        uint248 points;
         bool claimed;
+    }
+
+    struct BetData {
+        uint256 count;
+        bytes32[] predictions;
     }
 
     uint256 public constant DIVISOR = 10000;
 
+    string private tournamentName;
+    string private tournamentSymbol;
+    string private tournamentUri;
     address public owner;
     address public manager;
     RealityETH_v3_0 public realitio; // Realitio v3
-    uint256 public tokenCount;
+    uint256 public nextTokenID;
     bool public initialized;
     bool public tournamentInitialized;
     uint256 public resultSubmissionPeriodStart;
@@ -49,14 +57,16 @@ contract Tournament is ERC1155, IERC2981 {
 
     bytes32[] public questionIDs;
     uint16[] public prizeWeights;
-    mapping(uint256 => bytes32[]) public bets; // bets[tokenID]
+    mapping(bytes32 => BetData) public bets; // bets[tokenHash]
     mapping(uint256 => Result) public ranking; // ranking[index]
-    mapping(bytes32 => uint256) public tokenHashToTokenID; // ranking[index]
+    mapping(uint256 => bytes32) public tokenIDtoTokenHash;
 
-    constructor() ERC1155("") {}
+    constructor() ERC721("", "") {}
 
     function initialize(
-        string memory uri_,
+        string memory _tournamentName,
+        string memory _tournamentSymbol,
+        string memory _tournamentUri,
         address _owner,
         address _realityETH,
         uint256 _price,
@@ -67,7 +77,9 @@ contract Tournament is ERC1155, IERC2981 {
     ) external {
         require(!initialized, "Already initialized.");
 
-        _setURI(uri_);
+        tournamentName = _tournamentName;
+        tournamentSymbol = _tournamentSymbol;
+        tournamentUri = _tournamentUri;
         owner = _owner;
         realitio = RealityETH_v3_0(_realityETH);
         price = _price;
@@ -77,15 +89,6 @@ contract Tournament is ERC1155, IERC2981 {
         manager = _manager;
 
         initialized = true;
-    }
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC1155) returns (bool) {
-        return
-            interfaceId == type(IERC2981).interfaceId ||
-            super.supportsInterface(interfaceId);
     }
 
     // Link all Realitio questions.
@@ -116,17 +119,13 @@ contract Tournament is ERC1155, IERC2981 {
         require(block.timestamp < closingTime, "Bets not allowed");
 
         bytes32 tokenHash = keccak256(abi.encode(_results));
-        uint256 tokenID = tokenHashToTokenID[tokenHash];
-        if (tokenID == 0) {
-            // New set of predictions
-            tokenID = ++tokenCount;
-            tokenHashToTokenID[tokenHash] = tokenID;
-            bets[tokenID] = _results;
-        }
-        
-        // Non-compatible smart contracts (like gnosis safes) are not supported due to a ridiculous design choice of the ERC1155. Still using it for convenience.
-        _mint(msg.sender, tokenID, 1, "");
-        return tokenID;
+        tokenIDtoTokenHash[nextTokenID] = tokenHash;
+        BetData storage bet = bets[tokenHash];
+        if (bet.count == 0) bet.predictions = _results;
+        bet.count += 1;
+
+        _mint(msg.sender, nextTokenID);
+        return nextTokenID++;
     }
 
     function registerAvailabilityOfResults() external {
@@ -174,12 +173,13 @@ contract Tournament is ERC1155, IERC2981 {
         );
     }
 
-    function registerPoints(uint256 _tokenID, address _account, uint256 _rankIndex) external {
+    function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
+        require(_exists(_tokenID), "Token does not exist");
 
-        bytes32[] memory predictions = bets[_tokenID];
-        uint256 totalPoints;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
+        uint248 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
             bytes32 result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
@@ -188,21 +188,17 @@ contract Tournament is ERC1155, IERC2981 {
             }
         }
 
-        uint256 betCount = balanceOf(_account, _tokenID);
         if (totalPoints > ranking[_rankIndex].points && (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)) {
-            for (uint256 k = 0; k < betCount; k++) {
-                ranking[_rankIndex + k].points = uint88(totalPoints);
-                ranking[_rankIndex + k].account = _account;
-            }
+            ranking[_rankIndex].tokenID = _tokenID;
+            ranking[_rankIndex].points = totalPoints;
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 i = 1;
             while (ranking[_rankIndex + i].points == totalPoints) {
+                require(ranking[_rankIndex + i].tokenID != _tokenID, "Token already registered");
                 i += 1;
             }
-            for (uint256 k = 0; k < betCount; k++) {
-                ranking[_rankIndex + i + k].points = uint88(totalPoints);
-                ranking[_rankIndex + i + k].account = _account;
-            }
+            ranking[_rankIndex + i].tokenID = _tokenID;
+            ranking[_rankIndex + i].points = totalPoints;
         }
     }
 
@@ -211,7 +207,7 @@ contract Tournament is ERC1155, IERC2981 {
         require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
         require(!ranking[_rankIndex].claimed, "Already claimed");
 
-        uint88 points = ranking[_rankIndex].points;
+        uint248 points = ranking[_rankIndex].points;
         uint256 numberOfPrizes = prizeWeights.length;
         bool rankingFound = false;
         uint256 rankingPosition = 0;
@@ -236,7 +232,39 @@ contract Tournament is ERC1155, IERC2981 {
 
         uint256 reward = totalPrize * cumWeigths / (DIVISOR * shareBetween);
         ranking[_rankIndex].claimed = true;
-        payable(ranking[_rankIndex].account).send(reward);
+        payable(ownerOf(ranking[_rankIndex].tokenID)).send(reward);
+    }
+
+    /**
+     * @dev See {IERC721Metadata-name}.
+     */
+    function name() public view override returns (string memory) {
+        return tournamentName;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-symbol}.
+     */
+    function symbol() public view override returns (string memory) {
+        return tournamentSymbol;
+    }
+
+    /**
+     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
+     * by default, can be overriden in child contracts.
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return tournamentUri;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721) returns (bool) {
+        return
+            interfaceId == type(IERC2981).interfaceId ||
+            super.supportsInterface(interfaceId);
     }
 
     function royaltyInfo(
