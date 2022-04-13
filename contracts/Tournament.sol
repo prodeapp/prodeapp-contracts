@@ -130,6 +130,7 @@ contract Tournament is ERC721, IERC2981 {
 
     function registerAvailabilityOfResults() external {
         require(block.timestamp > closingTime, "Bets not allowed");
+        require(resultSubmissionPeriodStart == 0, "Results already available");
 
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
