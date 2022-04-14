@@ -5,8 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./IERC2981.sol";
 
-// If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of
-// all the questions and bets.
+// If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
 
 contract Tournament is ERC721, IERC2981 {
   
@@ -77,8 +76,10 @@ contract Tournament is ERC721, IERC2981 {
         initialized = true;
     }
 
-    // Link all Realitio questions.
-    // Should we add a weight for each question/answer?
+    /** @dev Link Realitio questions to the tournament and specify prizes. (Should a weight for each question/answer be added?)
+     *  @param _questionIDs List of question ids as defined in Realitio.
+     *  @param _prizeWeights List of prizes in basis points for each ranked position in descending order.
+     */
     function setTournament(bytes32[] calldata _questionIDs, uint16[] calldata _prizeWeights) external {
         require(msg.sender == owner, "Not authorized");
         require(!tournamentInitialized, "Already initialized");
@@ -98,6 +99,10 @@ contract Tournament is ERC721, IERC2981 {
         tournamentInitialized = true;
     }
 
+    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
+     *  @param _results The address of the submission which request to fund.
+     *  @return the minted token id.
+     */
     function placeBet(bytes32[] calldata _results) external payable returns(uint256) {
         require(tournamentInitialized, "Not initialized");
         require(_results.length == questionIDs.length, "Results mismatch");
@@ -114,6 +119,9 @@ contract Tournament is ERC721, IERC2981 {
         return nextTokenID++;
     }
 
+    /** @dev Passes the contract state to the submission period if all the Realitio results are available.
+     *  The management fee is paid to the manager address.
+     */
     function registerAvailabilityOfResults() external {
         require(block.timestamp > closingTime, "Bets not allowed");
         require(resultSubmissionPeriodStart == 0, "Results already available");
@@ -130,36 +138,12 @@ contract Tournament is ERC721, IERC2981 {
         totalPrize = poolBalance - managementReward;
     }
 
-    function reopenQuestion(
-        uint256 questionIndex,
-        uint256 template_id, 
-        string memory question, 
-        address arbitrator, 
-        uint32 timeout, 
-        uint32 opening_ts, 
-        uint256 nonce,
-        uint256 min_bond,
-        address author
-    ) external {
-        //require parameters to calculate/check the previous questionId etc
-        bytes32 content_hash = keccak256(abi.encodePacked(template_id, opening_ts, question));
-        bytes32 question_id = keccak256(abi.encodePacked(content_hash, arbitrator, timeout, min_bond, address(realitio), author, nonce));
-
-        require(question_id == questionIDs[questionIndex], "Incorrect question data");
-        require(realitio.isSettledTooSoon(question_id), "Cannot reopen question");
-
-        bytes32 reopenedQuestionID = realitio.reopenQuestion(
-            template_id, 
-            question, 
-            arbitrator, 
-            timeout, 
-            opening_ts, 
-            nonce + 1, 
-            min_bond,
-            question_id
-        );
-    }
-
+    /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
+     *  in descending order. Bets which points were not registered cannot claimed rewards even if they 
+     *  got more points than the ones registered.
+     *  @param _tokenID The token id of the bet which points are going to be registered.
+     *  @param _rankIndex The alleged ranking position the bet belongs to.
+     */
     function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
@@ -190,6 +174,9 @@ contract Tournament is ERC721, IERC2981 {
         }
     }
 
+    /** @dev Sends a prize to the token holder if applicable.
+     *  @param _rankIndex The ranking position of the bet which reward is being claimed.
+     */
     function claimRewards(uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
         require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
@@ -218,8 +205,11 @@ contract Tournament is ERC721, IERC2981 {
         payable(ownerOf(ranking[_rankIndex].tokenID)).send(reward);
     }
 
-    // Edge case in which no one won or winners were not registered.
-    function reimbursePlayers(uint256 _tokenID) external {
+    /** @dev Edge case in which no one won or winners were not registered. All players who own a token
+     *  are reimburse proportionally (management fee was discounted). Tokens are burnt.
+     *  @param _tokenID The token id.
+     */
+    function reimbursePlayer(uint256 _tokenID) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
         require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
         require(ranking[0].points == 0, "Can't reimburse if there are winners");
@@ -229,7 +219,9 @@ contract Tournament is ERC721, IERC2981 {
         payable(ownerOf(_tokenID)).send(reimbursement);
     }
 
-    // Edge case in which there is a winner but one or more prizes are vacant. Those prizes are given to the top winner/s.
+    /** @dev Edge case in which there is a winner but one or more prizes are vacant.
+     *  Vacant prizes are distributed equally among registered winner/s.
+     */
     function distributeRemainingPrizes() external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
         require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
@@ -258,7 +250,9 @@ contract Tournament is ERC721, IERC2981 {
         
     }
 
-    // For sponsors?
+    /** @dev Increases the balance of the pool without participating. Only callable during the betting period.
+     *  @param _message The message to publish.
+     */
     function fundPool(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
         require(msg.value > price, "Insufficient funds");
