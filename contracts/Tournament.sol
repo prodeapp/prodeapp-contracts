@@ -1,106 +1,311 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
-import "@reality.eth/contracts/development/contracts/IRealitio.sol";
+pragma solidity 0.8.13;
 
-contract Tournament {
-    string public name;
-    address public _owner;
-    address public arbitrator;
-    IRealitio public realitio;
-    bool public started;
-    uint256 public gamesCount = 0;
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
+import "./IERC2981.sol";
 
-    struct Game {
-        string home; // home team name identifier
-        string away; // away team name identifier
-        uint32 minEnd; // min date to ask for a result
-        uint256 result; // 0 = Tie; 1=Home; 2=Away; 0xff..ff=invalid;
-        bytes32 questionID; // realitio question identifier
+// If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of
+// all the questions and bets.
+
+contract Tournament is ERC721, IERC2981 {
+  
+    struct Result {
+        uint256 tokenID;
+        uint248 points;
+        bool claimed;
     }
 
-    // Game[] private games; // array containing all the matches in the tournament
-    mapping(uint256 => Game) public games;
-
-    constructor(
-        string memory _name,
-        address _arbitrator,
-        address _realityETH
-    ) {
-        name = _name;
-        _owner = msg.sender;
-        arbitrator = _arbitrator;
-        started = false;
-        realitio = IRealitio(_realityETH);
+    struct BetData {
+        uint256 count;
+        bytes32[] predictions;
     }
 
-    function startTournament() public {
-        require(gamesCount >= 1, "At least one match it's needed to start");
-        started = true;
+    uint256 public constant DIVISOR = 10000;
+
+    string private tournamentName;
+    string private tournamentSymbol;
+    string private tournamentUri;
+    address public owner;
+    address public manager;
+    RealityETH_v3_0 public realitio; // Realitio v3
+    uint256 public nextTokenID;
+    bool public initialized;
+    bool public tournamentInitialized;
+    uint256 public resultSubmissionPeriodStart;
+    uint256 public price;
+    uint256 public closingTime;
+    uint256 public submissionTimeout;
+    uint256 public managementFee;
+    uint256 private totalPrize;
+
+    bytes32[] public questionIDs;
+    uint16[] public prizeWeights;
+    mapping(bytes32 => BetData) public bets; // bets[tokenHash]
+    mapping(uint256 => Result) public ranking; // ranking[index]
+    mapping(uint256 => bytes32) public tokenIDtoTokenHash;
+
+    event FundingReceived(address indexed _funder, uint256 _amount, string _message);
+
+    constructor() ERC721("", "") {}
+
+    function initialize(
+        string memory _tournamentName,
+        string memory _tournamentSymbol,
+        string memory _tournamentUri,
+        address _owner,
+        address _realityETH,
+        uint256 _price,
+        uint256 _closingTime,
+        uint256 _submissionTimeout,
+        uint256 _managementFee,
+        address _manager
+    ) external {
+        require(!initialized, "Already initialized.");
+
+        tournamentName = _tournamentName;
+        tournamentSymbol = _tournamentSymbol;
+        tournamentUri = _tournamentUri;
+        owner = _owner;
+        realitio = RealityETH_v3_0(_realityETH);
+        price = _price;
+        closingTime = _closingTime;
+        submissionTimeout = _submissionTimeout;
+        managementFee = _managementFee;
+        manager = _manager;
+
+        initialized = true;
     }
 
-    // Internal function to update the result of a match. Must be called from the
-    // function that reads the realitio answer.
-    function _updateGamehResult(uint256 _gameID, bytes32 _result) internal {
-        Game storage game = games[_gameID];
-        game.result = uint256(_result);
+    // Link all Realitio questions.
+    // Should we add a weight for each question/answer?
+    function setTournament(bytes32[] calldata _questionIDs, uint16[] calldata _prizeWeights) external {
+        require(msg.sender == owner, "Not authorized");
+        require(!tournamentInitialized, "Already initialized");
+
+        for (uint256 i = 0; i < _questionIDs.length; i++) {
+            require(realitio.getTimeout(_questionIDs[i]) > 0, "Question not created");
+        }
+        questionIDs = _questionIDs;
+
+        uint256 sumWeights;
+        for (uint256 i = 0; i < _prizeWeights.length; i++) {
+            sumWeights += uint256(_prizeWeights[i]);
+        }
+        require(sumWeights == DIVISOR, "Invalid weights");
+        prizeWeights = _prizeWeights;
+
+        tournamentInitialized = true;
     }
 
-    // Ask question to realitio. This must be called when initializing a match
-    function _askQuestion(
-        string memory home,
-        string memory away,
-        uint32 _minEnd
-    ) internal returns (bytes32) {
-        bytes32 delim = "\u241f";
-        string memory question = string(
-                abi.encodePacked(
-                    "Who has won (without considering penalties definition) the match between ",
-                    home,
-                    " (HOME) and ",
-                    away,
-                    " (AWAY) in the tournament ",
-                    name,
-                    "?",
-                    delim,
-                    "Tie",
-                    delim,
-                    "Home",
-                    delim,
-                    "Away",
-                    delim,
-                    "Sports",
-                    delim,
-                    "en"
-                )
-            );
-        bytes32 questionID = realitio.askQuestion(
-            2,
-            question,
-            arbitrator,
-            1 days,
-            _minEnd,
-            0
+    function placeBet(bytes32[] calldata _results) external payable returns(uint256) {
+        require(tournamentInitialized, "Not initialized");
+        require(_results.length == questionIDs.length, "Results mismatch");
+        require(msg.value >= price, "Not enough funds");
+        require(block.timestamp < closingTime, "Bets not allowed");
+
+        bytes32 tokenHash = keccak256(abi.encode(_results));
+        tokenIDtoTokenHash[nextTokenID] = tokenHash;
+        BetData storage bet = bets[tokenHash];
+        if (bet.count == 0) bet.predictions = _results;
+        bet.count += 1;
+
+        _mint(msg.sender, nextTokenID);
+        return nextTokenID++;
+    }
+
+    function registerAvailabilityOfResults() external {
+        require(block.timestamp > closingTime, "Bets not allowed");
+        require(resultSubmissionPeriodStart == 0, "Results already available");
+
+        for (uint256 i = 0; i < questionIDs.length; i++) {
+            bytes32 questionId = questionIDs[i];
+            realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
+        }
+
+        resultSubmissionPeriodStart = block.timestamp;
+        uint256 poolBalance = address(this).balance;
+        uint256 managementReward = poolBalance * managementFee / DIVISOR;
+        payable(manager).send(managementReward);
+        totalPrize = poolBalance - managementReward;
+    }
+
+    function reopenQuestion(
+        uint256 questionIndex,
+        uint256 template_id, 
+        string memory question, 
+        address arbitrator, 
+        uint32 timeout, 
+        uint32 opening_ts, 
+        uint256 nonce,
+        uint256 min_bond,
+        address author
+    ) external {
+        //require parameters to calculate/check the previous questionId etc
+        bytes32 content_hash = keccak256(abi.encodePacked(template_id, opening_ts, question));
+        bytes32 question_id = keccak256(abi.encodePacked(content_hash, arbitrator, timeout, min_bond, address(realitio), author, nonce));
+
+        require(question_id == questionIDs[questionIndex], "Incorrect question data");
+        require(realitio.isSettledTooSoon(question_id), "Cannot reopen question");
+
+        bytes32 reopenedQuestionID = realitio.reopenQuestion(
+            template_id, 
+            question, 
+            arbitrator, 
+            timeout, 
+            opening_ts, 
+            nonce + 1, 
+            min_bond,
+            question_id
         );
-        return questionID;
     }
 
-    function createGame(
-        string memory _home,
-        string memory _away,
-        uint32 _minEnd
-    ) external returns (uint256) {
-        require(started == false, "Couldn't add match in a started tournament");
-        uint256 gameID = gamesCount + 1;
-        bytes32 questionID = _askQuestion(_home, _away, _minEnd);
-        Game memory game = Game({
-            home: _home,
-            away: _away,
-            minEnd: _minEnd,
-            result: 2**256 - 1, // initialize with invalid
-            questionID: questionID
-        });
-        games[gameID] = game;
-        gamesCount += 1;
-        return gameID;
+    function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
+        require(resultSubmissionPeriodStart != 0, "Not in submission period");
+        require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
+        require(_exists(_tokenID), "Token does not exist");
+
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
+        uint248 totalPoints;
+        for (uint256 i = 0; i < questionIDs.length; i++) {
+            bytes32 questionId = questionIDs[i];
+            bytes32 result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
+            if (result == predictions[i]) {
+                totalPoints += 1;
+            }
+        }
+
+        // Cannot registered a bet which got 0 points.
+        if (totalPoints > ranking[_rankIndex].points && (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)) {
+            ranking[_rankIndex].tokenID = _tokenID;
+            ranking[_rankIndex].points = totalPoints;
+        } else if (ranking[_rankIndex].points == totalPoints) {
+            uint256 i = 1;
+            while (ranking[_rankIndex + i].points == totalPoints) {
+                require(ranking[_rankIndex + i].tokenID != _tokenID, "Token already registered");
+                i += 1;
+            }
+            ranking[_rankIndex + i].tokenID = _tokenID;
+            ranking[_rankIndex + i].points = totalPoints;
+        }
+    }
+
+    function claimRewards(uint256 _rankIndex) external {
+        require(resultSubmissionPeriodStart != 0, "Not in claim period");
+        require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(!ranking[_rankIndex].claimed, "Already claimed");
+
+        uint248 points = ranking[_rankIndex].points;
+        uint256 numberOfPrizes = prizeWeights.length;
+        uint256 rankingPosition = 0;
+        uint256 cumWeigths = 0;
+        uint256 sharedBetween = 0;
+
+        // Infinite loop if ranking[_rankIndex].points = 0.
+        while (true) {
+            if (ranking[rankingPosition].points < points) break;
+            if (ranking[rankingPosition].points == points) {
+                if (rankingPosition < numberOfPrizes) {
+                    cumWeigths += prizeWeights[rankingPosition];
+                }
+                sharedBetween += 1;
+            }
+            rankingPosition += 1;
+        }
+
+        uint256 reward = totalPrize * cumWeigths / (DIVISOR * sharedBetween);
+        ranking[_rankIndex].claimed = true;
+        payable(ownerOf(ranking[_rankIndex].tokenID)).send(reward);
+    }
+
+    // Edge case in which no one won or winners were not registered.
+    function reimbursePlayers(uint256 _tokenID) external {
+        require(resultSubmissionPeriodStart != 0, "Not in claim period");
+        require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(ranking[0].points == 0, "Can't reimburse if there are winners");
+
+        uint256 reimbursement = totalPrize / nextTokenID;
+        _burn(_tokenID); // Can only be reimbursed once.
+        payable(ownerOf(_tokenID)).send(reimbursement);
+    }
+
+    // Edge case in which there is a winner but one or more prizes are vacant. Those prizes are given to the top winner/s.
+    function distributeRemainingPrizes() external {
+        require(resultSubmissionPeriodStart != 0, "Not in claim period");
+        require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(ranking[0].points > 0, "No winners");
+
+        uint256 numberOfPrizes = prizeWeights.length;
+        uint256 rankingPosition = 0;
+        uint256 cumWeigths = 0;
+        uint256 nWinners = 0;
+        while (true) {
+            if (rankingPosition >= numberOfPrizes) break;
+            if (ranking[rankingPosition].points == 0) {
+                if (nWinners == 0) nWinners = rankingPosition;
+                require(!ranking[rankingPosition].claimed, "Already claimed");
+                ranking[rankingPosition].claimed = true;
+                cumWeigths += prizeWeights[rankingPosition];
+            }
+            rankingPosition += 1;
+        }
+
+        require(cumWeigths > 0, "No vacant prizes");
+        uint256 vacantPrize = totalPrize * cumWeigths / (DIVISOR * rankingPosition);
+        for (uint256 rank = 0; rank < rankingPosition; rank++) {
+            payable(ownerOf(ranking[rank].tokenID)).send(vacantPrize);
+        }
+        
+    }
+
+    // For sponsors?
+    function fundPool(string calldata _message) external payable {
+        require(resultSubmissionPeriodStart == 0, "Results already available");
+        require(msg.value > price, "Insufficient funds");
+        emit FundingReceived(msg.sender, msg.value, _message);
+    }
+
+    /**
+     * @dev See {IERC721Metadata-name}.
+     */
+    function name() public view override returns (string memory) {
+        return tournamentName;
+    }
+
+    /**
+     * @dev See {IERC721Metadata-symbol}.
+     */
+    function symbol() public view override returns (string memory) {
+        return tournamentSymbol;
+    }
+
+    /**
+     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
+     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
+     * by default, can be overriden in child contracts.
+     */
+    function _baseURI() internal view override returns (string memory) {
+        return tournamentUri;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721) returns (bool) {
+        return
+            interfaceId == type(IERC2981).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
+    function royaltyInfo(
+        uint256 ,
+        uint256 _salePrice
+    ) external view override(IERC2981) returns (
+        address receiver,
+        uint256 royaltyAmount
+    ) {
+        receiver = manager;
+        // royalty fee = management fee
+        royaltyAmount = _salePrice * managementFee / DIVISOR;
     }
 }

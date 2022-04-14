@@ -1,6 +1,5 @@
 require("@nomiclabs/hardhat-waffle");
 require("@reality.eth/contracts")
-const { alchemyKey } = require('./secrets.json');
 
 const CHAIN_IDS = {
   hardhat: 31337, // chain ID for hardhat testing
@@ -23,7 +22,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.6",
+  solidity: "0.8.13",
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,

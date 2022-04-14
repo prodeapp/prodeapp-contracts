@@ -519,6 +519,11 @@
     "@types/sinon-chai" "^3.2.3"
     "@types/web3" "1.0.19"
 
+"@openzeppelin/contracts@^4.5.0":
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.5.0.tgz#3fd75d57de172b3743cdfc1206883f56430409cc"
+  integrity sha512-fdkzKPYMjrRiPK6K4y64e6GzULR7R7RwxSigHS8DDp7aWDeoReqsQI+cxHV1UuhAqX69L1lAaWDxenfP+xiqzA==
+
 "@reality.eth/contracts@^3.0.2":
   version "3.0.2"
   resolved "https://registry.yarnpkg.com/@reality.eth/contracts/-/contracts-3.0.2.tgz#9a66ffc8d124c0c7c534115f1d04b38ff3cdb71f"
