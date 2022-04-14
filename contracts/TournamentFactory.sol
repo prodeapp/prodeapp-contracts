@@ -17,6 +17,7 @@ contract TournamentFactory {
     // address public realitio = address(0xE78996A233895bE74a66F451f1019cA9734205cc);  // gnosis
     uint256 public submissionTimeout = 7 days;
 
+    event NewTournament(address indexed tournament);
     /**
      *  @dev Constructor.
      *  @param _tournament Address of the tournament contract that is going to be used for each new deployment.
@@ -49,6 +50,7 @@ contract TournamentFactory {
             manager
         );
         _tournaments.push(instance);
+        emit NewTournament(address(instance));
     }
 
     function allTournaments()

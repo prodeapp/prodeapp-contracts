@@ -61,6 +61,17 @@ contract Tournament is ERC721, IERC2981 {
     mapping(uint256 => Result) public ranking; // ranking[index]
     mapping(uint256 => bytes32) public tokenIDtoTokenHash;
 
+    event Initialize(
+        string name,
+        string symbol,
+        string uri,
+        address ownwer,
+        uint256 closingTime,
+        uint256 price,
+        uint256 managementFee,
+        address manager
+    );
+
     constructor() ERC721("", "") {}
 
     function initialize(
@@ -89,6 +100,7 @@ contract Tournament is ERC721, IERC2981 {
         manager = _manager;
 
         initialized = true;
+        emit Initialize(_tournamentName, _tournamentSymbol, _tournamentUri, _owner, _closingTime, _price, _managementFee, _manager);   
     }
 
     // Link all Realitio questions.
