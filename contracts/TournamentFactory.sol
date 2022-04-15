@@ -26,27 +26,27 @@ contract TournamentFactory {
     }
 
     function createTournament(
-        string memory name,
-        string memory symbol,
-        string memory uri,
-        address owner,
+        Tournament.TournamentInfo memory tournamentInfo,
         uint256 closingTime,
         uint256 price,
         uint256 managementFee,
-        address manager
+        address manager,
+        Tournament.RealitioSetup memory realitioSetup,
+        Tournament.RealitioQuestion[] memory questionsData,
+        uint16[] memory prizeWeights
     ) public {
         Tournament instance = Tournament(payable(tournament.clone()));
         instance.initialize(
-            name, 
-            symbol, 
-            uri, 
-            owner,
+            tournamentInfo, 
             realitio,
             price,
             closingTime,
             submissionTimeout,
             managementFee,
-            manager
+            manager,
+            realitioSetup,
+            questionsData, 
+            prizeWeights
         );
         _tournaments.push(instance);
     }
