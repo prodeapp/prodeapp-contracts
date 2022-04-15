@@ -45,16 +45,29 @@ contract Tournament is ERC721, IERC2981 {
     mapping(uint256 => bytes32) public tokenIDtoTokenHash;
 
     event Initialize(
-        string name,
-        string symbol,
-        string uri,
-        address ownwer,
-        uint256 closingTime,
-        uint256 price,
-        uint256 managementFee,
-        address manager
+        string _name,
+        string _symbol,
+        string _uri,
+        address _ownwer,
+        uint256 _closingTime,
+        uint256 _price,
+        uint256 _managementFee,
+        address _manager
     );
+ 
     event FundingReceived(address indexed _funder, uint256 _amount, string _message);
+
+    event PlaceBet(address indexed _player, uint256 indexed tokenID,bytes32[] _predictions);
+
+    event NewPeriod(uint256 _period);
+    
+    event RegisterResult(bytes32 _questionID, bytes32 _result);
+
+    event BetReward(address indexed _owner, uint256 _reward);
+
+    event ManagementReward(address indexed _manager, uint256 _managementReward);
+
+    event QuestionsRegistered(address _tournament, bytes32[] _questionIDs);
 
     constructor() ERC721("", "") {}
 
@@ -85,6 +98,7 @@ contract Tournament is ERC721, IERC2981 {
 
         initialized = true;
         emit Initialize(_tournamentName, _tournamentSymbol, _tournamentUri, _owner, _closingTime, _price, _managementFee, _manager);   
+        emit NewPeriod(0);  // Starting period. Tournament Not initialized
     }
 
     /** @dev Link Realitio questions to the tournament and specify prizes. (Should a weight for each question/answer be added?)
@@ -108,6 +122,9 @@ contract Tournament is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         tournamentInitialized = true;
+
+        emit NewPeriod(1);  // Betting period
+        emit QuestionsRegistered(address(this), questionIDs);
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
@@ -127,7 +144,9 @@ contract Tournament is ERC721, IERC2981 {
         bet.count += 1;
 
         _mint(msg.sender, nextTokenID);
-        return nextTokenID++;
+        emit PlaceBet(msg.sender, nextTokenID, _results);
+
+        return nextTokenID++;      
     }
 
     /** @dev Passes the contract state to the submission period if all the Realitio results are available.
@@ -139,7 +158,8 @@ contract Tournament is ERC721, IERC2981 {
 
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
-            realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
+            bytes32 _result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
+            emit RegisterResult(questionId, _result);  // We cann't emit results of some question until all the questions are solved.
         }
 
         resultSubmissionPeriodStart = block.timestamp;
@@ -147,6 +167,9 @@ contract Tournament is ERC721, IERC2981 {
         uint256 managementReward = poolBalance * managementFee / DIVISOR;
         payable(manager).send(managementReward);
         totalPrize = poolBalance - managementReward;
+
+        emit NewPeriod(2);  // Submission period
+        emit ManagementReward(manager, managementReward);
     }
 
     /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
@@ -214,6 +237,8 @@ contract Tournament is ERC721, IERC2981 {
         uint256 reward = totalPrize * cumWeigths / (DIVISOR * sharedBetween);
         ranking[_rankIndex].claimed = true;
         payable(ownerOf(ranking[_rankIndex].tokenID)).send(reward);
+
+        emit BetReward(ownerOf(ranking[_rankIndex].tokenID), reward);
     }
 
     /** @dev Edge case in which no one won or winners were not registered. All players who own a token
