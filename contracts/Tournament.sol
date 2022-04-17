@@ -75,8 +75,6 @@ contract Tournament is ERC721, IERC2981 {
 
     event NewPeriod(uint256 _period);
     
-    event RegisterResult(bytes32 _questionID, bytes32 _result);
-
     event BetReward(address indexed _owner, uint256 _reward);
 
     event ManagementReward(address indexed _manager, uint256 _managementReward);
@@ -165,7 +163,6 @@ contract Tournament is ERC721, IERC2981 {
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
             bytes32 _result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
-            emit RegisterResult(questionId, _result);  // We cann't emit results of some question until all the questions are solved.
         }
 
         resultSubmissionPeriodStart = block.timestamp;
