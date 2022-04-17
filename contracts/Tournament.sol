@@ -71,11 +71,11 @@ contract Tournament is ERC721, IERC2981 {
  
     event FundingReceived(address indexed _funder, uint256 _amount, string _message);
 
-    event PlaceBet(address indexed _player, uint256 indexed tokenID,bytes32[] _predictions);
+    event PlaceBet(address indexed _player, uint256 indexed tokenID, bytes32[] _predictions);
 
     event NewPeriod(uint256 _period);
     
-    event BetReward(address indexed _tokenID, uint256 _reward);
+    event BetReward(uint256 indexed _tokenID, uint256 _reward);
 
     event ManagementReward(address indexed _manager, uint256 _managementReward);
 
@@ -240,7 +240,7 @@ contract Tournament is ERC721, IERC2981 {
         uint256 reward = totalPrize * cumWeigths / (DIVISOR * sharedBetween);
         ranking[_rankIndex].claimed = true;
         payable(ownerOf(ranking[_rankIndex].tokenID)).transfer(reward);
-        emit BetReward(ownerOf(ranking[_rankIndex].tokenID), reward);
+        emit BetReward(ranking[_rankIndex].tokenID, reward);
     }
 
     /** @dev Edge case in which no one won or winners were not registered. All players who own a token
