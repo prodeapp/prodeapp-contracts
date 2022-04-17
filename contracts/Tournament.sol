@@ -162,7 +162,7 @@ contract Tournament is ERC721, IERC2981 {
 
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
-            bytes32 _result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
+            realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
         }
 
         resultSubmissionPeriodStart = block.timestamp;
