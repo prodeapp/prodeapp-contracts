@@ -86,7 +86,7 @@ contract Tournament is ERC721, IERC2981 {
 
     event ManagementReward(address indexed _manager, uint256 _managementReward);
 
-    event QuestionsRegistered(address _tournament, bytes32[] _questionIDs);
+    event QuestionsRegistered(bytes32[] _questionIDs);
 
     constructor() ERC721("", "") {}
 
@@ -133,9 +133,6 @@ contract Tournament is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         initialized = true;
-
-        emit NewPeriod(1); // Betting period
-        emit QuestionsRegistered(address(this), questionIDs);
         emit Initialize(
             tournamentInfo.tournamentName,
             tournamentInfo.tournamentSymbol,
@@ -146,6 +143,9 @@ contract Tournament is ERC721, IERC2981 {
             _managementFee,
             _manager
         );
+        emit NewPeriod(1); // Betting period
+        emit QuestionsRegistered(questionIDs);
+        
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.

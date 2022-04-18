@@ -37,6 +37,7 @@ contract TournamentFactory {
         uint16[] memory prizeWeights
     ) public {
         Tournament instance = Tournament(payable(tournament.clone()));
+        emit NewTournament(address(instance));
         instance.initialize(
             tournamentInfo, 
             realitio,
@@ -50,7 +51,7 @@ contract TournamentFactory {
             prizeWeights
         );
         _tournaments.push(instance);
-        emit NewTournament(address(instance));
+        
     }
 
     function allTournaments()
