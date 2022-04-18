@@ -1,7 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@reality.eth/contracts")
 require("@nomiclabs/hardhat-etherscan");
-const { mnemonic, etherscanApiKey } = require('./secrets.json');
+const { mnemonic, etherscanApiKey, alchemyKey } = require('./secrets.json');
 
 const CHAIN_IDS = {
   hardhat: 31337, // chain ID for hardhat testing
@@ -34,6 +34,10 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
+    },
+    kovan: {
+      url: 'https://eth-kovan.alchemyapi.io/v2/{$alchemyKey}',
+      accounts: { mnemonic }
     },
     gnosis: {
       url: 'https://rpc.gnosischain.com/',
