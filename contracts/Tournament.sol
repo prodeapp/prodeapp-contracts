@@ -8,7 +8,6 @@ import "./IERC2981.sol";
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
 
 contract Tournament is ERC721, IERC2981 {
-  
     struct RealitioQuestion {
         uint256 templateID;
         string question;
@@ -58,7 +57,34 @@ contract Tournament is ERC721, IERC2981 {
     mapping(uint256 => Result) public ranking; // ranking[index]
     mapping(uint256 => bytes32) public tokenIDtoTokenHash;
 
-    event FundingReceived(address indexed _funder, uint256 _amount, string _message);
+    event Initialize(
+        string _name,
+        string _symbol,
+        string _uri,
+        address _ownwer,
+        uint256 _closingTime,
+        uint256 _price,
+        uint256 _managementFee,
+        address _manager
+    );
+
+    event FundingReceived(
+        address indexed _funder,
+        uint256 _amount,
+        string _message
+    );
+
+    event PlaceBet(
+        address indexed _player,
+        uint256 indexed tokenID,
+        bytes32[] _predictions
+    );
+
+    event BetReward(uint256 indexed _tokenID, uint256 _reward);
+
+    event ManagementReward(address indexed _manager, uint256 _managementReward);
+
+    event QuestionsRegistered(bytes32[] _questionIDs);
 
     constructor() ERC721("", "") {}
 
@@ -71,7 +97,7 @@ contract Tournament is ERC721, IERC2981 {
         uint256 _managementFee,
         address _manager,
         RealitioSetup memory _realitioSetup,
-        RealitioQuestion[] memory _questionsData, 
+        RealitioQuestion[] memory _questionsData,
         uint16[] memory _prizeWeights
     ) external {
         require(!initialized, "Already initialized.");
@@ -105,13 +131,29 @@ contract Tournament is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         initialized = true;
+        emit Initialize(
+            tournamentInfo.tournamentName,
+            tournamentInfo.tournamentSymbol,
+            tournamentInfo.tournamentUri,
+            msg.sender,
+            _closingTime,
+            _price,
+            _managementFee,
+            _manager
+        );
+        emit QuestionsRegistered(questionIDs);
+        
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
      *  @param _results The address of the submission which request to fund.
      *  @return the minted token id.
      */
-    function placeBet(bytes32[] calldata _results) external payable returns(uint256) {
+    function placeBet(bytes32[] calldata _results)
+        external
+        payable
+        returns (uint256)
+    {
         require(initialized, "Not initialized");
         require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value >= price, "Not enough funds");
@@ -124,6 +166,8 @@ contract Tournament is ERC721, IERC2981 {
         bet.count += 1;
 
         _mint(msg.sender, nextTokenID);
+        emit PlaceBet(msg.sender, nextTokenID, _results);
+
         return nextTokenID++;
     }
 
@@ -141,23 +185,29 @@ contract Tournament is ERC721, IERC2981 {
 
         resultSubmissionPeriodStart = block.timestamp;
         uint256 poolBalance = address(this).balance;
-        uint256 managementReward = poolBalance * managementFee / DIVISOR;
+        uint256 managementReward = (poolBalance * managementFee) / DIVISOR;
         payable(manager).send(managementReward);
         totalPrize = poolBalance - managementReward;
+
+        emit ManagementReward(manager, managementReward);
     }
 
     /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
-     *  in descending order. Bets which points were not registered cannot claimed rewards even if they 
+     *  in descending order. Bets which points were not registered cannot claimed rewards even if they
      *  got more points than the ones registered.
      *  @param _tokenID The token id of the bet which points are going to be registered.
      *  @param _rankIndex The alleged ranking position the bet belongs to.
      */
     function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
-        require(block.timestamp < resultSubmissionPeriodStart + submissionTimeout, "Submission period over");
+        require(
+            block.timestamp < resultSubmissionPeriodStart + submissionTimeout,
+            "Submission period over"
+        );
         require(_exists(_tokenID), "Token does not exist");
 
-        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
+            .predictions;
         uint248 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
             bytes32 questionId = questionIDs[i];
@@ -168,13 +218,19 @@ contract Tournament is ERC721, IERC2981 {
         }
 
         // Cannot registered a bet which got 0 points.
-        if (totalPoints > ranking[_rankIndex].points && (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)) {
+        if (
+            totalPoints > ranking[_rankIndex].points &&
+            (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)
+        ) {
             ranking[_rankIndex].tokenID = _tokenID;
             ranking[_rankIndex].points = totalPoints;
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 i = 1;
             while (ranking[_rankIndex + i].points == totalPoints) {
-                require(ranking[_rankIndex + i].tokenID != _tokenID, "Token already registered");
+                require(
+                    ranking[_rankIndex + i].tokenID != _tokenID,
+                    "Token already registered"
+                );
                 i += 1;
             }
             ranking[_rankIndex + i].tokenID = _tokenID;
@@ -187,7 +243,10 @@ contract Tournament is ERC721, IERC2981 {
      */
     function claimRewards(uint256 _rankIndex) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
-        require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(
+            block.timestamp > resultSubmissionPeriodStart + submissionTimeout,
+            "Submission period not over"
+        );
         require(!ranking[_rankIndex].claimed, "Already claimed");
 
         uint248 points = ranking[_rankIndex].points;
@@ -208,9 +267,10 @@ contract Tournament is ERC721, IERC2981 {
             rankingPosition += 1;
         }
 
-        uint256 reward = totalPrize * cumWeigths / (DIVISOR * sharedBetween);
+        uint256 reward = (totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
         ranking[_rankIndex].claimed = true;
         payable(ownerOf(ranking[_rankIndex].tokenID)).transfer(reward);
+        emit BetReward(ranking[_rankIndex].tokenID, reward);
     }
 
     /** @dev Edge case in which no one won or winners were not registered. All players who own a token
@@ -219,7 +279,10 @@ contract Tournament is ERC721, IERC2981 {
      */
     function reimbursePlayer(uint256 _tokenID) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
-        require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(
+            block.timestamp > resultSubmissionPeriodStart + submissionTimeout,
+            "Submission period not over"
+        );
         require(ranking[0].points == 0, "Can't reimburse if there are winners");
 
         uint256 reimbursement = totalPrize / nextTokenID;
@@ -232,7 +295,10 @@ contract Tournament is ERC721, IERC2981 {
      */
     function distributeRemainingPrizes() external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
-        require(block.timestamp > resultSubmissionPeriodStart + submissionTimeout, "Submission period not over");
+        require(
+            block.timestamp > resultSubmissionPeriodStart + submissionTimeout,
+            "Submission period not over"
+        );
         require(ranking[0].points > 0, "No winners");
 
         uint256 numberOfPrizes = prizeWeights.length;
@@ -251,11 +317,11 @@ contract Tournament is ERC721, IERC2981 {
         }
 
         require(cumWeigths > 0, "No vacant prizes");
-        uint256 vacantPrize = totalPrize * cumWeigths / (DIVISOR * rankingPosition);
+        uint256 vacantPrize = (totalPrize * cumWeigths) /
+            (DIVISOR * rankingPosition);
         for (uint256 rank = 0; rank < rankingPosition; rank++) {
             payable(ownerOf(ranking[rank].tokenID)).send(vacantPrize);
         }
-        
     }
 
     /** @dev Increases the balance of the pool without participating. Only callable during the betting period.
@@ -293,21 +359,26 @@ contract Tournament is ERC721, IERC2981 {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721) returns (bool) {
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        virtual
+        override(ERC721)
+        returns (bool)
+    {
         return
             interfaceId == type(IERC2981).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
-    function royaltyInfo(
-        uint256 ,
-        uint256 _salePrice
-    ) external view override(IERC2981) returns (
-        address receiver,
-        uint256 royaltyAmount
-    ) {
+    function royaltyInfo(uint256, uint256 _salePrice)
+        external
+        view
+        override(IERC2981)
+        returns (address receiver, uint256 royaltyAmount)
+    {
         receiver = manager;
         // royalty fee = management fee
-        royaltyAmount = _salePrice * managementFee / DIVISOR;
+        royaltyAmount = (_salePrice * managementFee) / DIVISOR;
     }
 }
