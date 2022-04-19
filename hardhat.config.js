@@ -1,11 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@reality.eth/contracts")
 require("@nomiclabs/hardhat-etherscan");
-const { mnemonic, etherscanApiKey, alchemyKey } = require('./secrets.json');
-
-const CHAIN_IDS = {
-  hardhat: 31337, // chain ID for hardhat testing
-};
+const { mnemonic, etherscanApiKey, alchemyKey, PK } = require('./secrets.json');
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -24,30 +20,40 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  * @type import('hardhat/config').HardhatUserConfig
  */
 module.exports = {
-  solidity: "0.8.13",
-  settings: {
-    optimizer: {
-      enabled: true,
-      runs: 1000,
+  solidity: {
+    version: "0.8.9",
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
     },
   },
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
+      chainId: 31337
     },
     kovan: {
-      url: 'https://eth-kovan.alchemyapi.io/v2/{$alchemyKey}',
-      accounts: { mnemonic }
+      url: `https://eth-kovan.alchemyapi.io/v2/${alchemyKey}`,
+      chainId: 42,
+      accounts: [PK]
     },
     gnosis: {
       url: 'https://rpc.gnosischain.com/',
-      accounts: { mnemonic },
+      accounts: [PK],
+      chainId: 100,
       gasPrice: 10000000000
     }
   },
   etherscan: {
-    apiKey: etherscanApiKey
+    apiKey: {
+      mainnet: etherscanApiKey,
+      kovan: etherscanApiKey,
+      xdai: "no-api-key-needed",
+      sokol: "no-api-key-needed"
     }
+  }
   
 };
 

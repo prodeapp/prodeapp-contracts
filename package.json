@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "A betting sports platform.",
   "license": "MIT",
+  "scripts": {
+    "deploy:kovan": "npx hardhat run --network kovan scripts/deploy.js",
+    "deploy:gnosis": "npx hardhat run --network xdai scripts/deploy.js"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",
