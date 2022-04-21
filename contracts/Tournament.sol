@@ -63,6 +63,7 @@ contract Tournament is ERC721, IERC2981 {
         string _uri,
         address _ownwer,
         uint256 _closingTime,
+        uint256 _submissionTimeout,
         uint256 _price,
         uint256 _managementFee,
         address _manager
@@ -137,6 +138,7 @@ contract Tournament is ERC721, IERC2981 {
             tournamentInfo.tournamentUri,
             msg.sender,
             _closingTime,
+            _submissionTimeout,
             _price,
             _managementFee,
             _manager
