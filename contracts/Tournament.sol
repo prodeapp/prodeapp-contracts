@@ -57,17 +57,6 @@ contract Tournament is ERC721, IERC2981 {
     mapping(uint256 => Result) public ranking; // ranking[index]
     mapping(uint256 => bytes32) public tokenIDtoTokenHash;
 
-    event Initialize(
-        string _name,
-        string _symbol,
-        string _uri,
-        address _ownwer,
-        uint256 _closingTime,
-        uint256 _price,
-        uint256 _managementFee,
-        address _manager
-    );
-
     event FundingReceived(
         address indexed _funder,
         uint256 _amount,
@@ -77,6 +66,7 @@ contract Tournament is ERC721, IERC2981 {
     event PlaceBet(
         address indexed _player,
         uint256 indexed tokenID,
+        bytes32 indexed _tokenHash,
         bytes32[] _predictions
     );
 
@@ -91,8 +81,8 @@ contract Tournament is ERC721, IERC2981 {
     function initialize(
         TournamentInfo memory _tournamentInfo,
         address _realityETH,
-        uint256 _price,
         uint256 _closingTime,
+        uint256 _price,
         uint256 _submissionTimeout,
         uint256 _managementFee,
         address _manager,
@@ -131,18 +121,7 @@ contract Tournament is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         initialized = true;
-        emit Initialize(
-            tournamentInfo.tournamentName,
-            tournamentInfo.tournamentSymbol,
-            tournamentInfo.tournamentUri,
-            msg.sender,
-            _closingTime,
-            _price,
-            _managementFee,
-            _manager
-        );
-        emit QuestionsRegistered(questionIDs);
-        
+        emit QuestionsRegistered(questionIDs); 
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
@@ -159,14 +138,14 @@ contract Tournament is ERC721, IERC2981 {
         require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
 
-        bytes32 tokenHash = keccak256(abi.encode(_results));
+        bytes32 tokenHash = keccak256(abi.encodePacked(_results));
         tokenIDtoTokenHash[nextTokenID] = tokenHash;
         BetData storage bet = bets[tokenHash];
         if (bet.count == 0) bet.predictions = _results;
         bet.count += 1;
 
         _mint(msg.sender, nextTokenID);
-        emit PlaceBet(msg.sender, nextTokenID, _results);
+        emit PlaceBet(msg.sender, nextTokenID, tokenHash, _results);
 
         return nextTokenID++;
     }
@@ -354,6 +333,10 @@ contract Tournament is ERC721, IERC2981 {
      */
     function _baseURI() internal view override returns (string memory) {
         return tournamentInfo.tournamentUri;
+    }
+
+    function baseURI() external view returns (string memory) {
+        return _baseURI();
     }
 
     /**

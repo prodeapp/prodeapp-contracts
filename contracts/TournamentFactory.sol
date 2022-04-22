@@ -7,7 +7,7 @@ import "./Tournament.sol";
 contract TournamentFactory {
     using Clones for address;
 
-    Tournament[] private _tournaments;
+    Tournament[] public tournaments;
     address public immutable tournament;
     address public immutable arbitrator;
     address public immutable realitio;
@@ -38,7 +38,7 @@ contract TournamentFactory {
         uint256 minBond,
         Tournament.RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
-    ) public {
+    ) external {
         Tournament instance = Tournament(payable(tournament.clone()));
         emit NewTournament(address(instance));
 
@@ -50,8 +50,8 @@ contract TournamentFactory {
         instance.initialize(
             tournamentInfo, 
             realitio,
-            price,
             closingTime,
+            price,
             submissionTimeout,
             managementFee,
             manager,
@@ -59,13 +59,17 @@ contract TournamentFactory {
             questionsData, 
             prizeWeights
         );
-        _tournaments.push(instance);
+        tournaments.push(instance);
     }
 
     function allTournaments()
         external view
         returns (Tournament[] memory)
     {
-        return _tournaments;
+        return tournaments;
+    }
+
+    function tournamentCount() external view returns(uint256) {
+        return tournaments.length;
     }
 }
