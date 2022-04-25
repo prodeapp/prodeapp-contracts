@@ -72,9 +72,13 @@ contract Tournament is ERC721, IERC2981 {
 
     event BetReward(uint256 indexed _tokenID, uint256 _reward);
 
+    event RankingUpdated(uint256 indexed _tokenID, uint256 _points, uint256 _index);
+
     event ManagementReward(address indexed _manager, uint256 _managementReward);
 
     event QuestionsRegistered(bytes32[] _questionIDs);
+
+    event Prizes(uint16[] _prizes);
 
     constructor() ERC721("", "") {}
 
@@ -122,6 +126,7 @@ contract Tournament is ERC721, IERC2981 {
 
         initialized = true;
         emit QuestionsRegistered(questionIDs); 
+        emit Prizes(_prizeWeights);
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
@@ -154,7 +159,7 @@ contract Tournament is ERC721, IERC2981 {
      *  The management fee is paid to the manager address.
      */
     function registerAvailabilityOfResults() external {
-        require(block.timestamp > closingTime, "Bets not allowed");
+        require(block.timestamp > closingTime, "Bets ongoing");
         require(resultSubmissionPeriodStart == 0, "Results already available");
 
         for (uint256 i = 0; i < questionIDs.length; i++) {
@@ -184,6 +189,10 @@ contract Tournament is ERC721, IERC2981 {
             "Submission period over"
         );
         require(_exists(_tokenID), "Token does not exist");
+        require(
+            ranking[_rankIndex].points == 0 || ranking[_rankIndex].tokenID != _tokenID, 
+            "Token already registered"
+        );
 
         bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
             .predictions;
@@ -196,13 +205,15 @@ contract Tournament is ERC721, IERC2981 {
             }
         }
 
-        // Cannot registered a bet which got 0 points.
-        if (
-            totalPoints > ranking[_rankIndex].points &&
-            (totalPoints < ranking[_rankIndex - 1].points || _rankIndex == 0)
-        ) {
+        require(totalPoints > 0, "You are a loser");
+        require(
+            _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points, 
+            "Invalid ranking index"
+        );
+        if (totalPoints > ranking[_rankIndex].points) {
             ranking[_rankIndex].tokenID = _tokenID;
             ranking[_rankIndex].points = totalPoints;
+            emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 i = 1;
             while (ranking[_rankIndex + i].points == totalPoints) {
@@ -214,6 +225,7 @@ contract Tournament is ERC721, IERC2981 {
             }
             ranking[_rankIndex + i].tokenID = _tokenID;
             ranking[_rankIndex + i].points = totalPoints;
+            emit RankingUpdated(_tokenID, totalPoints, _rankIndex + i);
         }
     }
 
@@ -265,8 +277,9 @@ contract Tournament is ERC721, IERC2981 {
         require(ranking[0].points == 0, "Can't reimburse if there are winners");
 
         uint256 reimbursement = totalPrize / nextTokenID;
+        address player = ownerOf(_tokenID);
         _burn(_tokenID); // Can only be reimbursed once.
-        payable(ownerOf(_tokenID)).transfer(reimbursement);
+        payable(player).transfer(reimbursement);
     }
 
     /** @dev Edge case in which there is a winner but one or more prizes are vacant.
@@ -280,26 +293,22 @@ contract Tournament is ERC721, IERC2981 {
         );
         require(ranking[0].points > 0, "No winners");
 
-        uint256 numberOfPrizes = prizeWeights.length;
-        uint256 rankingPosition = 0;
         uint256 cumWeigths = 0;
         uint256 nWinners = 0;
-        while (true) {
-            if (rankingPosition >= numberOfPrizes) break;
-            if (ranking[rankingPosition].points == 0) {
-                if (nWinners == 0) nWinners = rankingPosition;
-                require(!ranking[rankingPosition].claimed, "Already claimed");
-                ranking[rankingPosition].claimed = true;
-                cumWeigths += prizeWeights[rankingPosition];
+        for (uint256 i = 0; i < prizeWeights.length; i++) {
+            if (ranking[i].points == 0) {
+                if (nWinners == 0) nWinners = i;
+                require(!ranking[i].claimed, "Already claimed");
+                ranking[i].claimed = true;
+                cumWeigths += prizeWeights[i];
             }
-            rankingPosition += 1;
         }
 
         require(cumWeigths > 0, "No vacant prizes");
-        uint256 vacantPrize = (totalPrize * cumWeigths) /
-            (DIVISOR * rankingPosition);
-        for (uint256 rank = 0; rank < rankingPosition; rank++) {
+        uint256 vacantPrize = (totalPrize * cumWeigths) / (DIVISOR * nWinners);
+        for (uint256 rank = 0; rank < nWinners; rank++) {
             payable(ownerOf(ranking[rank].tokenID)).send(vacantPrize);
+            emit BetReward(ranking[rank].tokenID, vacantPrize);
         }
     }
 
