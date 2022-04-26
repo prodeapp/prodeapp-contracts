@@ -60,6 +60,8 @@ describe("Tournament", () => {
     prizeWeights: [6000, 3000, 1000]
   };
 
+  const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
   before("Get accounts", async () => {
     const accounts = await ethers.getSigners();
     governor = accounts[0];
@@ -112,20 +114,20 @@ describe("Tournament", () => {
       let predictions;
 
       predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await tournament.placeBet(predictions, { value: 100 });
-      await tournament.placeBet(predictions, { value: 200 });
+      await tournament.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await tournament.placeBet(ZERO_ADDRESS, predictions, { value: 200 });
       await expect(
-        tournament.placeBet(predictions, { value: 99 })
+        tournament.placeBet(ZERO_ADDRESS, predictions, { value: 99 })
       ).to.be.revertedWith("Not enough funds");
 
       predictions = [numberToBytes32(1), numberToBytes32(40), numberToBytes32(50)];
       await expect(
-        tournament.placeBet(predictions, { value: 100 })
+        tournament.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
       ).to.be.revertedWith("Results mismatch");
 
       predictions = [numberToBytes32(1)];
       await expect(
-        tournament.placeBet(predictions, { value: 100 })
+        tournament.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
       ).to.be.revertedWith("Results mismatch");
     });
 
@@ -148,7 +150,7 @@ describe("Tournament", () => {
 
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
       await expect(
-        tournament.placeBet(predictions, { value: 100 })
+        tournament.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
       ).to.be.revertedWith("Bets not allowed");
     });
 
@@ -169,7 +171,7 @@ describe("Tournament", () => {
       tournament = await Tournament.attach(tournamentAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      const tx = await tournament.connect(other).placeBet(predictions, { value: 100 });
+      const tx = await tournament.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
       const receipt = await tx.wait();
       const [player, tokenID, tokenHash, _predictions] = getEmittedEvent('PlaceBet', receipt).args
       expect(player).to.eq(other.address);
@@ -195,7 +197,7 @@ describe("Tournament", () => {
       tournament = await Tournament.attach(tournamentAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await tournament.connect(other).placeBet(predictions, { value: 100 });
+      await tournament.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
 
       const tokenID = (await tournament.nextTokenID()).sub(BigNumber.from(1));
       expect(await tournament.ownerOf(tokenID)).to.eq(other.address);
@@ -203,6 +205,42 @@ describe("Tournament", () => {
       await tournament.connect(other).transferFrom(other.address, user1.address, tokenID);
       expect(await tournament.ownerOf(tokenID)).to.eq(user1.address);
       expect(await tournament.balanceOf(user1.address)).to.eq(BigNumber.from(1));
+    });
+
+    it("Should send fees to providers if specified in the call.", async () => {
+      await factory.createTournament(
+        tournamentData.info,
+        await getCurrentTimestamp() + 10000,
+        tournamentData.price,
+        tournamentData.managementFee,
+        creator.address,
+        tournamentData.timeout,
+        tournamentData.minBond,
+        tournamentData.questions,
+        tournamentData.prizeWeights
+      );
+      const totalTournaments = await factory.tournamentCount();
+      const tournamentAddress = await factory.tournaments(totalTournaments.sub(BigNumber.from(1)));
+      tournament = await Tournament.attach(tournamentAddress);
+      
+      const predictions = [numberToBytes32(1), numberToBytes32(40)];
+      tx = await tournament.placeBet(other.address, predictions, { value: 100 });
+      receipt = await tx.wait();
+      [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
+      expect(_provider).to.eq(other.address);
+      expectedReward = BigNumber.from(100).mul(tournamentData.managementFee).div(10000);
+      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      
+      tx = await tournament.placeBet(creator.address, predictions, { value: 200 });
+      receipt = await tx.wait();
+      [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
+      expect(_provider).to.eq(creator.address);
+      expectedReward = BigNumber.from(200).mul(tournamentData.managementFee).div(10000);
+      expect(_reward).to.eq(BigNumber.from(expectedReward));
+
+      tx = await tournament.placeBet(ZERO_ADDRESS, predictions, { value: 200 });
+      receipt = await tx.wait();
+      console.log(getEmittedEvent('ProviderReward', receipt));
     });
 
     it("Other functions should not be callable during the betting period, except for funding.", async () => {
@@ -362,7 +400,7 @@ describe("Tournament", () => {
       const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
   
       for (let i = 0; i < bets.length; i++) {
-        await tournament.connect(players[i]).placeBet(bets[i], { value: 100 });
+        await tournament.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
       }
       await ethers.provider.send('evm_increaseTime', [bettingTime]);
       await ethers.provider.send('evm_mine');
@@ -392,8 +430,8 @@ describe("Tournament", () => {
       await expect(tournament.registerPoints(100, 0)).to.be.revertedWith("Token does not exist");
   
       // Cannot register a token with 0 points
-      await expect(tournament.registerPoints(4, 0)).to.be.revertedWith("You are a loser");
-      await expect(tournament.registerPoints(4, 2)).to.be.revertedWith("You are a loser");
+      await expect(tournament.registerPoints(4, 0)).to.be.revertedWith("You are not a winner");
+      await expect(tournament.registerPoints(4, 2)).to.be.revertedWith("You are not a winner");
       await expect(tournament.registerPoints(2, 2)).to.be.revertedWith("Invalid ranking index");
   
       tx = await tournament.registerPoints(2, 0);
@@ -403,9 +441,9 @@ describe("Tournament", () => {
       expect(_totalPoints).to.eq(BigNumber.from(ranking[2]));
       expect(_index).to.eq(BigNumber.from(0));
   
-      await expect(tournament.registerPoints(4, 0)).to.be.revertedWith("You are a loser");
-      await expect(tournament.registerPoints(4, 1)).to.be.revertedWith("You are a loser");
-      await expect(tournament.registerPoints(4, 2)).to.be.revertedWith("You are a loser");
+      await expect(tournament.registerPoints(4, 0)).to.be.revertedWith("You are not a winner");
+      await expect(tournament.registerPoints(4, 1)).to.be.revertedWith("You are not a winner");
+      await expect(tournament.registerPoints(4, 2)).to.be.revertedWith("You are not a winner");
   
       // Cannot register a token at a position with fewer points than the current token
       tx = await tournament.registerPoints(3, 0);
@@ -502,7 +540,7 @@ describe("Tournament", () => {
       const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
 
       for (let i = 0; i < bets.length; i++) {
-        await tournament.connect(players[i]).placeBet(bets[i], { value: 100 });
+        await tournament.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
       }
       await ethers.provider.send('evm_increaseTime', [bettingTime]);
       await ethers.provider.send('evm_mine');
@@ -686,6 +724,52 @@ describe("Tournament", () => {
         expect(_tokenID).to.eq(BigNumber.from(i + 1));
         expect(_reward).to.eq(BigNumber.from(expectedReward));
       }
+    });
+  });
+
+  describe("Royalties - ERC2981 & IERC165", () => {
+    it("Should return the correct royalty info.", async () => {
+      await factory.createTournament(
+        tournamentData.info,
+        await getCurrentTimestamp() + 1000,
+        tournamentData.price,
+        tournamentData.managementFee,
+        creator.address,
+        tournamentData.timeout,
+        tournamentData.minBond,
+        tournamentData.questions,
+        tournamentData.prizeWeights
+      );
+      const totalTournaments = await factory.tournamentCount();
+      const tournamentAddress = await factory.tournaments(totalTournaments.sub(BigNumber.from(1)));
+      tournament = await Tournament.attach(tournamentAddress);
+      
+      const predictions = [numberToBytes32(1), numberToBytes32(40)];
+      await tournament.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+
+      const salePrices = [
+        ethers.utils.parseUnits("1.0", "wei"),
+        ethers.utils.parseUnits("100.0", "gwei"),
+        ethers.utils.parseEther("1.0"),
+        ethers.utils.parseEther("1000.0"),
+        ethers.utils.parseEther("100000000.0")
+      ];
+      for (let i = 0; i < salePrices.length; i++) {
+        const [receiver, amount] = await tournament.royaltyInfo(i, salePrices[i]);
+        const expectedRoyalty = salePrices[i].mul(tournamentData.managementFee).div(10000);
+        expect(receiver).to.eq(creator.address);
+        expect(amount).to.eq(expectedRoyalty);
+      }
+    });
+
+    it("Should support interfaces ERC165, ERC721, ERC721Metadata and ERC2981.", async () => {
+      expect(await tournament.supportsInterface("0x01ffc9a7")).to.be.true; // IERC165
+      expect(await tournament.supportsInterface("0x80ac58cd")).to.be.true; // IERC721
+      expect(await tournament.supportsInterface("0x5b5e139f")).to.be.true; // IERC721Metadata
+      expect(await tournament.supportsInterface("0x2a55205a")).to.be.true; // IERC2981
+      expect(await tournament.supportsInterface("0xffffffff")).to.be.false;
+      expect(await tournament.supportsInterface("0x00000000")).to.be.false;
+      expect(await tournament.supportsInterface("0x12345678")).to.be.false;
     });
   });
 });
