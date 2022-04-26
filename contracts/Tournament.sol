@@ -74,6 +74,8 @@ contract Tournament is ERC721, IERC2981 {
 
     event RankingUpdated(uint256 indexed _tokenID, uint256 _points, uint256 _index);
 
+    event ProviderReward(address indexed _provider, uint256 _providerReward);
+
     event ManagementReward(address indexed _manager, uint256 _managementReward);
 
     event QuestionsRegistered(bytes32[] _questionIDs);
@@ -130,10 +132,11 @@ contract Tournament is ERC721, IERC2981 {
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
-     *  @param _results The address of the submission which request to fund.
+     *  @param _provider Address to which to send a fee. If 0x0, it's ignored. Meant to be used by front-end providers.
+     *  @param _results Answer predictions to the questions asked in Realitio.
      *  @return the minted token id.
      */
-    function placeBet(bytes32[] calldata _results)
+    function placeBet(address payable _provider, bytes32[] calldata _results)
         external
         payable
         returns (uint256)
@@ -142,6 +145,12 @@ contract Tournament is ERC721, IERC2981 {
         require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
+
+        if (_provider != payable(0x0)) {
+            uint256 providerReward = (msg.value * managementFee) / DIVISOR;
+            _provider.send(providerReward);
+            emit ProviderReward(_provider, providerReward);
+        }
 
         bytes32 tokenHash = keccak256(abi.encodePacked(_results));
         tokenIDtoTokenHash[nextTokenID] = tokenHash;
@@ -205,7 +214,7 @@ contract Tournament is ERC721, IERC2981 {
             }
         }
 
-        require(totalPoints > 0, "You are a loser");
+        require(totalPoints > 0, "You are not a winner");
         require(
             _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points, 
             "Invalid ranking index"
