@@ -97,6 +97,8 @@ contract Tournament is ERC721, IERC2981 {
         uint16[] memory _prizeWeights
     ) external {
         require(!initialized, "Already initialized.");
+        require(_managementFee < DIVISOR, "Management fee too big");
+        require(_submissionTimeout > 0, "Submission timeout can't be 0");
 
         tournamentInfo = _tournamentInfo;
         realitio = RealityETH_v3_0(_realityETH);
@@ -107,6 +109,7 @@ contract Tournament is ERC721, IERC2981 {
         manager = _manager;
 
         for (uint256 i = 0; i < _questionsData.length; i++) {
+            require(_questionsData[i].openingTS > _closingTime, "Cannot open question in the betting period");
             bytes32 questionID = realitio.askQuestionWithMinBond(
                 _questionsData[i].templateID,
                 _questionsData[i].question,

@@ -30,12 +30,12 @@ describe("TournamentFactory", () => {
       {
         templateID: 2, 
         question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
-        openingTS: 0
+        openingTS: 1
       },
       {
         templateID: 2, 
         question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
-        openingTS: 0
+        openingTS: 1
       }
     ],
     prizeWeights: [6000, 3000, 1000]

@@ -96,9 +96,13 @@ describe("Tournament", () => {
 
   describe("Betting Period", () => {
     it("Should only accept valid bets.", async () => {
+      const currentTS = await getCurrentTimestamp() + 10000;
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
-        await getCurrentTimestamp() + 10000,
+        currentTS,
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
@@ -133,6 +137,9 @@ describe("Tournament", () => {
 
     it("Should not accept bets after closingTime has passed.", async () => {
       const currentTS = await getCurrentTimestamp();
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -155,9 +162,13 @@ describe("Tournament", () => {
     });
 
     it("Should emit PlaceBet event.", async () => {
+      const currentTS = await getCurrentTimestamp() + 1000;
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
-        await getCurrentTimestamp() + 1000,
+        currentTS,
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
@@ -181,9 +192,13 @@ describe("Tournament", () => {
     });
 
     it("Should create and transfer ERC721 Bet item correctly.", async () => {
+      const currentTS = await getCurrentTimestamp() + 1000;
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
-        await getCurrentTimestamp() + 1000,
+        currentTS,
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
@@ -208,9 +223,13 @@ describe("Tournament", () => {
     });
 
     it("Should send fees to providers if specified in the call.", async () => {
+      const currentTS = await getCurrentTimestamp() + 10000;
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
-        await getCurrentTimestamp() + 10000,
+        currentTS,
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
@@ -244,9 +263,13 @@ describe("Tournament", () => {
     });
 
     it("Other functions should not be callable during the betting period, except for funding.", async () => {
+      const currentTS = await getCurrentTimestamp() + 1000;
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
-        await getCurrentTimestamp() + 1000,
+        currentTS,
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
@@ -288,6 +311,9 @@ describe("Tournament", () => {
   describe("Register Points Period", () => {
     it("Should not register points if questions were not settled.", async () => {
       const currentTS = await getCurrentTimestamp();
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -313,6 +339,9 @@ describe("Tournament", () => {
 
     it("Should enter the submission period once questions are settled.", async () => {
       const currentTS = await getCurrentTimestamp();
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -351,17 +380,17 @@ describe("Tournament", () => {
         {
           templateID: 2, 
           question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
-          openingTS: 0
+          openingTS: closingTime + 1
         },
         {
           templateID: 2, 
           question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
-          openingTS: 0
+          openingTS: closingTime + 1
         },
         {
           templateID: 2, 
           question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
-          openingTS: 0
+          openingTS: closingTime + 1
         }
       ]
       await factory.createTournament(
@@ -491,17 +520,17 @@ describe("Tournament", () => {
         {
           templateID: 2, 
           question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
-          openingTS: 0
+          openingTS: closingTime + 1
         },
         {
           templateID: 2, 
           question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
-          openingTS: 0
+          openingTS: closingTime + 1
         },
         {
           templateID: 2, 
           question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
-          openingTS: 0
+          openingTS: closingTime + 1
         }
       ]
       await factory.createTournament(
@@ -729,9 +758,13 @@ describe("Tournament", () => {
 
   describe("Royalties - ERC2981 & IERC165", () => {
     it("Should return the correct royalty info.", async () => {
+      const currentTS = await getCurrentTimestamp() + 1000;
+      for (let i = 0; i < tournamentData.questions.length; i++) {
+        tournamentData.questions[i].openingTS = currentTS + 1;
+      }
       await factory.createTournament(
         tournamentData.info,
-        await getCurrentTimestamp() + 1000,
+        currentTS,
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
