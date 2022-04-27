@@ -11,21 +11,26 @@ contract TournamentFactory {
     address public immutable tournament;
     address public immutable arbitrator;
     address public immutable realitio;
-    uint256 public immutable submissionTimeout = 7 days;
+    uint256 public immutable submissionTimeout;
 
     event NewTournament(address indexed tournament);
     /**
      *  @dev Constructor.
      *  @param _tournament Address of the tournament contract that is going to be used for each new deployment.
+     *  @param _arbitrator Address of the arbitrator that is going to resolve Realitio disputes.
+     *  @param _realitio Address of the Realitio implementation.
+     *  @param _submissionTimeout Time players have to submit their rankings after the questions were answer in Realitio.
      */
     constructor(
         address _tournament,
         address _arbitrator,
-        address _realitio
+        address _realitio,
+        uint256 _submissionTimeout
     ) {
         tournament = _tournament;
         arbitrator = _arbitrator;
         realitio = _realitio;
+        submissionTimeout = _submissionTimeout;
     }
 
     function createTournament(

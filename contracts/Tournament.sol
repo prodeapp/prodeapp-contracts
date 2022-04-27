@@ -98,7 +98,6 @@ contract Tournament is ERC721, IERC2981 {
     ) external {
         require(!initialized, "Already initialized.");
         require(_managementFee < DIVISOR, "Management fee too big");
-        require(_submissionTimeout > 0, "Submission timeout can't be 0");
 
         tournamentInfo = _tournamentInfo;
         realitio = RealityETH_v3_0(_realityETH);

@@ -66,7 +66,8 @@ describe("TournamentFactory", () => {
     factory = await Factory.deploy(
       implementation.address,
       arbitrator.address,
-      realitio.address
+      realitio.address,
+      7*24*60*60
     );
   });
 
