@@ -44,7 +44,7 @@ contract TournamentFactory {
         Tournament.RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
     ) external {
-        Tournament instance = Tournament(payable(tournament.clone()));
+        Tournament instance = Tournament(tournament.clone());
         emit NewTournament(address(instance));
 
         Tournament.RealitioSetup memory realitioSetup;
