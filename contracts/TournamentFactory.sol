@@ -43,7 +43,7 @@ contract TournamentFactory {
         uint256 minBond,
         Tournament.RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
-    ) external {
+    ) external returns(address) {
         Tournament instance = Tournament(tournament.clone());
         emit NewTournament(address(instance));
 
@@ -65,6 +65,7 @@ contract TournamentFactory {
             prizeWeights
         );
         tournaments.push(instance);
+        return address(instance);
     }
 
     function allTournaments()
