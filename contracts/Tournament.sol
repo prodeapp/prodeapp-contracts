@@ -41,7 +41,7 @@ contract Tournament is ERC721, IERC2981 {
 
     TournamentInfo private tournamentInfo;
     address public manager;
-    RealityETH_v3_0 public realitio; // Realitio v3
+    RealityETH_v3_0 public realitio;
     uint256 public nextTokenID;
     bool public initialized;
     uint256 public resultSubmissionPeriodStart;
@@ -101,8 +101,8 @@ contract Tournament is ERC721, IERC2981 {
 
         tournamentInfo = _tournamentInfo;
         realitio = RealityETH_v3_0(_realityETH);
-        price = _price;
         closingTime = _closingTime;
+        price = _price;
         submissionTimeout = _submissionTimeout;
         managementFee = _managementFee;
         manager = _manager;
@@ -174,8 +174,7 @@ contract Tournament is ERC721, IERC2981 {
         require(resultSubmissionPeriodStart == 0, "Results already available");
 
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            bytes32 questionId = questionIDs[i];
-            realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
+            realitio.resultForOnceSettled(questionIDs[i]); // Reverts if not finalized.
         }
 
         resultSubmissionPeriodStart = block.timestamp;
@@ -200,23 +199,17 @@ contract Tournament is ERC721, IERC2981 {
             "Submission period over"
         );
         require(_exists(_tokenID), "Token does not exist");
-        require(
-            ranking[_rankIndex].points == 0 || ranking[_rankIndex].tokenID != _tokenID, 
-            "Token already registered"
-        );
 
-        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
-            .predictions;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         uint248 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            bytes32 questionId = questionIDs[i];
-            bytes32 result = realitio.resultForOnceSettled(questionId); // Reverts if not finalized.
-            if (result == predictions[i]) {
+            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
                 totalPoints += 1;
             }
         }
 
         require(totalPoints > 0, "You are not a winner");
+        // This ensures that ranking[N].points >= ranking[N+1].points always
         require(
             _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points, 
             "Invalid ranking index"
@@ -226,6 +219,7 @@ contract Tournament is ERC721, IERC2981 {
             ranking[_rankIndex].points = totalPoints;
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
+            require(ranking[_rankIndex].tokenID != _tokenID, "Token already registered");
             uint256 i = 1;
             while (ranking[_rankIndex + i].points == totalPoints) {
                 require(

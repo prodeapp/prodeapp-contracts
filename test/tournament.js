@@ -498,7 +498,7 @@ describe("Tournament", () => {
   
       await expect(tournament.registerPoints(2, 1)).to.be.revertedWith("Invalid ranking index");
       await expect(tournament.registerPoints(2, 0)).to.be.revertedWith("Token already registered");
-      await expect(tournament.registerPoints(0, 1)).to.be.revertedWith("Token already registered");
+      await expect(tournament.registerPoints(0, 1)).to.be.revertedWith("Invalid ranking index");
       await expect(tournament.registerPoints(0, 0)).to.be.revertedWith("Token already registered");
   
       // If overwritten, a token can get registered again
