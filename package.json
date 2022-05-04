@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "deploy:kovan": "npx hardhat run --network kovan scripts/deploy.js",
-    "deploy:gnosis": "npx hardhat run --network gnosis scripts/deploy.js"
+    "deploy:gnosis": "npx hardhat run --network gnosis scripts/deploy.js",
+    "ranking:gnosis": "npx hardhat run --network gnosis scripts/register-ranking.js"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
@@ -19,6 +20,8 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",
     "@reality.eth/contracts": "^3.0.2",
+    "graphql": "^16.4.0",
+    "graphql-request": "^4.2.0",
     "hardhat": "^2.9.2"
   }
 }
