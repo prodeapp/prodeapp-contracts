@@ -33,7 +33,7 @@ async function main() {
   const { bets, tournament: tournamentData } = await graph.request(
     gql`
       query rankingQuery($tournamentAddressStart: String, $tournamentAddressEnd: String) {
-        bets(where: {id_gt: $tournamentAddressStart, id_lt: $tournamentAddressEnd}, orderBy: points, orderDirection: desc) {
+        bets(where: {id_gt: $tournamentAddressStart, id_lt: $tournamentAddressEnd, points_not: 0}, orderBy: points, orderDirection: desc) {
           tokenID
           points
         }

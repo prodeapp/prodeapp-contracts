@@ -18,6 +18,7 @@ async function main() {
   // Deploy Tournament contract implementation
   const Distributor = await ethers.getContractFactory("Distributor");
   const distributor = await Distributor.deploy(recipients[chainId]);
+  await distributor.deployed();
 
   console.log("Distributor address:", distributor.address);
 

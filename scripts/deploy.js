@@ -38,6 +38,8 @@ async function main() {
     );
 
   console.log("Tournament factory address:", tournamentFactory.address);
+  await tournament.deployed();
+  await tournamentFactory.deployed();
 
   // Verify contracts
   await hre.run("verify:verify", {
