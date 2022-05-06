@@ -6,7 +6,10 @@
   "scripts": {
     "deploy:kovan": "npx hardhat run --network kovan scripts/deploy.js",
     "deploy:gnosis": "npx hardhat run --network gnosis scripts/deploy.js",
-    "ranking:gnosis": "npx hardhat run --network gnosis scripts/register-ranking.js"
+    "deploy:burner:gnosis": "npx hardhat run --network gnosis scripts/deploy-burner.js",
+    "deploy:distributor:gnosis": "npx hardhat run --network gnosis scripts/deploy-distributor.js",
+    "ranking:gnosis": "npx hardhat run --network gnosis scripts/register-ranking.js",
+    "rewards:gnosis": "npx hardhat run --network gnosis scripts/distribute-rewards.js"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",

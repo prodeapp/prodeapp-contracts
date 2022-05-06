@@ -1,9 +1,5 @@
-/**
- *Submitted for verification at Etherscan.io on 2021-09-25
-*/
-
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8;
+pragma solidity 0.8.9;
 
 /* Interfaces */
 
@@ -50,7 +46,7 @@ interface IERC677 {
     function transferAndCall(address receiver, uint amount, bytes memory data) external returns(bool success);
 }
 
-contract UBIburner {
+contract GnosisUBIBurner {
 
     /* Events */
 
@@ -63,8 +59,7 @@ contract UBIburner {
     /* Constants */
 
     /// @dev address of the uniswap v2 router (honeyswap)
-    address private constant UNISWAP_V2_ROUTER =
-        0x1C232F01118CB8B424793ae03F870aa7D0ac7f77;
+    address private constant UNISWAP_V2_ROUTER = 0x1C232F01118CB8B424793ae03F870aa7D0ac7f77;
 
     /// @dev address of WXDAI token. In Uniswap v2 there are no more direct ETH pairs, all ETH must be converted to WETH first.
     address private constant WXDAI = 0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d;
@@ -76,7 +71,7 @@ contract UBIburner {
     address private constant ForeignUBIBurner = 0x481B24Ed5feAcB37e282729b9815e27529Cf9ae2;
 
     /// @dev address of the omnibridge contract on the Gnosis chain.
-    address private constant omnibridge = 0xf6A78083ca3e2a662D6dd1703c939c8aCE2e268d;
+    address private constant Omnibridge = 0xf6A78083ca3e2a662D6dd1703c939c8aCE2e268d;
 
     /* Storage */
 
@@ -113,7 +108,7 @@ contract UBIburner {
 
     /* Constructor */
 
-    /// @dev 3 burners will be created by the constructor
+    /// @dev Burners will be created in the constructor
     constructor(address[] memory _burners) {
         addBurner(msg.sender); //_burner1
         for (uint256 i = 0; i < _burners.length; i++) {
@@ -173,7 +168,7 @@ contract UBIburner {
         isBurner[_burnerToRemove] = false;
     }
 
-    /// @dev UBI burn request. This stores the parameters to be used when another burner accepts. It can be called again to update the values.
+    /// @dev xDAI-WETH swap request. This stores the parameters to be used when another burner accepts. It can be called again to update the values.
     function requestSwap() external onlyBurner {
         currentAmountOutMin = getAmountOutMin();
         currentBurnRequester = msg.sender;
@@ -181,10 +176,10 @@ contract UBIburner {
     }
 
     // ************************ //
-    // *      Burn            * //
+    // *    Swap and Bridge   * //
     // ************************ //
 
-    /** @dev Using the parameters stored by the requester, this function buys UBI with the ETH contract balance and freezes on this contract.
+    /** @dev Using the parameters stored by the requester, this function buys WETH with the xDAI contract balance and freezes on this contract.
      *  @param _deadline Unix timestamp after which the transaction will revert.
      */
     function getWETH(uint256 _deadline) external onlyBurner {
@@ -202,7 +197,7 @@ contract UBIburner {
         emit Burned(_burnRequester, msg.sender, _balanceToBurn, amounts[1]);
     }
 
-    /** @dev Using the parameters stored by the requester, this function buys UBI with the ETH contract balance and freezes on this contract.
+    /** @dev Sends the WETH balance of this contract to the UBI burner on mainnet. WETH is converted to ETH in the process.
      *  @param _minAmount Unix timestamp after which the transaction will revert.
      */
     function bridgeToMainnet(uint256 _minAmount) external onlyBurner {
@@ -212,7 +207,7 @@ contract UBIburner {
             0xa6439Ca0FCbA1d0F80df0bE6A17220feD9c9038a, // WETH OmniBridge helper contract on mainnet
             ForeignUBIBurner // UBIBurner address on mainnet
         );
-        bool success = IERC677(WETH).transferAndCall(omnibridge, balanceToBridge, recipientData);
+        bool success = IERC677(WETH).transferAndCall(Omnibridge, balanceToBridge, recipientData);
         require(success, "Token bridging failed");
     }
 
