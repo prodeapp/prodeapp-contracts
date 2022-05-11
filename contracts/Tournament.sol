@@ -7,6 +7,13 @@ import "./IERC2981.sol";
 
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
 
+interface ITournamentFactory {
+    function askRealitio(
+        Tournament.RealitioQuestion memory questionsData,
+        Tournament.RealitioSetup memory realitioSetup
+    ) external returns(bytes32 questionID);
+}
+
 contract Tournament is ERC721, IERC2981 {
     struct RealitioQuestion {
         uint256 templateID;
@@ -107,17 +114,16 @@ contract Tournament is ERC721, IERC2981 {
         managementFee = _managementFee;
         manager = _manager;
 
+        bytes32 previousQuestionID = bytes32(0);
         for (uint256 i = 0; i < _questionsData.length; i++) {
             require(_questionsData[i].openingTS > _closingTime, "Cannot open question in the betting period");
-            bytes32 questionID = realitio.askQuestionWithMinBond(
-                _questionsData[i].templateID,
-                _questionsData[i].question,
-                _realitioSetup.arbitrator,
-                _realitioSetup.timeout,
-                _questionsData[i].openingTS,
-                0,
-                _realitioSetup.minBond
+            // Chequear que vaya en orden alfabetico como en el governor.
+            bytes32 questionID = ITournamentFactory(msg.sender).askRealitio(
+                _questionsData[i],
+                _realitioSetup
             );
+            require(questionID >= previousQuestionID, "Questions are in incorrect order");
+            previousQuestionID = questionID;
             questionIDs.push(questionID);
         }
 

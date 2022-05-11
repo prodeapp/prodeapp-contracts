@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./Tournament.sol";
 
 contract TournamentFactory {
@@ -46,6 +47,7 @@ contract TournamentFactory {
     ) external returns(address) {
         Tournament instance = Tournament(tournament.clone());
         emit NewTournament(address(instance));
+        tournaments.push(instance);
 
         Tournament.RealitioSetup memory realitioSetup;
         realitioSetup.arbitrator = arbitrator;
@@ -64,8 +66,45 @@ contract TournamentFactory {
             questionsData, 
             prizeWeights
         );
-        tournaments.push(instance);
         return address(instance);
+    }
+
+    function askRealitio(
+        Tournament.RealitioQuestion memory questionData,
+        Tournament.RealitioSetup memory realitioSetup
+    ) external returns(bytes32 questionID) {
+        require(
+            tournaments[tournaments.length - 1] == Tournament(msg.sender),
+            "Not the Tournament contract"
+        );
+        bytes32 content_hash = keccak256(abi.encodePacked(
+                questionData.templateID, 
+                questionData.openingTS, 
+                questionData.question
+        ));
+        bytes32 question_id = keccak256(abi.encodePacked(
+            content_hash,
+            arbitrator,
+            realitioSetup.timeout,
+            realitioSetup.minBond,
+            address(realitio),
+            address(this),
+            uint256(0)
+        ));
+        if (RealityETH_v3_0(realitio).getTimeout(question_id) != 0) {
+            // Question already exists.
+            questionID = question_id;
+        } else {
+            questionID = RealityETH_v3_0(realitio).askQuestionWithMinBond(
+                questionData.templateID,
+                questionData.question,
+                realitioSetup.arbitrator,
+                realitioSetup.timeout,
+                questionData.openingTS,
+                0,
+                realitioSetup.minBond
+            );
+        }
     }
 
     function allTournaments()
