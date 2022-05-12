@@ -8,12 +8,6 @@ import "./Tournament.sol";
 contract TournamentFactory {
     using Clones for address;
 
-    struct RealitioSetup {
-        address arbitrator;
-        uint32 timeout;
-        uint256 minBond;
-    }
-
     struct RealitioQuestion {
         uint256 templateID;
         string question;
