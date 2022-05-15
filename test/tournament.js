@@ -15,7 +15,28 @@ async function getCurrentTimestamp(blockNum) {
 }
 
 function getEmittedEvent(eventName, receipt) {
-  return receipt.events.find(({ event }) => event === eventName)
+  return receipt.events.find(({ event }) => event === eventName);
+}
+
+function getQuestionID(
+  _templateID,
+  _openingTS,
+  _question,
+  _arbitrator,
+  _timeout,
+  _minBond,
+  _realitio,
+  _factory
+) {
+  const contentHash = ethers.utils.solidityKeccak256(
+    [ "uint256", "uint32", "string" ],
+    [ _templateID, _openingTS, _question ]
+  );
+  const questionID = ethers.utils.solidityKeccak256(
+    [ "bytes32", "address", "uint32", "uint256", "address", "address", "uint256" ],
+    [ contentHash, _arbitrator, _timeout, _minBond, _realitio, _factory, 0 ]
+  );
+  return questionID;
 }
 
 describe("Tournament", () => {
@@ -101,6 +122,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -109,7 +151,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -141,6 +183,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -149,7 +212,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -167,6 +230,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -175,7 +259,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -197,6 +281,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -205,7 +310,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -228,6 +333,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -236,7 +362,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -268,6 +394,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -276,7 +423,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -315,6 +462,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -323,7 +491,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -343,6 +511,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            1,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            1,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -351,7 +540,7 @@ describe("Tournament", () => {
         creator.address,
         1,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -393,7 +582,29 @@ describe("Tournament", () => {
           question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
           openingTS: closingTime + 1
         }
-      ]
+      ];
+
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            1,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            1,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         closingTime,
@@ -402,7 +613,7 @@ describe("Tournament", () => {
         creator.address,
         1,
         tournamentData.minBond,
-        questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -533,7 +744,28 @@ describe("Tournament", () => {
           question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
           openingTS: closingTime + 1
         }
-      ]
+      ];
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            1,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            1,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         closingTime,
@@ -542,7 +774,7 @@ describe("Tournament", () => {
         creator.address,
         1,
         tournamentData.minBond,
-        questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
@@ -763,6 +995,27 @@ describe("Tournament", () => {
       for (let i = 0; i < tournamentData.questions.length; i++) {
         tournamentData.questions[i].openingTS = currentTS + 1;
       }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = tournamentData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            tournamentData.timeout,
+            tournamentData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
       await factory.createTournament(
         tournamentData.info,
         currentTS,
@@ -771,7 +1024,7 @@ describe("Tournament", () => {
         creator.address,
         tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const totalTournaments = await factory.tournamentCount();
