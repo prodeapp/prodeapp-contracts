@@ -20,7 +20,8 @@ contract TournamentFactory {
     address public immutable realitio;
     uint256 public immutable submissionTimeout;
 
-    event NewTournament(address indexed tournament);
+    event NewTournament(address indexed tournament, bytes32 indexed hash);
+
     /**
      *  @dev Constructor.
      *  @param _tournament Address of the tournament contract that is going to be used for each new deployment.
@@ -52,8 +53,6 @@ contract TournamentFactory {
         uint16[] memory prizeWeights
     ) external returns(address) {
         Tournament instance = Tournament(tournament.clone());
-        emit NewTournament(address(instance));
-        tournaments.push(instance);
 
         bytes32[] memory questionIDs = new bytes32[](questionsData.length);
         {
@@ -83,6 +82,10 @@ contract TournamentFactory {
             questionIDs, 
             prizeWeights
         );
+
+        emit NewTournament(address(instance), keccak256(abi.encodePacked(questionIDs)));
+        tournaments.push(instance);
+
         return address(instance);
     }
 
