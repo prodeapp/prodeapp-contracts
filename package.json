@@ -9,7 +9,8 @@
     "deploy:burner:gnosis": "npx hardhat run --network gnosis scripts/deploy-burner.js",
     "deploy:distributor:gnosis": "npx hardhat run --network gnosis scripts/deploy-distributor.js",
     "ranking:gnosis": "npx hardhat run --network gnosis scripts/register-ranking.js",
-    "rewards:gnosis": "npx hardhat run --network gnosis scripts/distribute-rewards.js"
+    "rewards:gnosis": "npx hardhat run --network gnosis scripts/distribute-rewards.js",
+    "reimburse:gnosis": "npx hardhat run --network gnosis scripts/reimburse-players.js"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",

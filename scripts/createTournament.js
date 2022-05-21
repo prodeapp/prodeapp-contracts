@@ -20,7 +20,6 @@ const tournamentData = {
   price: 100,
   managementFee: 1000,
   manager: "0xc713E11091C74151020ee49e650C3847C7028e32",
-  timeout: 1800,
   minBond: 10,
   questions: [
     {
@@ -55,7 +54,6 @@ async function main() {
     tournamentData.price,
     tournamentData.managementFee,
     tournamentData.manager,
-    tournamentData.timeout,
     tournamentData.minBond,
     tournamentData.questions,
     tournamentData.prizeWeights

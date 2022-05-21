@@ -2,18 +2,28 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./Tournament.sol";
 
 contract TournamentFactory {
     using Clones for address;
 
+    struct RealitioQuestion {
+        uint256 templateID;
+        string question;
+        uint32 openingTS;
+    }
+
+    uint32 public constant QUESTION_TIMEOUT = 1.5 days;
+    
     Tournament[] public tournaments;
     address public immutable tournament;
     address public immutable arbitrator;
     address public immutable realitio;
     uint256 public immutable submissionTimeout;
 
-    event NewTournament(address indexed tournament);
+    event NewTournament(address indexed tournament, bytes32 indexed hash);
+
     /**
      *  @dev Constructor.
      *  @param _tournament Address of the tournament contract that is going to be used for each new deployment.
@@ -39,18 +49,27 @@ contract TournamentFactory {
         uint256 price,
         uint256 managementFee,
         address manager,
-        uint32 timeout,
         uint256 minBond,
-        Tournament.RealitioQuestion[] memory questionsData,
+        RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
     ) external returns(address) {
         Tournament instance = Tournament(tournament.clone());
-        emit NewTournament(address(instance));
 
-        Tournament.RealitioSetup memory realitioSetup;
-        realitioSetup.arbitrator = arbitrator;
-        realitioSetup.timeout = timeout;
-        realitioSetup.minBond = minBond;
+        bytes32[] memory questionIDs = new bytes32[](questionsData.length);
+        {
+            // Extra scope prevents Stack Too Deep error.
+            bytes32 previousQuestionID = bytes32(0);
+            for (uint256 i = 0; i < questionsData.length; i++) {
+                require(questionsData[i].openingTS > closingTime, "Cannot open question in the betting period");
+                bytes32 questionID = askRealitio(
+                    questionsData[i],
+                    minBond
+                );
+                require(questionID >= previousQuestionID, "Questions are in incorrect order");
+                previousQuestionID = questionID;
+                questionIDs[i] = questionID;
+            }
+        }
 
         instance.initialize(
             tournamentInfo, 
@@ -60,12 +79,48 @@ contract TournamentFactory {
             submissionTimeout,
             managementFee,
             manager,
-            realitioSetup,
-            questionsData, 
+            questionIDs, 
             prizeWeights
         );
+
+        emit NewTournament(address(instance), keccak256(abi.encodePacked(questionIDs)));
         tournaments.push(instance);
+
         return address(instance);
+    }
+
+    function askRealitio(
+        RealitioQuestion memory questionData,
+        uint256 minBond
+    ) internal returns(bytes32 questionID) {
+        bytes32 content_hash = keccak256(abi.encodePacked(
+                questionData.templateID, 
+                questionData.openingTS, 
+                questionData.question
+        ));
+        bytes32 question_id = keccak256(abi.encodePacked(
+            content_hash,
+            arbitrator,
+            QUESTION_TIMEOUT,
+            minBond,
+            address(realitio),
+            address(this),
+            uint256(0)
+        ));
+        if (RealityETH_v3_0(realitio).getTimeout(question_id) != 0) {
+            // Question already exists.
+            questionID = question_id;
+        } else {
+            questionID = RealityETH_v3_0(realitio).askQuestionWithMinBond(
+                questionData.templateID,
+                questionData.question,
+                arbitrator,
+                QUESTION_TIMEOUT,
+                questionData.openingTS,
+                0,
+                minBond
+            );
+        }
     }
 
     function allTournaments()

@@ -4,6 +4,27 @@ const { BigNumber } = ethers;
 const { solidity } = require('ethereum-waffle');
 use(solidity);
 
+function getQuestionID(
+  _templateID,
+  _openingTS,
+  _question,
+  _arbitrator,
+  _timeout,
+  _minBond,
+  _realitio,
+  _factory
+) {
+  const contentHash = ethers.utils.solidityKeccak256(
+    [ "uint256", "uint32", "string" ],
+    [ _templateID, _openingTS, _question ]
+  );
+  const questionID = ethers.utils.solidityKeccak256(
+    [ "bytes32", "address", "uint32", "uint256", "address", "address", "uint256" ],
+    [ contentHash, _arbitrator, _timeout, _minBond, _realitio, _factory, 0 ]
+  );
+  return questionID;
+}
+
 describe("TournamentFactory", () => {
   let governor;
   let creator;
@@ -24,7 +45,6 @@ describe("TournamentFactory", () => {
     price: 100,
     managementFee: 1000,
     manager: "",
-    timeout: 1800,
     minBond: 10,
     questions: [
       {
@@ -72,15 +92,49 @@ describe("TournamentFactory", () => {
   });
 
   it("Should not be possibe to initialize a Tournament instance twice.", async () => {
+    // Sort questions by Realitio's question ID.
+    const timeout = 129600; // 1.5 days
+    const questionsIDs = tournamentData.questions
+      .map((questionData) => getQuestionID(
+        questionData.templateID,
+        questionData.openingTS,
+        questionData.question,
+        arbitrator.address,
+        timeout,
+        tournamentData.minBond,
+        realitio.address,
+        factory.address,
+      )
+    ).sort();
+    const orderedQuestions = tournamentData.questions
+      .sort((a, b) => getQuestionID(
+          a.templateID,
+          a.openingTS,
+          a.question,
+          arbitrator.address,
+          timeout,
+          tournamentData.minBond,
+          realitio.address,
+          factory.address,
+        ) > getQuestionID(
+          b.templateID,
+          b.openingTS,
+          b.question,
+          arbitrator.address,
+          timeout,
+          tournamentData.minBond,
+          realitio.address,
+          factory.address,
+        ) ? 1 : -1);
+
     await factory.createTournament(
       tournamentData.info,
       tournamentData.closingTime,
       tournamentData.price,
       tournamentData.managementFee,
       creator.address,
-      tournamentData.timeout,
       tournamentData.minBond,
-      tournamentData.questions,
+      orderedQuestions,
       tournamentData.prizeWeights
     );
     const tournamentAddress = await factory.tournaments(0);
@@ -94,18 +148,35 @@ describe("TournamentFactory", () => {
         0,
         tournamentData.managementFee,
         creator.address,
-        {
-          arbitrator: arbitrator.address,
-          timeout: tournamentData.timeout,
-          minBond: tournamentData.minBond
-        },
-        tournamentData.questions,
+        questionsIDs,
         tournamentData.prizeWeights
       )
     ).to.be.revertedWith("Already initialized");
   });
 
   it("Should revert if tournament's prizes don't add up to 100% (10000 basis points).", async () => {
+    // Sort questions by Realitio's question ID.
+    const timeout = 129600; // 1.5 days
+    const orderedQuestions = tournamentData.questions
+      .sort((a, b) => getQuestionID(
+          a.templateID,
+          a.openingTS,
+          a.question,
+          arbitrator.address,
+          timeout,
+          tournamentData.minBond,
+          realitio.address,
+          factory.address,
+        ) > getQuestionID(
+          b.templateID,
+          b.openingTS,
+          b.question,
+          arbitrator.address,
+          timeout,
+          tournamentData.minBond,
+          realitio.address,
+          factory.address,
+        ) ? 1 : -1);
     await expect(
       factory.createTournament(
         tournamentData.info,
@@ -113,9 +184,8 @@ describe("TournamentFactory", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         [100, 200, 300]
       )
     ).to.be.revertedWith(
@@ -129,9 +199,8 @@ describe("TournamentFactory", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         [10000, 2000, 3000]
       )
     ).to.be.revertedWith(
@@ -140,6 +209,28 @@ describe("TournamentFactory", () => {
   });
 
   it("Should allow multiple deployments.", async () => {
+    // Sort questions by Realitio's question ID.
+    const timeout = 129600; // 1.5 days
+    const orderedQuestions = tournamentData.questions
+      .sort((a, b) => getQuestionID(
+          a.templateID,
+          a.openingTS,
+          a.question,
+          arbitrator.address,
+          timeout,
+          tournamentData.minBond,
+          realitio.address,
+          factory.address,
+        ) > getQuestionID(
+          b.templateID,
+          b.openingTS,
+          b.question,
+          arbitrator.address,
+          timeout,
+          tournamentData.minBond,
+          realitio.address,
+          factory.address,
+        ) ? 1 : -1);
     for (let i = 0; i <= 5; i++) {
       await factory.createTournament(
         tournamentData.info,
@@ -147,9 +238,8 @@ describe("TournamentFactory", () => {
         tournamentData.price + i,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
-        tournamentData.questions,
+        orderedQuestions,
         tournamentData.prizeWeights
       );
       const tournamentClone = await Tournament.attach(await factory.tournaments(i));
@@ -158,5 +248,19 @@ describe("TournamentFactory", () => {
         BigNumber.from(tournamentData.price + i)
       );
     }
+  });
+
+  it("Should revert questions are not ordered by question IDs.", async () => {
+    // Sort questions by Realitio's question ID.
+    await expect(factory.createTournament(
+      tournamentData.info,
+      tournamentData.closingTime,
+      tournamentData.price,
+      tournamentData.managementFee,
+      creator.address,
+      tournamentData.minBond,
+      tournamentData.questions,
+      tournamentData.prizeWeights
+    )).to.be.revertedWith("Questions are in incorrect order");
   });
 });

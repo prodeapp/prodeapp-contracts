@@ -8,18 +8,6 @@ import "./IERC2981.sol";
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
 
 contract Tournament is ERC721, IERC2981 {
-    struct RealitioQuestion {
-        uint256 templateID;
-        string question;
-        uint32 openingTS;
-    }
-
-    struct RealitioSetup {
-        address arbitrator;
-        uint32 timeout;
-        uint256 minBond;
-    }
-
     struct TournamentInfo {
         string tournamentName;
         string tournamentSymbol;
@@ -51,6 +39,7 @@ contract Tournament is ERC721, IERC2981 {
     uint256 public managementFee;
     uint256 public totalPrize;
 
+    bytes32 public questionsHash;
     bytes32[] public questionIDs;
     uint16[] public prizeWeights;
     mapping(bytes32 => BetData) public bets; // bets[tokenHash]
@@ -92,8 +81,7 @@ contract Tournament is ERC721, IERC2981 {
         uint256 _submissionTimeout,
         uint256 _managementFee,
         address _manager,
-        RealitioSetup memory _realitioSetup,
-        RealitioQuestion[] memory _questionsData,
+        bytes32[] memory _questionIDs,
         uint16[] memory _prizeWeights
     ) external {
         require(!initialized, "Already initialized.");
@@ -107,19 +95,8 @@ contract Tournament is ERC721, IERC2981 {
         managementFee = _managementFee;
         manager = _manager;
 
-        for (uint256 i = 0; i < _questionsData.length; i++) {
-            require(_questionsData[i].openingTS > _closingTime, "Cannot open question in the betting period");
-            bytes32 questionID = realitio.askQuestionWithMinBond(
-                _questionsData[i].templateID,
-                _questionsData[i].question,
-                _realitioSetup.arbitrator,
-                _realitioSetup.timeout,
-                _questionsData[i].openingTS,
-                0,
-                _realitioSetup.minBond
-            );
-            questionIDs.push(questionID);
-        }
+        questionsHash = keccak256(abi.encodePacked(_questionIDs));
+        questionIDs = _questionIDs;
 
         uint256 sumWeights;
         for (uint256 i = 0; i < _prizeWeights.length; i++) {
