@@ -14,6 +14,8 @@ contract TournamentFactory {
         uint32 openingTS;
     }
 
+    uint32 public constant QUESTION_TIMEOUT = 1.5 days;
+    
     Tournament[] public tournaments;
     address public immutable tournament;
     address public immutable arbitrator;
@@ -47,7 +49,6 @@ contract TournamentFactory {
         uint256 price,
         uint256 managementFee,
         address manager,
-        uint32 timeout,
         uint256 minBond,
         RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
@@ -62,7 +63,6 @@ contract TournamentFactory {
                 require(questionsData[i].openingTS > closingTime, "Cannot open question in the betting period");
                 bytes32 questionID = askRealitio(
                     questionsData[i],
-                    timeout,
                     minBond
                 );
                 require(questionID >= previousQuestionID, "Questions are in incorrect order");
@@ -91,7 +91,6 @@ contract TournamentFactory {
 
     function askRealitio(
         RealitioQuestion memory questionData,
-        uint32 timeout,
         uint256 minBond
     ) internal returns(bytes32 questionID) {
         bytes32 content_hash = keccak256(abi.encodePacked(
@@ -102,7 +101,7 @@ contract TournamentFactory {
         bytes32 question_id = keccak256(abi.encodePacked(
             content_hash,
             arbitrator,
-            timeout,
+            QUESTION_TIMEOUT,
             minBond,
             address(realitio),
             address(this),
@@ -116,7 +115,7 @@ contract TournamentFactory {
                 questionData.templateID,
                 questionData.question,
                 arbitrator,
-                timeout,
+                QUESTION_TIMEOUT,
                 questionData.openingTS,
                 0,
                 minBond

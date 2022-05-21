@@ -45,7 +45,6 @@ describe("TournamentFactory", () => {
     price: 100,
     managementFee: 1000,
     manager: "",
-    timeout: 1800,
     minBond: 10,
     questions: [
       {
@@ -94,13 +93,14 @@ describe("TournamentFactory", () => {
 
   it("Should not be possibe to initialize a Tournament instance twice.", async () => {
     // Sort questions by Realitio's question ID.
+    const timeout = 129600; // 1.5 days
     const questionsIDs = tournamentData.questions
       .map((questionData) => getQuestionID(
         questionData.templateID,
         questionData.openingTS,
         questionData.question,
         arbitrator.address,
-        tournamentData.timeout,
+        timeout,
         tournamentData.minBond,
         realitio.address,
         factory.address,
@@ -112,7 +112,7 @@ describe("TournamentFactory", () => {
           a.openingTS,
           a.question,
           arbitrator.address,
-          tournamentData.timeout,
+          timeout,
           tournamentData.minBond,
           realitio.address,
           factory.address,
@@ -121,7 +121,7 @@ describe("TournamentFactory", () => {
           b.openingTS,
           b.question,
           arbitrator.address,
-          tournamentData.timeout,
+          timeout,
           tournamentData.minBond,
           realitio.address,
           factory.address,
@@ -133,7 +133,6 @@ describe("TournamentFactory", () => {
       tournamentData.price,
       tournamentData.managementFee,
       creator.address,
-      tournamentData.timeout,
       tournamentData.minBond,
       orderedQuestions,
       tournamentData.prizeWeights
@@ -157,13 +156,14 @@ describe("TournamentFactory", () => {
 
   it("Should revert if tournament's prizes don't add up to 100% (10000 basis points).", async () => {
     // Sort questions by Realitio's question ID.
+    const timeout = 129600; // 1.5 days
     const orderedQuestions = tournamentData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
           a.openingTS,
           a.question,
           arbitrator.address,
-          tournamentData.timeout,
+          timeout,
           tournamentData.minBond,
           realitio.address,
           factory.address,
@@ -172,7 +172,7 @@ describe("TournamentFactory", () => {
           b.openingTS,
           b.question,
           arbitrator.address,
-          tournamentData.timeout,
+          timeout,
           tournamentData.minBond,
           realitio.address,
           factory.address,
@@ -184,7 +184,6 @@ describe("TournamentFactory", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         [100, 200, 300]
@@ -200,7 +199,6 @@ describe("TournamentFactory", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         [10000, 2000, 3000]
@@ -212,13 +210,14 @@ describe("TournamentFactory", () => {
 
   it("Should allow multiple deployments.", async () => {
     // Sort questions by Realitio's question ID.
+    const timeout = 129600; // 1.5 days
     const orderedQuestions = tournamentData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
           a.openingTS,
           a.question,
           arbitrator.address,
-          tournamentData.timeout,
+          timeout,
           tournamentData.minBond,
           realitio.address,
           factory.address,
@@ -227,7 +226,7 @@ describe("TournamentFactory", () => {
           b.openingTS,
           b.question,
           arbitrator.address,
-          tournamentData.timeout,
+          timeout,
           tournamentData.minBond,
           realitio.address,
           factory.address,
@@ -239,7 +238,6 @@ describe("TournamentFactory", () => {
         tournamentData.price + i,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -260,7 +258,6 @@ describe("TournamentFactory", () => {
       tournamentData.price,
       tournamentData.managementFee,
       creator.address,
-      tournamentData.timeout,
       tournamentData.minBond,
       tournamentData.questions,
       tournamentData.prizeWeights

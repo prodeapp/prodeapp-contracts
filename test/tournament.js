@@ -54,6 +54,7 @@ describe("Tournament", () => {
   let Tournament;
   let tournament;
   
+  const timeout = 129600; // 1.5 days
   const tournamentData = {
     info: {
       tournamentName: "FIFA World Cup 2022", 
@@ -64,7 +65,6 @@ describe("Tournament", () => {
     price: 100,
     managementFee: 1000,
     manager: "",
-    timeout: 10,
     minBond: 10,
     questions: [
       {
@@ -129,7 +129,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -138,7 +138,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -149,7 +149,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -190,7 +189,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -199,7 +198,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -210,7 +209,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -237,7 +235,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -246,7 +244,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -257,7 +255,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -288,7 +285,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -297,7 +294,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -308,7 +305,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -340,7 +336,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -349,7 +345,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -360,7 +356,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -401,7 +396,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -410,7 +405,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -421,7 +416,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -469,7 +463,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -478,7 +472,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -489,7 +483,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -518,7 +511,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            1,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -527,7 +520,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            1,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -538,7 +531,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        1,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -552,6 +544,8 @@ describe("Tournament", () => {
       const questionID2 = await tournament.questionIDs(1);
       await realitio.submitAnswer(questionID1, numberToBytes32(1), 0, { value: 10 });
       await realitio.submitAnswer(questionID2, numberToBytes32(40), 0, { value: 10 });
+      await ethers.provider.send('evm_increaseTime', [timeout]);
+      await ethers.provider.send('evm_mine');
       const tx = await tournament.registerAvailabilityOfResults();
       const receipt = await tx.wait();
       const timestamp = BigNumber.from(await getCurrentTimestamp(receipt.blockNumber));
@@ -591,7 +585,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            1,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -600,7 +594,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            1,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -611,7 +605,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        1,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -651,6 +644,8 @@ describe("Tournament", () => {
         await realitio.submitAnswer(questionID, results[i], 0, { value: 10 });
       }
       const poolBalance = await ethers.provider.getBalance(tournament.address);
+      await ethers.provider.send('evm_increaseTime', [timeout]);
+      await ethers.provider.send('evm_mine');
       let tx = await tournament.registerAvailabilityOfResults();
       let receipt = await tx.wait();
       const [_manager, _managementReward] = getEmittedEvent('ManagementReward', receipt).args
@@ -752,7 +747,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            1,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -761,7 +756,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            1,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -772,7 +767,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        1,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
@@ -811,6 +805,8 @@ describe("Tournament", () => {
         const questionID = await tournament.questionIDs(i);
         await realitio.submitAnswer(questionID, results[i], 0, { value: 10 });
       }
+      await ethers.provider.send('evm_increaseTime', [timeout]);
+      await ethers.provider.send('evm_mine');
       await tournament.registerAvailabilityOfResults();
 
       // Estimate ranking
@@ -1002,7 +998,7 @@ describe("Tournament", () => {
             a.openingTS,
             a.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -1011,7 +1007,7 @@ describe("Tournament", () => {
             b.openingTS,
             b.question,
             arbitrator.address,
-            tournamentData.timeout,
+            timeout,
             tournamentData.minBond,
             realitio.address,
             factory.address,
@@ -1022,7 +1018,6 @@ describe("Tournament", () => {
         tournamentData.price,
         tournamentData.managementFee,
         creator.address,
-        tournamentData.timeout,
         tournamentData.minBond,
         orderedQuestions,
         tournamentData.prizeWeights
