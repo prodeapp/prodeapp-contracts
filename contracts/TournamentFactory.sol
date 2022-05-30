@@ -20,6 +20,7 @@ contract TournamentFactory {
     address public immutable tournament;
     address public immutable arbitrator;
     address public immutable realitio;
+    address public immutable nftDescriptor;
     uint256 public immutable submissionTimeout;
 
     event NewTournament(address indexed tournament, bytes32 indexed hash);
@@ -35,11 +36,13 @@ contract TournamentFactory {
         address _tournament,
         address _arbitrator,
         address _realitio,
+        address _nftDescriptor,
         uint256 _submissionTimeout
     ) {
         tournament = _tournament;
         arbitrator = _arbitrator;
         realitio = _realitio;
+        nftDescriptor = _nftDescriptor;
         submissionTimeout = _submissionTimeout;
     }
 
@@ -73,6 +76,7 @@ contract TournamentFactory {
 
         instance.initialize(
             tournamentInfo, 
+            nftDescriptor,
             realitio,
             closingTime,
             price,

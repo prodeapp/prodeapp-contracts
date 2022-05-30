@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./IERC2981.sol";
+import "./BetNFTDescriptor.sol";
 
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
 
@@ -11,7 +12,6 @@ contract Tournament is ERC721, IERC2981 {
     struct TournamentInfo {
         string tournamentName;
         string tournamentSymbol;
-        string tournamentUri;
     }
 
     struct Result {
@@ -28,6 +28,7 @@ contract Tournament is ERC721, IERC2981 {
     uint256 public constant DIVISOR = 10000;
 
     TournamentInfo private tournamentInfo;
+    address public betNFTDescriptor;
     address public manager;
     RealityETH_v3_0 public realitio;
     uint256 public nextTokenID;
@@ -75,6 +76,7 @@ contract Tournament is ERC721, IERC2981 {
 
     function initialize(
         TournamentInfo memory _tournamentInfo,
+        address _nftDescriptor,
         address _realityETH,
         uint256 _closingTime,
         uint256 _price,
@@ -88,6 +90,7 @@ contract Tournament is ERC721, IERC2981 {
         require(_managementFee < DIVISOR, "Management fee too big");
 
         tournamentInfo = _tournamentInfo;
+        betNFTDescriptor = _nftDescriptor;
         realitio = RealityETH_v3_0(_realityETH);
         closingTime = _closingTime;
         price = _price;
@@ -318,16 +321,11 @@ contract Tournament is ERC721, IERC2981 {
     }
 
     /**
-     * @dev Base URI for computing {tokenURI}. If set, the resulting URI for each
-     * token will be the concatenation of the `baseURI` and the `tokenId`. Empty
-     * by default, can be overriden in child contracts.
+     * @dev See {IERC721Metadata-tokenURI}.
      */
-    function _baseURI() internal view override returns (string memory) {
-        return tournamentInfo.tournamentUri;
-    }
-
-    function baseURI() external view returns (string memory) {
-        return _baseURI();
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+        return BetNFTDescriptor(betNFTDescriptor).tokenURI(tokenId);
     }
 
     /**
