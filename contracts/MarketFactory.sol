@@ -3,9 +3,9 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
-import "./Tournament.sol";
+import "./Market.sol";
 
-contract TournamentFactory {
+contract MarketFactory {
     using Clones for address;
 
     struct RealitioQuestion {
@@ -16,38 +16,38 @@ contract TournamentFactory {
 
     uint32 public constant QUESTION_TIMEOUT = 1.5 days;
     
-    Tournament[] public tournaments;
-    address public immutable tournament;
+    Market[] public markets;
+    address public immutable market;
     address public immutable arbitrator;
     address public immutable realitio;
     address public immutable nftDescriptor;
     uint256 public immutable submissionTimeout;
 
-    event NewTournament(address indexed tournament, bytes32 indexed hash);
+    event NewMarket(address indexed market, bytes32 indexed hash);
 
     /**
      *  @dev Constructor.
-     *  @param _tournament Address of the tournament contract that is going to be used for each new deployment.
+     *  @param _market Address of the market contract that is going to be used for each new deployment.
      *  @param _arbitrator Address of the arbitrator that is going to resolve Realitio disputes.
      *  @param _realitio Address of the Realitio implementation.
      *  @param _submissionTimeout Time players have to submit their rankings after the questions were answer in Realitio.
      */
     constructor(
-        address _tournament,
+        address _market,
         address _arbitrator,
         address _realitio,
         address _nftDescriptor,
         uint256 _submissionTimeout
     ) {
-        tournament = _tournament;
+        market = _market;
         arbitrator = _arbitrator;
         realitio = _realitio;
         nftDescriptor = _nftDescriptor;
         submissionTimeout = _submissionTimeout;
     }
 
-    function createTournament(
-        Tournament.TournamentInfo memory tournamentInfo,
+    function createMarket(
+        Market.MarketInfo memory marketInfo,
         uint256 closingTime,
         uint256 price,
         uint256 managementFee,
@@ -56,7 +56,7 @@ contract TournamentFactory {
         RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
     ) external returns(address) {
-        Tournament instance = Tournament(tournament.clone());
+        Market instance = Market(market.clone());
 
         bytes32[] memory questionIDs = new bytes32[](questionsData.length);
         {
@@ -75,7 +75,7 @@ contract TournamentFactory {
         }
 
         instance.initialize(
-            tournamentInfo, 
+            marketInfo, 
             nftDescriptor,
             realitio,
             closingTime,
@@ -87,8 +87,8 @@ contract TournamentFactory {
             prizeWeights
         );
 
-        emit NewTournament(address(instance), keccak256(abi.encodePacked(questionIDs)));
-        tournaments.push(instance);
+        emit NewMarket(address(instance), keccak256(abi.encodePacked(questionIDs)));
+        markets.push(instance);
 
         return address(instance);
     }
@@ -127,14 +127,14 @@ contract TournamentFactory {
         }
     }
 
-    function allTournaments()
+    function allMarkets()
         external view
-        returns (Tournament[] memory)
+        returns (Market[] memory)
     {
-        return tournaments;
+        return markets;
     }
 
-    function tournamentCount() external view returns(uint256) {
-        return tournaments.length;
+    function marketCount() external view returns(uint256) {
+        return markets.length;
     }
 }

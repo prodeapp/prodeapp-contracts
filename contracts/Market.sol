@@ -8,10 +8,10 @@ import "./BetNFTDescriptor.sol";
 
 // If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
 
-contract Tournament is ERC721, IERC2981 {
-    struct TournamentInfo {
-        string tournamentName;
-        string tournamentSymbol;
+contract Market is ERC721, IERC2981 {
+    struct MarketInfo {
+        string marketName;
+        string marketSymbol;
     }
 
     struct Result {
@@ -27,7 +27,7 @@ contract Tournament is ERC721, IERC2981 {
 
     uint256 public constant DIVISOR = 10000;
 
-    TournamentInfo private tournamentInfo;
+    MarketInfo private marketInfo;
     address public betNFTDescriptor;
     address public manager;
     RealityETH_v3_0 public realitio;
@@ -75,7 +75,7 @@ contract Tournament is ERC721, IERC2981 {
     constructor() ERC721("", "") {}
 
     function initialize(
-        TournamentInfo memory _tournamentInfo,
+        MarketInfo memory _marketInfo,
         address _nftDescriptor,
         address _realityETH,
         uint256 _closingTime,
@@ -89,7 +89,7 @@ contract Tournament is ERC721, IERC2981 {
         require(!initialized, "Already initialized.");
         require(_managementFee < DIVISOR, "Management fee too big");
 
-        tournamentInfo = _tournamentInfo;
+        marketInfo = _marketInfo;
         betNFTDescriptor = _nftDescriptor;
         realitio = RealityETH_v3_0(_realityETH);
         closingTime = _closingTime;
@@ -310,14 +310,14 @@ contract Tournament is ERC721, IERC2981 {
      * @dev See {IERC721Metadata-name}.
      */
     function name() public view override returns (string memory) {
-        return tournamentInfo.tournamentName;
+        return marketInfo.marketName;
     }
 
     /**
      * @dev See {IERC721Metadata-symbol}.
      */
     function symbol() public view override returns (string memory) {
-        return tournamentInfo.tournamentSymbol;
+        return marketInfo.marketSymbol;
     }
 
     /**

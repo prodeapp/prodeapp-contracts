@@ -25,7 +25,7 @@ function getQuestionID(
   return questionID;
 }
 
-describe("TournamentFactory", () => {
+describe("MarketFactory", () => {
   let governor;
   let creator;
   let other;
@@ -33,13 +33,13 @@ describe("TournamentFactory", () => {
   let arbitrator;
   let realitio;
   let factory;
-  let Tournament;
+  let Market;
   
-  const tournamentData = {
+  const marketData = {
     info: {
-      tournamentName: "FIFA World Cup 2022", 
-      tournamentSymbol: "FWC22", 
-      tournamentUri: "URI"
+      marketName: "FIFA World Cup 2022", 
+      marketSymbol: "FWC22", 
+      marketUri: "URI"
     },
     closingTime: 0,
     price: 100,
@@ -79,10 +79,10 @@ describe("TournamentFactory", () => {
     realitio = await RealityEth.deploy();
     // console.log("Realitio Address: ", realitio.address)
 
-    // Deploy a Tournament contract and Factory
-    Tournament = await ethers.getContractFactory("Tournament");
-    implementation = await Tournament.deploy();
-    const Factory = await ethers.getContractFactory("TournamentFactory");
+    // Deploy a Market contract and Factory
+    Market = await ethers.getContractFactory("Market");
+    implementation = await Market.deploy();
+    const Factory = await ethers.getContractFactory("MarketFactory");
     factory = await Factory.deploy(
       implementation.address,
       arbitrator.address,
@@ -91,29 +91,29 @@ describe("TournamentFactory", () => {
     );
   });
 
-  it("Should not be possibe to initialize a Tournament instance twice.", async () => {
+  it("Should not be possibe to initialize a Market instance twice.", async () => {
     // Sort questions by Realitio's question ID.
     const timeout = 129600; // 1.5 days
-    const questionsIDs = tournamentData.questions
+    const questionsIDs = marketData.questions
       .map((questionData) => getQuestionID(
         questionData.templateID,
         questionData.openingTS,
         questionData.question,
         arbitrator.address,
         timeout,
-        tournamentData.minBond,
+        marketData.minBond,
         realitio.address,
         factory.address,
       )
     ).sort();
-    const orderedQuestions = tournamentData.questions
+    const orderedQuestions = marketData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
           a.openingTS,
           a.question,
           arbitrator.address,
           timeout,
-          tournamentData.minBond,
+          marketData.minBond,
           realitio.address,
           factory.address,
         ) > getQuestionID(
@@ -122,49 +122,49 @@ describe("TournamentFactory", () => {
           b.question,
           arbitrator.address,
           timeout,
-          tournamentData.minBond,
+          marketData.minBond,
           realitio.address,
           factory.address,
         ) ? 1 : -1);
 
-    await factory.createTournament(
-      tournamentData.info,
-      tournamentData.closingTime,
-      tournamentData.price,
-      tournamentData.managementFee,
+    await factory.createMarket(
+      marketData.info,
+      marketData.closingTime,
+      marketData.price,
+      marketData.managementFee,
       creator.address,
-      tournamentData.minBond,
+      marketData.minBond,
       orderedQuestions,
-      tournamentData.prizeWeights
+      marketData.prizeWeights
     );
-    const tournamentAddress = await factory.tournaments(0);
-    const tournament = await Tournament.attach(tournamentAddress);
+    const marketAddress = await factory.markets(0);
+    const market = await Market.attach(marketAddress);
     await expect(
-      tournament.initialize(
-        tournamentData.info,
+      market.initialize(
+        marketData.info,
         realitio.address,
-        tournamentData.closingTime,
-        tournamentData.price,
+        marketData.closingTime,
+        marketData.price,
         0,
-        tournamentData.managementFee,
+        marketData.managementFee,
         creator.address,
         questionsIDs,
-        tournamentData.prizeWeights
+        marketData.prizeWeights
       )
     ).to.be.revertedWith("Already initialized");
   });
 
-  it("Should revert if tournament's prizes don't add up to 100% (10000 basis points).", async () => {
+  it("Should revert if market's prizes don't add up to 100% (10000 basis points).", async () => {
     // Sort questions by Realitio's question ID.
     const timeout = 129600; // 1.5 days
-    const orderedQuestions = tournamentData.questions
+    const orderedQuestions = marketData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
           a.openingTS,
           a.question,
           arbitrator.address,
           timeout,
-          tournamentData.minBond,
+          marketData.minBond,
           realitio.address,
           factory.address,
         ) > getQuestionID(
@@ -173,18 +173,18 @@ describe("TournamentFactory", () => {
           b.question,
           arbitrator.address,
           timeout,
-          tournamentData.minBond,
+          marketData.minBond,
           realitio.address,
           factory.address,
         ) ? 1 : -1);
     await expect(
-      factory.createTournament(
-        tournamentData.info,
-        tournamentData.closingTime,
-        tournamentData.price,
-        tournamentData.managementFee,
+      factory.createMarket(
+        marketData.info,
+        marketData.closingTime,
+        marketData.price,
+        marketData.managementFee,
         creator.address,
-        tournamentData.minBond,
+        marketData.minBond,
         orderedQuestions,
         [100, 200, 300]
       )
@@ -193,13 +193,13 @@ describe("TournamentFactory", () => {
     );
 
     await expect(
-      factory.createTournament(
-        tournamentData.info,
-        tournamentData.closingTime,
-        tournamentData.price,
-        tournamentData.managementFee,
+      factory.createMarket(
+        marketData.info,
+        marketData.closingTime,
+        marketData.price,
+        marketData.managementFee,
         creator.address,
-        tournamentData.minBond,
+        marketData.minBond,
         orderedQuestions,
         [10000, 2000, 3000]
       )
@@ -211,14 +211,14 @@ describe("TournamentFactory", () => {
   it("Should allow multiple deployments.", async () => {
     // Sort questions by Realitio's question ID.
     const timeout = 129600; // 1.5 days
-    const orderedQuestions = tournamentData.questions
+    const orderedQuestions = marketData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
           a.openingTS,
           a.question,
           arbitrator.address,
           timeout,
-          tournamentData.minBond,
+          marketData.minBond,
           realitio.address,
           factory.address,
         ) > getQuestionID(
@@ -227,40 +227,40 @@ describe("TournamentFactory", () => {
           b.question,
           arbitrator.address,
           timeout,
-          tournamentData.minBond,
+          marketData.minBond,
           realitio.address,
           factory.address,
         ) ? 1 : -1);
     for (let i = 0; i <= 5; i++) {
-      await factory.createTournament(
-        tournamentData.info,
-        tournamentData.closingTime,
-        tournamentData.price + i,
-        tournamentData.managementFee,
+      await factory.createMarket(
+        marketData.info,
+        marketData.closingTime,
+        marketData.price + i,
+        marketData.managementFee,
         creator.address,
-        tournamentData.minBond,
+        marketData.minBond,
         orderedQuestions,
-        tournamentData.prizeWeights
+        marketData.prizeWeights
       );
-      const tournamentClone = await Tournament.attach(await factory.tournaments(i));
-      expect(await factory.tournamentCount()).to.eq(BigNumber.from(i + 1));
-      expect(await tournamentClone.price()).to.eq(
-        BigNumber.from(tournamentData.price + i)
+      const marketClone = await Market.attach(await factory.markets(i));
+      expect(await factory.marketCount()).to.eq(BigNumber.from(i + 1));
+      expect(await marketClone.price()).to.eq(
+        BigNumber.from(marketData.price + i)
       );
     }
   });
 
   it("Should revert questions are not ordered by question IDs.", async () => {
     // Sort questions by Realitio's question ID.
-    await expect(factory.createTournament(
-      tournamentData.info,
-      tournamentData.closingTime,
-      tournamentData.price,
-      tournamentData.managementFee,
+    await expect(factory.createMarket(
+      marketData.info,
+      marketData.closingTime,
+      marketData.price,
+      marketData.managementFee,
       creator.address,
-      tournamentData.minBond,
-      tournamentData.questions,
-      tournamentData.prizeWeights
+      marketData.minBond,
+      marketData.questions,
+      marketData.prizeWeights
     )).to.be.revertedWith("Questions are in incorrect order");
   });
 });

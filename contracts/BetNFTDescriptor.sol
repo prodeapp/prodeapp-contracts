@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import '@openzeppelin/contracts/utils/Strings.sol';
 import 'base64-sol/base64.sol';
-import './Tournament.sol';
+import './Market.sol';
 
 interface ICurate {
     function isRegistered(bytes32 questionsHash) external view returns(bool);
@@ -38,7 +38,7 @@ contract BetNFTDescriptor is Initializable {
 
     function tokenURI(uint256 tokenId) public view returns (string memory) {
         string memory name = generateName(tokenId);
-        string memory marketName = Tournament(msg.sender).name();
+        string memory marketName = Market(msg.sender).name();
         string memory marketFee = generateFee();
         string memory descriptionPartOne = generateDescriptionPartOne();
         string memory descriptionPartTwo =
@@ -119,7 +119,7 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function generateFee() private view returns (string memory) {
-        uint256 fee = Tournament(msg.sender).managementFee();
+        uint256 fee = Market(msg.sender).managementFee();
         uint256 units = fee/100;
         uint256 decimals = fee - 100 * units;
         if (decimals == 0) {
@@ -169,10 +169,10 @@ contract BetNFTDescriptor is Initializable {
 
         string memory status = getStatus();
 
-        Tournament tournament = Tournament(msg.sender);
-        bytes32 tokenHash = tournament.tokenIDtoTokenHash(tokenId);
-        string memory copies = tournament.bets(tokenHash).toString();
-        bool isRegistered = ICurate(curatedMarkets).isRegistered(tournament.questionsHash());
+        Market market = Market(msg.sender);
+        bytes32 tokenHash = market.tokenIDtoTokenHash(tokenId);
+        string memory copies = market.bets(tokenHash).toString();
+        bool isRegistered = ICurate(curatedMarkets).isRegistered(market.questionsHash());
         
         return
             string(
@@ -188,10 +188,10 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function getStatus() internal view returns(string memory status) {
-        Tournament tournament = Tournament(msg.sender);
-        uint256 resultSubmissionPeriodStart = tournament.resultSubmissionPeriodStart();
-        uint256 closingTime = tournament.closingTime();
-        uint256 submissionTimeout = tournament.submissionTimeout();
+        Market market = Market(msg.sender);
+        uint256 resultSubmissionPeriodStart = market.resultSubmissionPeriodStart();
+        uint256 closingTime = market.closingTime();
+        uint256 submissionTimeout = market.submissionTimeout();
         if (block.timestamp < closingTime) {
             status = "open to bets";
         } else if (
