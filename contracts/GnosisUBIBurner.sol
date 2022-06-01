@@ -198,16 +198,17 @@ contract GnosisUBIBurner {
     }
 
     /** @dev Sends the WETH balance of this contract to the UBI burner on mainnet. WETH is converted to ETH in the process.
-     *  @param _minAmount Unix timestamp after which the transaction will revert.
+     *  @param _amount amount of WETH to send to mainnet. 
+     *  Prevents small transfers that would cost relatively too much to claim on mainnet.
+     *  Prevents big donations to be transferred at once and that would generate big price spikes.
      */
-    function bridgeToMainnet(uint256 _minAmount) external onlyBurner {
-        uint256 balanceToBridge = IERC20(WETH).balanceOf(address(this));
-        require(balanceToBridge >= _minAmount, "Not enough WETH");
+    function bridgeToMainnet(uint256 _amount) external onlyBurner {
+        require(_amount <= IERC20(WETH).balanceOf(address(this)), "Not enough WETH");
         bytes memory recipientData = abi.encodePacked(
             0xa6439Ca0FCbA1d0F80df0bE6A17220feD9c9038a, // WETH OmniBridge helper contract on mainnet
             ForeignUBIBurner // UBIBurner address on mainnet
         );
-        bool success = IERC677(WETH).transferAndCall(Omnibridge, balanceToBridge, recipientData);
+        bool success = IERC677(WETH).transferAndCall(Omnibridge, _amount, recipientData);
         require(success, "Token bridging failed");
     }
 
