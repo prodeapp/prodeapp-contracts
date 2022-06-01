@@ -95,7 +95,7 @@ contract BetNFTDescriptor is Initializable {
                 abi.encodePacked(
                     'Market address: ',
                     addressToString(msg.sender),
-                    '\\Market name: ',
+                    '\\nMarket name: ',
                     marketName,
                     '\\nFee: ',
                     fee,
