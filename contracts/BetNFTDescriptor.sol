@@ -239,7 +239,7 @@ contract BetNFTDescriptor is Initializable {
                         )
                     )
                 ),
-				'<feGaussianBlur ',
+				'"/><feGaussianBlur ',
                 'in="p1" stdDeviation="',
                 std.toString(),
                 '" /></filter> ',
@@ -307,7 +307,7 @@ contract BetNFTDescriptor is Initializable {
 				'<text y="78px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="11px">',
                 'Management fee: ',
                 fee,
-				'%</text>',
+				'</text>',
 				'<text y="96px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-weight="200" font-size="11px">',
                 'Status: ',
                 status,
