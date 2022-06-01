@@ -33,13 +33,14 @@ describe("MarketFactory", () => {
   let arbitrator;
   let realitio;
   let factory;
+  let betNFTDescriptor;
   let Market;
   
+  const timeout = 129600; // 1.5 days
   const marketData = {
     info: {
       marketName: "FIFA World Cup 2022", 
-      marketSymbol: "FWC22", 
-      marketUri: "URI"
+      marketSymbol: "FWC22"
     },
     closingTime: 0,
     price: 100,
@@ -79,6 +80,15 @@ describe("MarketFactory", () => {
     realitio = await RealityEth.deploy();
     // console.log("Realitio Address: ", realitio.address)
 
+    // Deploy Curate Proxy contract
+    const curateAddress = "0x0000000000000000000000000000000000000000";
+    const CurateProxy = await ethers.getContractFactory("CurateProxy");
+    const curateProxy = await CurateProxy.deploy(curateAddress);
+
+    // Deploy NFT Descriptor contract
+    const BetNFTDescriptor = await ethers.getContractFactory("BetNFTDescriptor");
+    betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
+
     // Deploy a Market contract and Factory
     Market = await ethers.getContractFactory("Market");
     implementation = await Market.deploy();
@@ -87,13 +97,13 @@ describe("MarketFactory", () => {
       implementation.address,
       arbitrator.address,
       realitio.address,
+      betNFTDescriptor.address,
       7*24*60*60
     );
   });
 
   it("Should not be possibe to initialize a Market instance twice.", async () => {
     // Sort questions by Realitio's question ID.
-    const timeout = 129600; // 1.5 days
     const questionsIDs = marketData.questions
       .map((questionData) => getQuestionID(
         questionData.templateID,
@@ -142,6 +152,7 @@ describe("MarketFactory", () => {
     await expect(
       market.initialize(
         marketData.info,
+        betNFTDescriptor.address,
         realitio.address,
         marketData.closingTime,
         marketData.price,
@@ -156,7 +167,6 @@ describe("MarketFactory", () => {
 
   it("Should revert if market's prizes don't add up to 100% (10000 basis points).", async () => {
     // Sort questions by Realitio's question ID.
-    const timeout = 129600; // 1.5 days
     const orderedQuestions = marketData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
@@ -210,7 +220,6 @@ describe("MarketFactory", () => {
 
   it("Should allow multiple deployments.", async () => {
     // Sort questions by Realitio's question ID.
-    const timeout = 129600; // 1.5 days
     const orderedQuestions = marketData.questions
       .sort((a, b) => getQuestionID(
           a.templateID,
@@ -250,8 +259,29 @@ describe("MarketFactory", () => {
     }
   });
 
-  it("Should revert questions are not ordered by question IDs.", async () => {
-    // Sort questions by Realitio's question ID.
+  it("Should revert questions if they are not ordered by question IDs.", async () => {
+    // Wrongly sort questions by Realitio's question ID.
+    const unorderedQuestions = marketData.questions
+    .sort((a, b) => getQuestionID(
+        a.templateID,
+        a.openingTS,
+        a.question,
+        arbitrator.address,
+        timeout,
+        marketData.minBond,
+        realitio.address,
+        factory.address,
+      ) > getQuestionID(
+        b.templateID,
+        b.openingTS,
+        b.question,
+        arbitrator.address,
+        timeout,
+        marketData.minBond,
+        realitio.address,
+        factory.address,
+      ) ? -1 : 1);
+
     await expect(factory.createMarket(
       marketData.info,
       marketData.closingTime,
@@ -259,7 +289,7 @@ describe("MarketFactory", () => {
       marketData.managementFee,
       creator.address,
       marketData.minBond,
-      marketData.questions,
+      unorderedQuestions,
       marketData.prizeWeights
     )).to.be.revertedWith("Questions are in incorrect order");
   });

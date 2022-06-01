@@ -128,7 +128,7 @@ contract CurateProxy {
 	}
 
 	function getHash(bytes memory data) internal pure returns(bytes32 hash) {
-		RLPReader.RLPItem memory rawHash = data.toRlpItem().toList()[0]; // the encoding of hash.
+		RLPReader.RLPItem memory rawHash = data.toRlpItem().toList()[1]; // the encoding of hash.
         bytes memory bytesHash = rawHash.toBytes();
         require(bytesHash.length == 66, "Not bytes32");
         for (uint256 i = HEX_OFFSET; i < bytesHash.length; i++) {

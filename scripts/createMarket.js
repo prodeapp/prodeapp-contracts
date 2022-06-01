@@ -10,11 +10,11 @@ const params = {
   }
 };
 
-const tournamentData = {
+const marketData = {
   info: {
-    tournamentName: "FIFA World Cup 2022", 
-    tournamentSymbol: "FWC22", 
-    tournamentUri: "URI"
+    marketName: "FIFA World Cup 2022", 
+    marketSymbol: "FWC22", 
+    marketUri: "URI"
   },
   closingTime: 1650563000,
   price: 100,
@@ -44,19 +44,17 @@ async function main() {
   console.log("Account balance:", (await deployer.getBalance()).toString());
   console.log("Chain Id:", chainId);
 
-  const Tournament = await ethers.getContractFactory("Tournament");
-
-  const TournamentFactory = await ethers.getContractFactory("TournamentFactory");
-  const tournamentFactory = await TournamentFactory.attach(params[chainId].factory);
-  await tournamentFactory.createTournament(
-    tournamentData.info,
-    tournamentData.closingTime,
-    tournamentData.price,
-    tournamentData.managementFee,
-    tournamentData.manager,
-    tournamentData.minBond,
-    tournamentData.questions,
-    tournamentData.prizeWeights
+  const MarketFactory = await ethers.getContractFactory("MarketFactory");
+  const marketFactory = await MarketFactory.attach(params[chainId].factory);
+  await marketFactory.createMarket(
+    marketData.info,
+    marketData.closingTime,
+    marketData.price,
+    marketData.managementFee,
+    marketData.manager,
+    marketData.minBond,
+    marketData.questions,
+    marketData.prizeWeights
   );
 }
 

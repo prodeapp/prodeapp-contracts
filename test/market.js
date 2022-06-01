@@ -58,8 +58,7 @@ describe("Market", () => {
   const marketData = {
     info: {
       marketName: "FIFA World Cup 2022", 
-      marketSymbol: "FWC22", 
-      marketUri: "URI"
+      marketSymbol: "FWC22"
     },
     closingTime: 0,
     price: 100,
@@ -104,6 +103,14 @@ describe("Market", () => {
     realitio = await RealityEth.deploy();
     // console.log("Realitio Address: ", realitio.address)
 
+    const curateAddress = "0x0000000000000000000000000000000000000000";
+    const CurateProxy = await ethers.getContractFactory("CurateProxy");
+    const curateProxy = await CurateProxy.deploy(curateAddress);
+
+    // Deploy NFT Descriptor contract
+    const BetNFTDescriptor = await ethers.getContractFactory("BetNFTDescriptor");
+    const betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
+
     // Deploy a Market contract and Factory
     Market = await ethers.getContractFactory("Market");
     implementation = await Market.deploy();
@@ -112,6 +119,7 @@ describe("Market", () => {
       implementation.address,
       arbitrator.address,
       realitio.address,
+      betNFTDescriptor.address,
       7*24*60*60
     );
   });
