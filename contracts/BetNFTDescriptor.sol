@@ -247,8 +247,9 @@ contract BetNFTDescriptor is Initializable {
 
     function generateSVGDefs() private view returns (string memory svg) {
         uint256 uintAddress = uint256(uint160(msg.sender));
-        uint256 radius = sliceTokenHex(uintAddress, 32) & 0x7f;
+        uint256 radius = 20 + sliceTokenHex(uintAddress, 32) & 0x7f;
         uint256 std = sliceTokenHex(uintAddress, 40) & 0x3f;
+        if (std > radius) std = std/2;
         svg = string(
             abi.encodePacked(
                 '<svg width="290" height="500" viewBox="0 0 290 500" xmlns="http://www.w3.org/2000/svg"',
