@@ -30,14 +30,17 @@ async function main() {
   // Deploy Market contract implementation
   const Market = await ethers.getContractFactory("Market");
   const market = await Market.deploy();
+  await market.deployed();
 
   // Deploy Curate Proxy contract
   const CurateProxy = await ethers.getContractFactory("CurateProxy");
   const curateProxy = await CurateProxy.deploy(params[chainId].curate);
+  await curateProxy.deployed();
 
   // Deploy NFT Descriptor contract
   const BetNFTDescriptor = await ethers.getContractFactory("BetNFTDescriptor");
   const betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
+  await betNFTDescriptor.deployed();
 
   // Deploy factory contract
   const MarketFactory = await ethers.getContractFactory("MarketFactory");
@@ -49,12 +52,13 @@ async function main() {
       betNFTDescriptor.address,
       params[chainId].submissionTimeout
     );
-
-  console.log("Market factory address:", marketFactory.address);
-  await market.deployed();
   await marketFactory.deployed();
-  await curateProxy.deployed();
-  await betNFTDescriptor.deployed();
+
+  console.log("");
+  console.log("Market factory address:", marketFactory.address);
+  console.log("Curate proxy address:", curateProxy.address);
+  console.log("NFT descriptor address:", betNFTDescriptor.address);
+  console.log("");
 
   // async function changeProxyAdmin(
   //   proxyAddress: string,
