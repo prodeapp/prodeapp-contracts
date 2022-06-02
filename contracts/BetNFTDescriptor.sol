@@ -8,6 +8,8 @@ import './Market.sol';
 
 interface ICurate {
     function isRegistered(bytes32 questionsHash) external view returns(bool);
+	function getTitle(bytes32 _questionsHash) external view returns(string memory);
+	function getTimestamp(bytes32 _questionsHash) external view returns(uint256);
 }
 
 library HexStrings {
@@ -37,8 +39,8 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function tokenURI(uint256 tokenId) public view returns (string memory) {
-        string memory name = generateName(tokenId);
-        string memory marketName = Market(msg.sender).name();
+        string memory marketName = getMarketName();
+        string memory nftName = generateName(tokenId, marketName);
         string memory marketFee = generateFee();
         string memory descriptionPartOne = generateDescriptionPartOne();
         string memory descriptionPartTwo =
@@ -60,7 +62,7 @@ contract BetNFTDescriptor is Initializable {
                         bytes(
                             abi.encodePacked(
                                 '{"name":"',
-                                name,
+                                nftName,
                                 '", "description":"',
                                 descriptionPartOne,
                                 descriptionPartTwo,
@@ -90,30 +92,57 @@ contract BetNFTDescriptor is Initializable {
         string memory marketName,
         string memory fee
     ) private view returns (string memory) {
+        string memory marketAddress = addressToString(msg.sender);
+        string memory link = string(
+                abi.encodePacked(
+                    'https://prode.eth.link/#/markets/',
+                    marketAddress,
+                    '/',
+                    tokenId.toString()
+                )
+        );
         return
             string(
                 abi.encodePacked(
                     'Market address: ',
-                    addressToString(msg.sender),
+                    marketAddress,
                     '\\nMarket name: ',
                     marketName,
                     '\\nFee: ',
                     fee,
                     '\\nToken ID: ',
                     tokenId.toString(),
+                    '\\nFull display: ',
+                    link,
                     '\\n\\n',
                     unicode'⚠️ DISCLAIMER: Due diligence is imperative when assessing this NFT. Make sure token addresses match the expected tokens, as token symbols may be imitated.'
                 )
             );
     }
 
-    function generateName(uint256 tokenId) private view returns (string memory) {
+    function getMarketName() private view returns(string memory) {
+        Market market = Market(msg.sender);
+        bytes32 questionsHash = market.questionsHash();
+        bool isRegistered = ICurate(curatedMarkets).isRegistered(questionsHash);
+
+        if (isRegistered) {
+            return ICurate(curatedMarkets).getTitle(questionsHash);
+        } else {
+            return market.name();
+        }
+    }
+
+    function generateName(
+        uint256 tokenId,
+        string memory marketName
+    ) private pure returns(string memory) {
         return
             string(
                 abi.encodePacked(
-                    addressToString(msg.sender),
-                    ' - Bet: ',
-                    tokenId.toString()
+                    'Bet ',
+                    tokenId.toString(),
+                    ' - ',
+                    marketName
                 )
             );
     }
@@ -172,15 +201,14 @@ contract BetNFTDescriptor is Initializable {
         Market market = Market(msg.sender);
         bytes32 tokenHash = market.tokenIDtoTokenHash(tokenId);
         string memory copies = market.bets(tokenHash).toString();
-        bool isRegistered = ICurate(curatedMarkets).isRegistered(market.questionsHash());
-        
+
         return
             string(
                 abi.encodePacked(
                     generateSVGDefs(),
                     generateSVGBorderText(marketName),
                     generateSVGCardMantle(jackpot, marketFee, status, copies),
-                    generateCurationMark(isRegistered),
+                    generateCurationMark(),
                     generatePredictionsFootprint(tokenHash),
                     '</svg>'
                 )
@@ -197,7 +225,7 @@ contract BetNFTDescriptor is Initializable {
         } else if (
             block.timestamp > closingTime &&
             resultSubmissionPeriodStart == 0) {
-            status = "closed to bets";
+            status = "waiting for results";
         } else if (
             resultSubmissionPeriodStart > 0 &&
             block.timestamp < resultSubmissionPeriodStart + submissionTimeout) {
@@ -321,10 +349,13 @@ contract BetNFTDescriptor is Initializable {
         );
     }
 
-    function generateCurationMark(
-        bool isRegistered
-    ) private pure returns (string memory svg) {
-		if (!isRegistered) return '';
+    function generateCurationMark() private view returns (string memory svg) {
+        Market market = Market(msg.sender);
+        bytes32 questionsHash = market.questionsHash();
+        bool isRegistered = ICurate(curatedMarkets).isRegistered(questionsHash);
+        uint256 startTime = ICurate(curatedMarkets).getTimestamp(questionsHash);
+
+		if (!isRegistered || market.closingTime() > startTime) return '';
 
         svg = string(
             abi.encodePacked(

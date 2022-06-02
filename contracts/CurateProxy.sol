@@ -61,7 +61,13 @@ contract CurateProxy {
 		bool isRegistered;
 	}
 
-    mapping(bytes32 => bool) public isHashRegistered; // isRegistered[questionsHash]
+	struct HashData {
+		bool isRegistered;
+		uint248 startTimestamp;
+		string title;
+	}
+
+    mapping(bytes32 => HashData) public hashData; // hashData[questionsHash]
     mapping(bytes32 => Item) public items; // items[itemID]
     mapping(bytes32 => bytes32[]) public itemsWithHash; // items[questionsHash]
 
@@ -75,18 +81,22 @@ contract CurateProxy {
 
 	function registerMarket(bytes32 _itemID) external {
 		(
-            bytes memory data,
+            bytes memory itemData,
             IGeneralizedTCR.Status status,
 			uint256 numberOfRequests
         ) = IGeneralizedTCR(gtcrClassic).getItemInfo(_itemID);
 
-		bytes32 questionsHash = getHash(data);
+		RLPReader.RLPItem[] memory rlpData = itemData.toRlpItem().toList();
+		bytes32 questionsHash = decodeHash(rlpData[1]);
 
 		if (
 			status == IGeneralizedTCR.Status.Registered ||
 			status == IGeneralizedTCR.Status.ClearingRequested
 		) {
-			isHashRegistered[questionsHash] = true;
+			HashData storage data = hashData[questionsHash];
+			data.title = decodeTitle(rlpData[0]);
+			data.startTimestamp = uint248(decodeTimestamp(rlpData[2]));
+			data.isRegistered = true;
 			items[_itemID].isRegistered = true;
 			if (!items[_itemID].isInitialized) {
 				items[_itemID].isInitialized = true;
@@ -115,20 +125,23 @@ contract CurateProxy {
 							bytes32 id_j = itemsWithHash[questionsHash][j];
 							if (items[id_j].isRegistered) return;
 						}
-						isHashRegistered[questionsHash] = false;
+						hashData[questionsHash].isRegistered = false;
 						return;
 					}
 				}
 			}
 		}
 	}
-
-	function isRegistered(bytes32 _questionsHash) external view returns(bool) {
-		return isHashRegistered[_questionsHash];
+	
+	function decodeTitle(RLPReader.RLPItem memory rawTitle) internal pure returns(string memory) {
+		return string(rawTitle.toBytes());
+	}
+	
+	function decodeTimestamp(RLPReader.RLPItem memory rawTimestamp) internal pure returns(uint256) {
+		return rawTimestamp.toUint();
 	}
 
-	function getHash(bytes memory data) internal pure returns(bytes32 hash) {
-		RLPReader.RLPItem memory rawHash = data.toRlpItem().toList()[1]; // the encoding of hash.
+	function decodeHash(RLPReader.RLPItem memory rawHash) internal pure returns(bytes32 hash) {
         bytes memory bytesHash = rawHash.toBytes();
         require(bytesHash.length == 66, "Not bytes32");
         for (uint256 i = HEX_OFFSET; i < bytesHash.length; i++) {
@@ -144,5 +157,17 @@ contract CurateProxy {
                 revert();
             }
         }
+	}
+
+	function isRegistered(bytes32 _questionsHash) external view returns(bool) {
+		return hashData[_questionsHash].isRegistered;
+	}
+
+	function getTitle(bytes32 _questionsHash) external view returns(string memory) {
+		return hashData[_questionsHash].title;
+	}
+
+	function getTimestamp(bytes32 _questionsHash) external view returns(uint256) {
+		return uint256(hashData[_questionsHash].startTimestamp);
 	}
 }

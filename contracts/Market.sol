@@ -123,7 +123,6 @@ contract Market is ERC721, IERC2981 {
         payable
         returns (uint256)
     {
-        require(initialized, "Not initialized");
         require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
