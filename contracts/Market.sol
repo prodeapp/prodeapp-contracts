@@ -207,8 +207,8 @@ contract Market is ERC721, IERC2981 {
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 realRankIndex = _rankIndex + _duplicates;
-            require(totalPoints > ranking[realRankIndex].points, "Invalid index5");
-            require(totalPoints == ranking[realRankIndex - 1].points, "Invalid index6");
+            require(totalPoints > ranking[realRankIndex].points, "Wrong _duplicates amount");
+            require(totalPoints == ranking[realRankIndex - 1].points, "Wrong _duplicates amount");
             if (ranking[realRankIndex].points > 0) {
                 // Rank position is being overwritten
                 isRanked[ranking[realRankIndex].tokenID] = false;
@@ -239,12 +239,12 @@ contract Market is ERC721, IERC2981 {
 
         uint248 points = ranking[_rankIndex].points;
         // Check that shared indexes are valid.
-        require(points == ranking[_firstSharedIndex].points, "Invalid index1");
-        require(points == ranking[_lastSharedIndex].points, "Invalid index2");
-        require(points > ranking[_lastSharedIndex + 1].points, "Invalid index3");
+        require(points == ranking[_firstSharedIndex].points, "Wrong start index");
+        require(points == ranking[_lastSharedIndex].points, "Wrong end index");
+        require(points > ranking[_lastSharedIndex + 1].points, "Wrong end index");
         require(
             _firstSharedIndex == 0 || points < ranking[_firstSharedIndex - 1].points, 
-            "Invalid index4"
+            "Wrong start index"
         );
         uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
