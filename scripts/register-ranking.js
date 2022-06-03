@@ -59,7 +59,7 @@ async function main() {
     rankIndex = previousPoints == bets[i].points ? rankIndex : i;
     if (rankIndex >= tournamentData.prizes.length) break;
 
-    const registerPoints = (await tournament.populateTransaction.registerPoints(bets[i].tokenID, rankIndex)).data;
+    const registerPoints = (await tournament.populateTransaction.registerPoints(bets[i].tokenID, rankIndex, i - rankIndex)).data;
     datas.push(registerPoints);
     
     previousPoints = bets[i].points;
