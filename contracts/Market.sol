@@ -45,7 +45,8 @@ contract Market is ERC721, IERC2981 {
     uint16[] public prizeWeights;
     mapping(bytes32 => BetData) public bets; // bets[tokenHash]
     mapping(uint256 => Result) public ranking; // ranking[index]
-    mapping(uint256 => bytes32) public tokenIDtoTokenHash;
+    mapping(uint256 => bytes32) public tokenIDtoTokenHash; // tokenIDtoTokenHash[tokenID]
+    mapping(uint256 => bool) public isRanked; // isRanked[tokenID]
 
     event FundingReceived(
         address indexed _funder,
@@ -170,14 +171,16 @@ contract Market is ERC721, IERC2981 {
      *  got more points than the ones registered.
      *  @param _tokenID The token id of the bet which points are going to be registered.
      *  @param _rankIndex The alleged ranking position the bet belongs to.
+     *  @param _duplicates The alleged number of tokens that are already registered and have the same points as _tokenID.
      */
-    function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
+    function registerPoints(uint256 _tokenID, uint256 _rankIndex, uint256 _duplicates) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(
             block.timestamp < resultSubmissionPeriodStart + submissionTimeout,
             "Submission period over"
         );
         require(_exists(_tokenID), "Token does not exist");
+        require(!isRanked[_tokenID], "Token already registered");
 
         bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         uint248 totalPoints;
@@ -194,29 +197,39 @@ contract Market is ERC721, IERC2981 {
             "Invalid ranking index"
         );
         if (totalPoints > ranking[_rankIndex].points) {
+            if (ranking[_rankIndex].points > 0) {
+                // Rank position is being overwritten
+                isRanked[ranking[_rankIndex].tokenID] = false;
+            }
             ranking[_rankIndex].tokenID = _tokenID;
             ranking[_rankIndex].points = totalPoints;
+            isRanked[_tokenID] = true;
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
-            require(ranking[_rankIndex].tokenID != _tokenID, "Token already registered");
-            uint256 i = 1;
-            while (ranking[_rankIndex + i].points == totalPoints) {
-                require(
-                    ranking[_rankIndex + i].tokenID != _tokenID,
-                    "Token already registered"
-                );
-                i += 1;
+            uint256 realRankIndex = _rankIndex + _duplicates;
+            require(totalPoints > ranking[realRankIndex].points, "Invalid index5");
+            require(totalPoints == ranking[realRankIndex - 1].points, "Invalid index6");
+            if (ranking[realRankIndex].points > 0) {
+                // Rank position is being overwritten
+                isRanked[ranking[realRankIndex].tokenID] = false;
             }
-            ranking[_rankIndex + i].tokenID = _tokenID;
-            ranking[_rankIndex + i].points = totalPoints;
-            emit RankingUpdated(_tokenID, totalPoints, _rankIndex + i);
+            ranking[realRankIndex].tokenID = _tokenID;
+            ranking[realRankIndex].points = totalPoints;
+            isRanked[_tokenID] = true;
+            emit RankingUpdated(_tokenID, totalPoints, realRankIndex);
         }
     }
 
     /** @dev Sends a prize to the token holder if applicable.
      *  @param _rankIndex The ranking position of the bet which reward is being claimed.
+     *  @param _firstSharedIndex The ranking position of the bet which reward is being claimed.
+     *  @param _lastSharedIndex The ranking position of the bet which reward is being claimed.
      */
-    function claimRewards(uint256 _rankIndex) external {
+    function claimRewards(
+        uint256 _rankIndex,
+        uint256 _firstSharedIndex,
+        uint256 _lastSharedIndex
+    ) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
         require(
             block.timestamp > resultSubmissionPeriodStart + submissionTimeout,
@@ -225,21 +238,19 @@ contract Market is ERC721, IERC2981 {
         require(!ranking[_rankIndex].claimed, "Already claimed");
 
         uint248 points = ranking[_rankIndex].points;
-        uint256 numberOfPrizes = prizeWeights.length;
-        uint256 rankingPosition = 0;
-        uint256 cumWeigths = 0;
-        uint256 sharedBetween = 0;
+        // Check that shared indexes are valid.
+        require(points == ranking[_firstSharedIndex].points, "Invalid index1");
+        require(points == ranking[_lastSharedIndex].points, "Invalid index2");
+        require(points > ranking[_lastSharedIndex + 1].points, "Invalid index3");
+        require(
+            _firstSharedIndex == 0 || points < ranking[_firstSharedIndex - 1].points, 
+            "Invalid index4"
+        );
+        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
-        // Infinite loop if ranking[_rankIndex].points = 0.
-        while (true) {
-            if (ranking[rankingPosition].points < points) break;
-            if (ranking[rankingPosition].points == points) {
-                if (rankingPosition < numberOfPrizes) {
-                    cumWeigths += prizeWeights[rankingPosition];
-                }
-                sharedBetween += 1;
-            }
-            rankingPosition += 1;
+        uint256 cumWeigths = 0;
+        for (uint256 i = _firstSharedIndex; i < prizeWeights.length && i <= _lastSharedIndex; i++) {
+            cumWeigths += prizeWeights[i];
         }
 
         uint256 reward = (totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
