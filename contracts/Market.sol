@@ -6,8 +6,6 @@ import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./IERC2981.sol";
 import "./BetNFTDescriptor.sol";
 
-// If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
-
 contract Market is ERC721, IERC2981 {
     struct MarketInfo {
         string marketName;
@@ -222,8 +220,8 @@ contract Market is ERC721, IERC2981 {
 
     /** @dev Sends a prize to the token holder if applicable.
      *  @param _rankIndex The ranking position of the bet which reward is being claimed.
-     *  @param _firstSharedIndex The ranking position of the bet which reward is being claimed.
-     *  @param _lastSharedIndex The ranking position of the bet which reward is being claimed.
+     *  @param _firstSharedIndex If there are many tokens sharing the same score, this is the first ranking position of the batch.
+     *  @param _lastSharedIndex If there are many tokens sharing the same score, this is the last ranking position of the batch.
      */
     function claimRewards(
         uint256 _rankIndex,
