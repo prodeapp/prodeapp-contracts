@@ -284,11 +284,12 @@ contract BetNFTDescriptor is Initializable {
                 '<linearGradient id="grad-symbol"><stop offset="0.7" stop-color="white" stop-opacity="1" /><stop offset=".95" stop-color="white" stop-opacity="0" /></linearGradient>',
                 '<mask id="fade-symbol" maskContentUnits="userSpaceOnUse"><rect width="290px" height="200px" fill="url(#grad-symbol)" /></mask></defs>',
                 '<g clip-path="url(#corners)">',
+                '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,1)" stroke="rgba(255,255,255,0.2)" />',
                 '<rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />',
                 ' <g style="filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;">',
                 '<rect fill="none" x="0px" y="0px" width="290px" height="500px" />',
                 '<ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000" opacity="0.85" /></g>',
-                '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" /></g>'
+                '</g>'
             )
         );
     }
