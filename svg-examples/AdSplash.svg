@@ -1,0 +1,78 @@
+<svg width="290" height="500" viewBox="0 0 290 500"
+    xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink='http://www.w3.org/1999/xlink'>
+    <defs>
+        <filter id="f1">
+            <feImage result="p1" xlink:href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0nMjkwJyBoZWlnaHQ9JzUwMCcgdmlld0JveD0nMCAwIDI5MCA1MDAnIHhtbG5zPSdodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2Zyc+PGNpcmNsZSBjeD0nMTcnIGN5PScyNzYnIHI9JzEyOHB4JyBmaWxsPScjNzZiYzNhJy8+PC9zdmc+"/>
+            <feGaussianBlur in="p1" stdDeviation="5" />
+        </filter>
+        <filter id="f2">
+          <feTurbulence type="turbulence" baseFrequency="0.6"
+              numOctaves="2" result="turbulence"/>
+          <feDisplacementMap in2="turbulence" in="SourceGraphic"
+              scale="5" xChannelSelector="R" yChannelSelector="G"/>
+        </filter>
+        <clipPath id="corners">
+            <rect width="290" height="500" rx="42" ry="42" />
+        </clipPath>
+        <filter id="top-region-blur">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="24" />
+        </filter>
+        <mask id="none" maskContentUnits="objectBoundingBox">
+            <rect width="1" height="1" fill="white" />
+        </mask>
+        <linearGradient id="grad-symbol">
+            <stop offset="0.7" stop-color="white" stop-opacity="1" />
+            <stop offset=".95" stop-color="white" stop-opacity="0" />
+        </linearGradient>
+        <mask id="fade-symbol" maskContentUnits="userSpaceOnUse">
+            <rect width="290px" height="200px" fill="url(#grad-symbol)" />
+        </mask>
+    </defs>
+    <g clip-path="url(#corners)">
+        <rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0,1)" stroke="rgba(255,255,255,0.2)" />
+        <rect style="filter: url(#f1)" x="0px" y="0px" width="290px" height="500px" />
+        <g style="filter:url(#top-region-blur); transform:scale(1.5); transform-origin:center top;">
+            <rect fill="none" x="0px" y="0px" width="290px" height="500px" />
+            <ellipse cx="50%" cy="0px" rx="180px" ry="120px" fill="#000000" opacity="0.85" />
+        </g>
+    </g>
+
+    <g mask="url(#fade-symbol)">
+        <rect fill="none" x="0px" y="0px" width="290px" height="200px" />
+        <text y="60px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="11px">Jackpot: 561.010 xDAI</text>
+        <text y="78px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="11px">Management fee: 3%</text>
+        <text y="96px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="11px">Status: betting ongoing</text>
+        <text y="114px" x="32px" fill="white" font-family="'Courier New', monospace" font-weight="200" font-size="11px">Copies: 2</text>
+    </g>
+    <rect x="16" y="16" width="258" height="468" rx="26" ry="26" fill="rgba(0,0,0,0)" stroke="rgba(255,255,255,0.2)" />
+    
+    <g style="transform:translate(243px, 11px)">
+        <rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />
+        <svg x="5px" y="6px" fill="#4CAF50">
+          <path d="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/>
+        </svg>
+        <svg x="8px" y="6px" fill="#4CAF50">
+          <path d="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/>
+        </svg>
+    </g>
+    
+    <g style="transform:translate(220px, 154px)">
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="5px" x="6px" rx="10px" ry="5px" fill="#d63030" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="41px" x="6px" rx="20px" ry="5px" fill="#c6ce5a" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="77px" x="6px" rx="2px" ry="5px" fill="#8ece5a" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="113px" x="6px" rx="20px" ry="15px" fill="#c6ce5a" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="155px" x="6px" rx="20px" ry="5px" fill="#ec08ec" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="189px" x="6px" rx="20px" ry="5px" fill="#3a3016" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="225px" x="6px" rx="20px" ry="5px" fill="#5aadce" />
+        <rect style="filter: url(#f2)" width="20px" height="20px" y="261px" x="6px" rx="20px" ry="5px" fill="#db8d8d" />
+    </g>
+
+    /* Injected Ad */
+    <g clip-path="url(#corners)">
+        <rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(152,207,239)" stroke="rgba(14,14,14)" />
+        <text y="30px" x="250px" fill="#27272780" font-family="'Courier New', monospace" font-weight="200" font-size="13px">Ad</text>
+        <path transform="translate(50, 100)" d="M42.741 71.477c-9.881 11.604-19.355 25.994-19.45 36.75-.037 4.047 1.255 7.58 4.354 10.256 4.46 3.854 9.374 5.213 14.264 5.221 7.146.01 14.242-2.873 19.798-5.096 9.357-3.742 112.79-48.659 112.79-48.659.998-.5.811-1.123-.438-.812-.504.126-112.603 30.505-112.603 30.505a24.771 24.771 0 0 1-6.524.934c-8.615.051-16.281-4.731-16.219-14.808.024-3.943 1.231-8.698 4.028-14.291z"/>
+        <animate dur="1s" attributeName="opacity" from="1" to="0" begin="2s" repeatCount="1" fill="freeze" />
+    </g>
+</svg>
