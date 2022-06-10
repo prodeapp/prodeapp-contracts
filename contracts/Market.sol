@@ -117,12 +117,39 @@ contract Market is ERC721, IERC2981 {
      *  @return the minted token id.
      */
     function placeBet(bytes32[] calldata _results)
-        public
+        external
         payable
         returns (uint256)
     {
-        require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value == price, "Wrong value sent");
+        return _placeBet(_results);
+    }
+
+    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted. Meant to be used by front-end providers.
+     *  @param _provider Address to which to send a fee.
+     *  @param _fee fee charged by provider.
+     *  @param _results Answer predictions to the questions asked in Realitio.
+     *  @return the minted token id.
+     */
+    function placeBetWithProvider(address payable _provider, uint256 _fee, bytes32[] calldata _results)
+        external
+        payable
+        returns (uint256)
+    {
+        uint256 providerReward = (price * _fee) / DIVISOR;
+        require(msg.value == price + providerReward, "Wrong value sent");
+        _provider.send(providerReward);
+        emit ProviderReward(_provider, providerReward);
+
+        return _placeBet(_results);
+    }
+
+    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
+     *  @param _results Answer predictions to the questions asked in Realitio.
+     *  @return the minted token id.
+     */
+    function _placeBet(bytes32[] calldata _results) internal returns (uint256) {
+        require(_results.length == questionIDs.length, "Results mismatch");
         require(block.timestamp < closingTime, "Bets not allowed");
 
         bytes32 tokenHash = keccak256(abi.encodePacked(_results));
@@ -135,23 +162,6 @@ contract Market is ERC721, IERC2981 {
         emit PlaceBet(msg.sender, nextTokenID, tokenHash, _results);
 
         return nextTokenID++;
-    }
-
-    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted. A provider can be specified.
-     *  @param _provider Address to which to send a fee. If 0x0, it's ignored. Meant to be used by front-end providers.
-     *  @param _results Answer predictions to the questions asked in Realitio.
-     *  @return the minted token id.
-     */
-    function placeBetWithProvider(address payable _provider, bytes32[] calldata _results)
-        external
-        payable
-        returns (uint256)
-    {
-        uint256 providerReward = (msg.value * managementFee) / DIVISOR;
-        _provider.send(providerReward);
-        emit ProviderReward(_provider, providerReward);
-
-        return placeBet(_results);
     }
 
     /** @dev Passes the contract state to the submission period if all the Realitio results are available.

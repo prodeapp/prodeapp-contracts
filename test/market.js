@@ -374,20 +374,22 @@ describe("Market", () => {
       const totalMarkets = await factory.marketCount();
       const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
       market = await Market.attach(marketAddress);
-      
+
+      let providerFee = 5000;
+      let expectedReward = BigNumber.from(100).mul(providerFee).div(10000);
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      tx = await market.placeBetWithProvider(other.address, predictions, { value: 100 });
+      tx = await market.placeBetWithProvider(other.address, providerFee, predictions, { value: expectedReward.add(BigNumber.from(100)) });
       receipt = await tx.wait();
       [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
       expect(_provider).to.eq(other.address);
-      expectedReward = BigNumber.from(100).mul(marketData.managementFee).div(10000);
       expect(_reward).to.eq(BigNumber.from(expectedReward));
       
-      tx = await market.placeBetWithProvider(creator.address, predictions, { value: 100 });
+      providerFee = 500;
+      expectedReward = BigNumber.from(100).mul(providerFee).div(10000);
+      tx = await market.placeBetWithProvider(creator.address, providerFee, predictions, { value: expectedReward.add(BigNumber.from(100)) });
       receipt = await tx.wait();
       [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
       expect(_provider).to.eq(creator.address);
-      expectedReward = BigNumber.from(100).mul(marketData.managementFee).div(10000);
       expect(_reward).to.eq(BigNumber.from(expectedReward));
 
       tx = await market.placeBet(predictions, { value: 100 });
