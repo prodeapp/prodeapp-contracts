@@ -168,23 +168,23 @@ describe("Market", () => {
       let predictions;
 
       predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
-      await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await market.placeBet(predictions, { value: 100 });
+      await market.placeBet(predictions, { value: 100 });
       await expect(
-        market.placeBet(ZERO_ADDRESS, predictions, { value: 101 })
+        market.placeBet(predictions, { value: 101 })
       ).to.be.revertedWith("Wrong value sent");
       await expect(
-        market.placeBet(ZERO_ADDRESS, predictions, { value: 99 })
+        market.placeBet(predictions, { value: 99 })
       ).to.be.revertedWith("Wrong value sent");
 
       predictions = [numberToBytes32(1), numberToBytes32(40), numberToBytes32(50)];
       await expect(
-        market.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
+        market.placeBet(predictions, { value: 100 })
       ).to.be.revertedWith("Results mismatch");
 
       predictions = [numberToBytes32(1)];
       await expect(
-        market.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
+        market.placeBet(predictions, { value: 100 })
       ).to.be.revertedWith("Results mismatch");
     });
 
@@ -230,7 +230,7 @@ describe("Market", () => {
 
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
       await expect(
-        market.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
+        market.placeBet(predictions, { value: 100 })
       ).to.be.revertedWith("Bets not allowed");
     });
 
@@ -275,7 +275,7 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      const tx = await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      const tx = await market.connect(other).placeBet(predictions, { value: 100 });
       const receipt = await tx.wait();
       const [player, tokenID, tokenHash, _predictions] = getEmittedEvent('PlaceBet', receipt).args
       expect(player).to.eq(other.address);
@@ -325,7 +325,7 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await market.connect(other).placeBet(predictions, { value: 100 });
 
       const tokenID = (await market.nextTokenID()).sub(BigNumber.from(1));
       expect(await market.ownerOf(tokenID)).to.eq(other.address);
@@ -376,21 +376,21 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      tx = await market.placeBet(other.address, predictions, { value: 100 });
+      tx = await market.placeBetWithProvider(other.address, predictions, { value: 100 });
       receipt = await tx.wait();
       [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
       expect(_provider).to.eq(other.address);
       expectedReward = BigNumber.from(100).mul(marketData.managementFee).div(10000);
       expect(_reward).to.eq(BigNumber.from(expectedReward));
       
-      tx = await market.placeBet(creator.address, predictions, { value: 100 });
+      tx = await market.placeBetWithProvider(creator.address, predictions, { value: 100 });
       receipt = await tx.wait();
       [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
       expect(_provider).to.eq(creator.address);
       expectedReward = BigNumber.from(100).mul(marketData.managementFee).div(10000);
       expect(_reward).to.eq(BigNumber.from(expectedReward));
 
-      tx = await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      tx = await market.placeBet(predictions, { value: 100 });
       receipt = await tx.wait();
       console.log(getEmittedEvent('ProviderReward', receipt));
     });
@@ -645,7 +645,7 @@ describe("Market", () => {
       const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
   
       for (let i = 0; i < bets.length; i++) {
-        await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
+        await market.connect(players[i]).placeBet(bets[i], { value: 100 });
       }
       await ethers.provider.send('evm_increaseTime', [bettingTime]);
       await ethers.provider.send('evm_mine');
@@ -807,7 +807,7 @@ describe("Market", () => {
       const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
 
       for (let i = 0; i < bets.length; i++) {
-        await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
+        await market.connect(players[i]).placeBet(bets[i], { value: 100 });
       }
       await ethers.provider.send('evm_increaseTime', [bettingTime]);
       await ethers.provider.send('evm_mine');
@@ -1044,7 +1044,7 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await market.connect(other).placeBet(predictions, { value: 100 });
 
       const salePrices = [
         ethers.utils.parseUnits("1.0", "wei"),

@@ -113,24 +113,17 @@ contract Market is ERC721, IERC2981 {
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
-     *  @param _provider Address to which to send a fee. If 0x0, it's ignored. Meant to be used by front-end providers.
      *  @param _results Answer predictions to the questions asked in Realitio.
      *  @return the minted token id.
      */
-    function placeBet(address payable _provider, bytes32[] calldata _results)
-        external
+    function placeBet(bytes32[] calldata _results)
+        public
         payable
         returns (uint256)
     {
         require(_results.length == questionIDs.length, "Results mismatch");
         require(msg.value == price, "Wrong value sent");
         require(block.timestamp < closingTime, "Bets not allowed");
-
-        if (_provider != payable(0x0)) {
-            uint256 providerReward = (msg.value * managementFee) / DIVISOR;
-            _provider.send(providerReward);
-            emit ProviderReward(_provider, providerReward);
-        }
 
         bytes32 tokenHash = keccak256(abi.encodePacked(_results));
         tokenIDtoTokenHash[nextTokenID] = tokenHash;
@@ -142,6 +135,23 @@ contract Market is ERC721, IERC2981 {
         emit PlaceBet(msg.sender, nextTokenID, tokenHash, _results);
 
         return nextTokenID++;
+    }
+
+    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted. A provider can be specified.
+     *  @param _provider Address to which to send a fee. If 0x0, it's ignored. Meant to be used by front-end providers.
+     *  @param _results Answer predictions to the questions asked in Realitio.
+     *  @return the minted token id.
+     */
+    function placeBetWithProvider(address payable _provider, bytes32[] calldata _results)
+        external
+        payable
+        returns (uint256)
+    {
+        uint256 providerReward = (msg.value * managementFee) / DIVISOR;
+        _provider.send(providerReward);
+        emit ProviderReward(_provider, providerReward);
+
+        return placeBet(_results);
     }
 
     /** @dev Passes the contract state to the submission period if all the Realitio results are available.
