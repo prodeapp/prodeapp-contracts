@@ -123,7 +123,7 @@ contract Market is ERC721, IERC2981 {
         returns (uint256)
     {
         require(_results.length == questionIDs.length, "Results mismatch");
-        require(msg.value >= price, "Not enough funds");
+        require(msg.value == price, "Wrong value sent");
         require(block.timestamp < closingTime, "Bets not allowed");
 
         if (_provider != payable(0x0)) {
@@ -156,10 +156,10 @@ contract Market is ERC721, IERC2981 {
         }
 
         resultSubmissionPeriodStart = block.timestamp;
-        uint256 poolBalance = address(this).balance;
-        uint256 managementReward = (poolBalance * managementFee) / DIVISOR;
+        uint256 marketBalance = address(this).balance;
+        uint256 managementReward = (marketBalance * managementFee) / DIVISOR;
         payable(manager).send(managementReward);
-        totalPrize = poolBalance - managementReward;
+        totalPrize = marketBalance - managementReward;
 
         emit ManagementReward(manager, managementReward);
     }
@@ -305,12 +305,11 @@ contract Market is ERC721, IERC2981 {
         }
     }
 
-    /** @dev Increases the balance of the pool without participating. Only callable during the betting period.
+    /** @dev Increases the balance of the market without participating. Only callable during the betting period.
      *  @param _message The message to publish.
      */
-    function fundPool(string calldata _message) external payable {
+    function fundMarket(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
-        require(msg.value > price, "Insufficient funds");
         emit FundingReceived(msg.sender, msg.value, _message);
     }
 

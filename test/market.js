@@ -169,10 +169,13 @@ describe("Market", () => {
 
       predictions = [numberToBytes32(1), numberToBytes32(40)];
       await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
-      await market.placeBet(ZERO_ADDRESS, predictions, { value: 200 });
+      await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await expect(
+        market.placeBet(ZERO_ADDRESS, predictions, { value: 101 })
+      ).to.be.revertedWith("Wrong value sent");
       await expect(
         market.placeBet(ZERO_ADDRESS, predictions, { value: 99 })
-      ).to.be.revertedWith("Not enough funds");
+      ).to.be.revertedWith("Wrong value sent");
 
       predictions = [numberToBytes32(1), numberToBytes32(40), numberToBytes32(50)];
       await expect(
@@ -380,14 +383,14 @@ describe("Market", () => {
       expectedReward = BigNumber.from(100).mul(marketData.managementFee).div(10000);
       expect(_reward).to.eq(BigNumber.from(expectedReward));
       
-      tx = await market.placeBet(creator.address, predictions, { value: 200 });
+      tx = await market.placeBet(creator.address, predictions, { value: 100 });
       receipt = await tx.wait();
       [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
       expect(_provider).to.eq(creator.address);
-      expectedReward = BigNumber.from(200).mul(marketData.managementFee).div(10000);
+      expectedReward = BigNumber.from(100).mul(marketData.managementFee).div(10000);
       expect(_reward).to.eq(BigNumber.from(expectedReward));
 
-      tx = await market.placeBet(ZERO_ADDRESS, predictions, { value: 200 });
+      tx = await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
       receipt = await tx.wait();
       console.log(getEmittedEvent('ProviderReward', receipt));
     });
@@ -448,7 +451,7 @@ describe("Market", () => {
         market.distributeRemainingPrizes()
       ).to.be.revertedWith("Not in claim period");
       
-      const tx = await market.connect(user1).fundPool("Brrrrr", { value: 1000});
+      const tx = await market.connect(user1).fundMarket("Brrrrr", { value: 1000});
       const receipt = await tx.wait();
       const [funder, value, message] = getEmittedEvent('FundingReceived', receipt).args
       expect(funder).to.eq(user1.address);
@@ -504,7 +507,7 @@ describe("Market", () => {
       ).to.be.revertedWith("question must be finalized");
 
       // Should still allow sponsors after bettings closed, only if questions were not settled.
-      await market.connect(user1).fundPool("Brrrrr", { value: 1000});
+      await market.connect(user1).fundMarket("Brrrrr", { value: 1000});
     });
 
     it("Should enter the submission period once questions are settled.", async () => {
@@ -561,7 +564,7 @@ describe("Market", () => {
       expect(await market.totalPrize()).to.eq(BigNumber.from(0));
       // Should not allow sponsors.
       await expect(
-        market.connect(user1).fundPool("Brrrrr", { value: 1000})
+        market.connect(user1).fundMarket("Brrrrr", { value: 1000})
       ).to.be.revertedWith("Results already available");
     });
 
