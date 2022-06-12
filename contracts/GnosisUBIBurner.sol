@@ -234,7 +234,7 @@ contract GnosisUBIBurner {
     // *       Getters        * //
     // ************************ //
 
-    /** @dev Calculate the minimum UBI amount from swapping the ETH contract balance.
+    /** @dev Calculate the minimum wETH amount from swapping the xDAI contract balance.
      *  @return The minimum amount of output token that must be received.
      */
     function getAmountOutMin() public view returns (uint256) {
@@ -246,7 +246,7 @@ contract GnosisUBIBurner {
 
     /* Fallback Function */
 
-    /// @dev Allows the contract to receive ETH
+    /// @dev Allows the contract to receive xDAI
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }
