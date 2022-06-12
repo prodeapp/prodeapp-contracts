@@ -247,7 +247,5 @@ contract GnosisUBIBurner {
     /* Fallback Function */
 
     /// @dev Allows the contract to receive xDAI
-    receive() external payable {
-        emit Received(msg.sender, msg.value);
-    }
+    receive() external payable {}
 }
