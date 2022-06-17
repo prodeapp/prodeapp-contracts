@@ -169,16 +169,16 @@ contract FirstPriceAuction {
 		}
 	}
 
-	function getAd(address _market) external view returns(string memory svg) {
+	function getAd(address _market) external view returns(string memory) {
 		bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
 		bytes32 highestBidID = bids[startID].nextBidPointer;
-		Bid storage bid = bids[highestBidID]; // highest bid might have expired.
+		if (highestBidID == 0x0) {
+			return "";
+		} else {
+			Bid storage bid = bids[highestBidID]; // highest bid might have expired.
 
-		ISVGContract svgContract = ISVGContract(curate.getAddress(bid.itemID));
-		svg = svgContract.getSVG();
-	}
-
-	function findPositionForBid(address _market, uint256 _bidPerSecond) external view returns(bytes32) {
-
+			ISVGContract svgContract = ISVGContract(curate.getAddress(bid.itemID));
+			return svgContract.getSVG();
+		}
 	}
 }
