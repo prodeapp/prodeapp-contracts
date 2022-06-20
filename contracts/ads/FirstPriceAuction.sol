@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
 interface ICurate {
@@ -8,8 +9,6 @@ interface ICurate {
 interface ISVGContract {
 	function getSVG() external view returns(string memory);
 }
-
-// v2 tokenID and adID
 
 contract FirstPriceAuction {
 
@@ -30,13 +29,17 @@ contract FirstPriceAuction {
 
 	ICurate public curate;
 	address payable public billing;
-	//mapping(bytes32 => bytes32) public currentHeighestBid;
 	mapping(bytes32 => Bid) public bids;
 
     constructor(ICurate _curate) {
 		curate = _curate;
 	}
 
+    /** @dev Creates and places a new bid or replaces one that has been removed.
+     *  @param _itemID The id of curated ad.
+     *  @param _market The address of the market the bid will be placed to.
+     *  @param _bidPerSecond The amount of tokens (xDAI) per second that will be payed if the bid gets the highest position, now or at some point.
+     */
 	function placeBid(
 		bytes32 _itemID,
 		address _market,
@@ -58,6 +61,10 @@ contract FirstPriceAuction {
 		_insertBid(_market, bidID);
 	}
 
+    /** @dev Increases the balance of an existing bid. If the bid was removed, it is inserted back.
+     *  @param _itemID The id of curated ad.
+     *  @param _market The address of the market the bid will be placed to.
+     */
 	function increaseBalance(bytes32 _itemID, address _market) external payable {
 		bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
 		Bid storage bid = bids[bidID];
@@ -72,6 +79,11 @@ contract FirstPriceAuction {
 		}
 	}
 
+    /** @dev Places a new bid or replaces one that has been removed.
+     *  @param _itemID The id of curated ad.
+     *  @param _market The address of the market the bid will be placed to.
+     *  @param _bidPerSecond The amount of tokens (xDAI) per second that will be payed if the bid gets the highest position, now or at some point.
+     */
 	function updateBid(bytes32 _itemID, address _market, uint256 _bidPerSecond) external payable {
 		bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
 		Bid storage bid = bids[bidID];
@@ -106,6 +118,10 @@ contract FirstPriceAuction {
 		_insertBid(_market, bidID);
 	}
 
+    /** @dev Removes an existing bid.
+     *  @param _itemID The id of curated ad.
+     *  @param _market The address of the market the bid will be placed to.
+     */
 	function removeBid(bytes32 _itemID, address _market) external {
 		bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
 		Bid storage bid = bids[bidID];
@@ -134,6 +150,9 @@ contract FirstPriceAuction {
 		bid.balance = 0;
 	}
 
+    /** @dev Removes the current highest bid if the balance is empty or if it was removed from curate.
+     *  @param _market The address of the market.
+     */
 	function reportBid(address _market) public {
 		bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
 		bytes32 highestBidID = bids[startID].nextBidPointer;
