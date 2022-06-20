@@ -224,8 +224,12 @@ contract FirstPriceAuction {
 			return "";
 		} else {
 			Bid storage bid = bids[highestBidID];
-			ISVGContract svgContract = ISVGContract(curate.getAddress(bid.itemID));
-			return svgContract.getSVG();
+			address svgAddress = curate.getAddress(bid.itemID);
+			try ISVGContract(svgAddress).getSVG() returns (string memory svg) {
+				return svg;
+			} catch {
+				return "";
+			}
 		}
 	}
 }
