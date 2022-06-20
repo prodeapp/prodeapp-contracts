@@ -1,6 +1,7 @@
 require("@nomiclabs/hardhat-waffle");
 require("@reality.eth/contracts")
 require("@nomiclabs/hardhat-etherscan");
+require("@openzeppelin/hardhat-upgrades");
 const { mnemonic, etherscanApiKey, alchemyKey, PK } = require('./secrets.json');
 
 // This is a sample Hardhat task. To learn how to create your own go to
@@ -21,13 +22,29 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
  */
 module.exports = {
   solidity: {
-    version: "0.8.9",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.9",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+            details: {
+              yul: false
+            }
+          }
+        }
       },
-    },
+      {
+        version: "0.6.12",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200
+          }
+        }
+      }
+    ]
   },
   defaultNetwork: "hardhat",
   networks: {
@@ -44,7 +61,7 @@ module.exports = {
       url: 'https://rpc.gnosischain.com/',
       accounts: [PK],
       chainId: 100,
-      gasPrice: 10000000000
+      gasPrice: 5000000000
     }
   },
   etherscan: {

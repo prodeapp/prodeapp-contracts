@@ -4,11 +4,11 @@ Descentralized pool betting platform using Realitio secured by Kleros as oracle.
 
 ## Overview
 
-The contracts in this repo are meant to allow permissionless creation and management of betting pools. The typical setup for a pool would be a set of questions related to the outcome of the matches of a tournament (or part of it). We call each pool a `Tournament`.
+The contracts in this repo are meant to allow permissionless creation and management of betting markets. The typical setup for a market would be a set of questions related to the outcome of the matches of a tournament (or part of it).
 
-Users who want to participate in a pool will have to:
+Users who want to participate in a market will have to:
 - Pay a fixed price for each bet.
-- Place a bet. A bet consists of all the predictions for the set of questions that compose the `Tournament` (for example: team A wins game 1, team C wins game 2, team Z wins the final, etc.).
+- Place a bet. A bet consists of all the predictions for the set of questions that compose the `Market` (for example: team A wins game 1, team C wins game 2, team Z wins the final, etc.).
 - Bets should only be submitted prior to the beginning of the matches.
 
 Once all the matches results are known and resolved in Realitio, a users ranking has to be created and the rewards are then distributed according to the ranking.
@@ -21,23 +21,23 @@ The gas consumption of the contracts is high. v1 is going to be deployed on the 
 
 Gas optimization, among other things, are going to be considered for v2, which is going to be deployed on a rollup. 
 
-### Tournament creation
+### Market creation
 
-Each `Tournament` is created from the `TournamentFactory`. To create a new `Tournament` instance, the following information is needed:
-- The tournament info, containing the name, symbol and uri of the tournament.
-- All the questions (template ID, string and the opening timestamp) that make up de tournament. The questions will be created in Realitio v3 at the moment of initialization of the contract. The results, i.e. the answers to the questions, should be unknown during the betting period (< `closingTime`).
+Each `Market` is created from the `MarketFactory`. To create a new `Market` instance, the following information is needed:
+- The market info, containing the name and symbol of the market.
+- All the questions (template ID, string and the opening timestamp) that make up de market. The questions will be created in Realitio v3 at the moment of initialization of the contract. The results, i.e. the answers to the questions, should be unknown during the betting period (< `closingTime`).
 - `closingTime`: timestamp at which no more bets are allow.
 - `price`: how much each bet costs.
-- The `managementFee` (in basis points) and the `manager`. The creator of the `Tournament` must set the address of the `manager`, which will receive a percentage (`managementFee`) of the pool as reward. In addition, the `managementFee` might be used to reward front-end providers on calling `placeBet()` and to reward the `manager` thourgh royalties.
+- The `managementFee` (in basis points) and the `manager`. The creator of the `Market` must set the address of the `manager`, which will receive a percentage (`managementFee`) of the pool as reward. In addition, the `managementFee` might be used to reward front-end providers on calling `placeBet()` and to reward the `manager` thourgh royalties.
 - The Realitio question `timeout`, which specifies how much time should pass for a new answer to be considered final.
 - The Realitio question `minBond`, which specifies the minimum bond require to answer each question.
 - `prizeWeights`: an array containing the distribution of rewards in basis points. It is expected to be filled in descending order, but not enforced.
 
 ### Betting period
 
-Once the tournament has been created, anyone can place a bet by paying the given `price` and submitting their predictions. Duplicate bets are allowed. 
+Once the market has been created, anyone can place a bet by paying the given `price` and submitting their predictions. Duplicate bets are allowed. 
 
-For each correct prediction, a point is earned. Predicting that a question will result `Invalid` is allowed and will add up to the score if correct. However, questions answered too soon are not considered final by the `Tournament` contract. The final score of a bet is equal to the sum of correct answers.
+For each correct prediction, a point is earned. Predicting that a question will result `Invalid` is allowed and will add up to the score if correct. However, questions answered too soon are not considered final by the `Market` contract. The final score of a bet is equal to the sum of correct answers.
 
 An ERC721 token is minted on making a bet. The manager of the bet could receive royalties equal to the `managementFee`.
 
@@ -67,8 +67,8 @@ In the unexpected case in which no bet got more than 0 points or the ranking was
 
 ### Funding a pool
 
-Anyone can provide extra funding for the tournament until the ranking creation period starts. Beware that the funds will be lost if no bet is submitted during the betting period.
+Anyone can provide extra funding for the market until the ranking creation period starts. Beware that the funds will be lost if no bet is submitted during the betting period.
 
 ### Further considerations
 
-Betting pools are fun and make the most sense when the prediction space is big. In such cases, the chances of becoming a winner are small, but the reward is big. Take this into consideration when creating a new tournament.
+The type of betting markets supported by these contracts are fun and make the most sense when the prediction space is big. In such cases, the chances of becoming a winner are small, but the reward is big. Take this into consideration when creating a new market.
