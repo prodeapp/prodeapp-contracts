@@ -53,7 +53,7 @@ contract CurateProxySVG {
 			RLPReader.RLPItem[] memory rlpData = data.toRlpItem().toList();
 			return decodeAddress(rlpData[0]);
 		} else {
-			return 0x0;
+			return address(0x0);
 		}
 	}
 }
