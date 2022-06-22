@@ -90,30 +90,32 @@ contract FirstPriceAuction {
 		require(curate.isRegistered(_itemID), "Item must be registered");
 		require(bid.bidder == msg.sender, "Bid does not exist");
 
-		bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
-		if (bid.previousBidPointer == startID && !bid.removed) {
-			// send balance back
-			uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
-			uint256 bill = price > bid.balance ? bid.balance : price;
-			bid.startTimestamp = 0;
-			bid.balance -= bill;
-			billing.send(bill);
+		if (!bid.removed) {
+			bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+			if (bid.previousBidPointer == startID) {
+				// send balance back
+				uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
+				uint256 bill = price > bid.balance ? bid.balance : price;
+				bid.startTimestamp = 0;
+				bid.balance -= bill;
+				billing.send(bill);
 
-			if (bid.nextBidPointer != 0x0) {
-				Bid storage newHighestBid = bids[bid.nextBidPointer];
-				newHighestBid.startTimestamp = uint64(block.timestamp);
+				if (bid.nextBidPointer != 0x0) {
+					Bid storage newHighestBid = bids[bid.nextBidPointer];
+					newHighestBid.startTimestamp = uint64(block.timestamp);
+				}
 			}
+
+			// force remove
+			bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
+			bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
 		}
 
 		bid.balance += msg.value;
 		require(bid.balance / _bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
 		bid.bidPerSecond = _bidPerSecond;
 
-		// force remove and insert back
-		bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
-		bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
-		bid.previousBidPointer = 0x0;
-		bid.nextBidPointer = 0x0;
+		// Insert back
 		bid.removed = false;
 		_insertBid(_market, bidID);
 	}
@@ -210,8 +212,7 @@ contract FirstPriceAuction {
 					// remove bid from list.
 					bids[nextID].removed = true;
 					bids[bids[nextID].nextBidPointer].previousBidPointer = _bidID;
-					bids[_bidID].nextBidPointer = bids[nextID].nextBidPointer;
-
+					bid.nextBidPointer = bids[nextID].nextBidPointer;
 				}
 			}
 		}
@@ -224,6 +225,7 @@ contract FirstPriceAuction {
 			return "";
 		} else {
 			Bid storage bid = bids[highestBidID];
+			// Look for highest bid?
 			address svgAddress = curate.getAddress(bid.itemID);
 			try ISVGContract(svgAddress).getSVG() returns (string memory svg) {
 				return svg;
