@@ -4,6 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./Market.sol";
+import "./Manager.sol";
 
 contract MarketFactory {
     using Clones for address;
@@ -23,6 +24,11 @@ contract MarketFactory {
     address public immutable nftDescriptor;
     uint256 public immutable submissionTimeout;
 
+    address public governor;
+    address public protocolTraesury;
+    address public manager;
+    uint256 public protocolFee;
+
     event NewMarket(address indexed market, bytes32 indexed hash);
 
     /**
@@ -30,6 +36,11 @@ contract MarketFactory {
      *  @param _market Address of the market contract that is going to be used for each new deployment.
      *  @param _arbitrator Address of the arbitrator that is going to resolve Realitio disputes.
      *  @param _realitio Address of the Realitio implementation.
+     *  @param _nftDescriptor Address of the nft contract that is going to be used for each new deployment.
+     *  @param _manager Address of the manager contract that is going to be used for each new deployment.
+     *  @param _governor Address of the governor of this contract.
+     *  @param _protocolFee protocol fee.
+     *  @param _protocolTraesury address in which protocol fees will be received.
      *  @param _submissionTimeout Time players have to submit their rankings after the questions were answer in Realitio.
      */
     constructor(
@@ -37,21 +48,50 @@ contract MarketFactory {
         address _arbitrator,
         address _realitio,
         address _nftDescriptor,
+        address _manager,
+        address _governor,
+        address _protocolTraesury,
+        uint256 _protocolFee,
         uint256 _submissionTimeout
     ) {
         market = _market;
         arbitrator = _arbitrator;
         realitio = _realitio;
         nftDescriptor = _nftDescriptor;
+        manager = _manager;
+        governor = _governor;
+        protocolTraesury = _protocolTraesury;
+        protocolFee = _protocolFee;
         submissionTimeout = _submissionTimeout;
     }
 
+    function changeGovernor(address _governor) external {
+        require(msg.sender == governor, "Not authorized");
+        governor = _governor;
+    }
+
+    function changeProtocolTreasury(address _protocolTraesury) external {
+        require(msg.sender == governor, "Not authorized");
+        protocolTraesury = _protocolTraesury;
+    }
+
+    function changeProtocolFee(uint256 _protocolFee) external {
+        require(msg.sender == governor, "Not authorized");
+        protocolFee = _protocolFee;
+    }
+
+    function changeManager(address _manager) external {
+        require(msg.sender == governor, "Not authorized");
+        manager = _manager;
+    }
+
     function createMarket(
-        Market.MarketInfo memory marketInfo,
+        string memory marketName,
+        string memory marketSymbol,
+        address creator,
+        uint256 creatorFee,
         uint256 closingTime,
         uint256 price,
-        uint256 managementFee,
-        address manager,
         uint256 minBond,
         RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
@@ -74,6 +114,21 @@ contract MarketFactory {
             }
         }
 
+        address newManager = address(manager.clone());
+        Manager(payable(newManager)).initialize(
+            payable(creator),
+            creatorFee,
+            payable(protocolTraesury),
+            protocolFee,
+            address(instance)
+        );
+
+        Market.MarketInfo memory marketInfo;
+        marketInfo.marketName = marketName;
+        marketInfo.marketSymbol = marketSymbol;
+        marketInfo.fee = uint16(protocolFee + creatorFee);
+        marketInfo.royaltyFee = uint16(protocolFee);
+        marketInfo.manager = payable(newManager);
         instance.initialize(
             marketInfo, 
             nftDescriptor,
@@ -81,8 +136,6 @@ contract MarketFactory {
             closingTime,
             price,
             submissionTimeout,
-            managementFee,
-            manager,
             questionIDs, 
             prizeWeights
         );

@@ -148,9 +148,9 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function generateFee() private view returns (string memory) {
-        uint256 fee = Market(msg.sender).managementFee();
+        (uint16 fee,,,,) = Market(msg.sender).marketInfo();
         uint256 units = fee/100;
-        uint256 decimals = fee - 100 * units;
+        uint256 decimals = uint256(fee) - 100 * units;
         if (decimals == 0) {
             return string(
                 abi.encodePacked(

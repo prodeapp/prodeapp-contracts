@@ -8,6 +8,9 @@ import "./BetNFTDescriptor.sol";
 
 contract Market is ERC721, IERC2981 {
     struct MarketInfo {
+        uint16 fee;
+        uint16 royaltyFee;
+        address payable manager;
         string marketName;
         string marketSymbol;
     }
@@ -25,9 +28,8 @@ contract Market is ERC721, IERC2981 {
 
     uint256 public constant DIVISOR = 10000;
 
-    MarketInfo private marketInfo;
+    MarketInfo public marketInfo;
     address public betNFTDescriptor;
-    address public manager;
     RealityETH_v3_0 public realitio;
     uint256 public nextTokenID;
     bool public initialized;
@@ -35,8 +37,9 @@ contract Market is ERC721, IERC2981 {
     uint256 public price;
     uint256 public closingTime;
     uint256 public submissionTimeout;
-    uint256 public managementFee;
     uint256 public totalPrize;
+    uint256 public managementReward;
+    uint256 public totalAttributions;
 
     bytes32 public questionsHash;
     bytes32[] public questionIDs;
@@ -45,6 +48,7 @@ contract Market is ERC721, IERC2981 {
     mapping(uint256 => Result) public ranking; // ranking[index]
     mapping(uint256 => bytes32) public tokenIDtoTokenHash; // tokenIDtoTokenHash[tokenID]
     mapping(uint256 => bool) public isRanked; // isRanked[tokenID]
+    mapping(address => uint256) public attributionBalance; // bets[tokenHash]
 
     event FundingReceived(
         address indexed _funder,
@@ -63,9 +67,9 @@ contract Market is ERC721, IERC2981 {
 
     event RankingUpdated(uint256 indexed _tokenID, uint256 _points, uint256 _index);
 
-    event ProviderReward(address indexed _provider, uint256 _providerReward);
+    event Attribution(address indexed _provider);
 
-    event ManagementReward(address indexed _manager, uint256 _managementReward);
+    event ManagementReward(address _manager, uint256 _managementReward);
 
     event QuestionsRegistered(bytes32[] _questionIDs);
 
@@ -80,13 +84,12 @@ contract Market is ERC721, IERC2981 {
         uint256 _closingTime,
         uint256 _price,
         uint256 _submissionTimeout,
-        uint256 _managementFee,
-        address _manager,
         bytes32[] memory _questionIDs,
         uint16[] memory _prizeWeights
     ) external {
         require(!initialized, "Already initialized.");
-        require(_managementFee < DIVISOR, "Management fee too big");
+        require(_marketInfo.fee < DIVISOR, "Management fee too big");
+        require(_marketInfo.royaltyFee < DIVISOR, "Royalty fee too big");
 
         marketInfo = _marketInfo;
         betNFTDescriptor = _nftDescriptor;
@@ -94,8 +97,6 @@ contract Market is ERC721, IERC2981 {
         closingTime = _closingTime;
         price = _price;
         submissionTimeout = _submissionTimeout;
-        managementFee = _managementFee;
-        manager = _manager;
 
         questionsHash = keccak256(abi.encodePacked(_questionIDs));
         questionIDs = _questionIDs;
@@ -113,44 +114,24 @@ contract Market is ERC721, IERC2981 {
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
+     *  @param _attribution Address that sent the referral. If 0x0, it's ignored.
      *  @param _results Answer predictions to the questions asked in Realitio.
      *  @return the minted token id.
      */
-    function placeBet(bytes32[] calldata _results)
+    function placeBet(address _attribution, bytes32[] calldata _results)
         external
         payable
         returns (uint256)
     {
         require(msg.value == price, "Wrong value sent");
-        return _placeBet(_results);
-    }
-
-    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted. Meant to be used by front-end providers.
-     *  @param _provider Address to which to send a fee.
-     *  @param _fee fee charged by provider.
-     *  @param _results Answer predictions to the questions asked in Realitio.
-     *  @return the minted token id.
-     */
-    function placeBetWithProvider(address payable _provider, uint256 _fee, bytes32[] calldata _results)
-        external
-        payable
-        returns (uint256)
-    {
-        uint256 providerReward = (price * _fee) / DIVISOR;
-        require(msg.value == price + providerReward, "Wrong value sent");
-        _provider.send(providerReward);
-        emit ProviderReward(_provider, providerReward);
-
-        return _placeBet(_results);
-    }
-
-    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
-     *  @param _results Answer predictions to the questions asked in Realitio.
-     *  @return the minted token id.
-     */
-    function _placeBet(bytes32[] calldata _results) internal returns (uint256) {
         require(_results.length == questionIDs.length, "Results mismatch");
         require(block.timestamp < closingTime, "Bets not allowed");
+
+        if (_attribution != address(0x0)) {
+            attributionBalance[_attribution] += 1;
+            totalAttributions += 1;
+            emit Attribution(_attribution);
+        }
 
         bytes32 tokenHash = keccak256(abi.encodePacked(_results));
         tokenIDtoTokenHash[nextTokenID] = tokenHash;
@@ -177,11 +158,11 @@ contract Market is ERC721, IERC2981 {
 
         resultSubmissionPeriodStart = block.timestamp;
         uint256 marketBalance = address(this).balance;
-        uint256 managementReward = (marketBalance * managementFee) / DIVISOR;
-        payable(manager).send(managementReward);
+        managementReward = (marketBalance * marketInfo.fee) / DIVISOR;
+        marketInfo.manager.send(managementReward);
         totalPrize = marketBalance - managementReward;
 
-        emit ManagementReward(manager, managementReward);
+        emit ManagementReward(marketInfo.manager, managementReward);
     }
 
     /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
@@ -376,8 +357,7 @@ contract Market is ERC721, IERC2981 {
         override(IERC2981)
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = manager;
-        // royalty fee = management fee
-        royaltyAmount = (_salePrice * managementFee) / DIVISOR;
+        receiver = marketInfo.manager;
+        royaltyAmount = (_salePrice * marketInfo.royaltyFee) / DIVISOR;
     }
 }
