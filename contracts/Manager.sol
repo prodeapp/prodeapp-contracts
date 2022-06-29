@@ -50,16 +50,17 @@ contract Manager {
 
 		managerRewardDistributed = true;
 
+		uint256 totalFee = creatorFee + protocolFee;
 		uint256 totalReward = market.managementReward();
 		uint256 totalBets = market.nextTokenID();
 		uint256 nonReferralShare = totalBets - market.totalAttributions();
 
-		uint256 creatorReward = totalReward * creatorFee * nonReferralShare / ( totalBets * 2 );
-		creatorReward += totalReward * creatorFee / 2;
+		uint256 creatorReward = totalReward * creatorFee * nonReferralShare / ( totalBets * totalFee * 2 );
+		creatorReward += totalReward * creatorFee / ( totalFee * 2 );
 		creator.send(creatorReward);
 
-		uint256 protocolReward = totalReward * protocolFee * nonReferralShare / ( totalBets * 3 );
-		protocolReward += totalReward * protocolFee * 2 / 3;
+		uint256 protocolReward = totalReward * protocolFee * nonReferralShare / ( totalBets * totalFee * 3 );
+		protocolReward += totalReward * protocolFee * 2 / ( totalFee * 3 );
 		protocolTreasury.send(protocolReward);
 
 		amountClaimed += creatorReward + protocolReward;
@@ -69,12 +70,13 @@ contract Manager {
 		require(market.resultSubmissionPeriodStart() != 0, "Fees not received");
 		require(!claimed[_referral], "Reward already claimed");
 
+		uint256 totalFee = creatorFee + protocolFee;
 		uint256 totalReward = market.managementReward();
 		uint256 referralShare = market.attributionBalance(_referral);
 		uint256 totalBets = market.nextTokenID();
 
-		uint256 rewardFromCreator = totalReward * creatorFee * referralShare / ( totalBets * 2 );
-		uint256 rewardFromProtocol = totalReward * protocolFee * referralShare / ( totalBets * 3 );
+		uint256 rewardFromCreator = totalReward * creatorFee * referralShare / ( totalBets * totalFee * 2 );
+		uint256 rewardFromProtocol = totalReward * protocolFee * referralShare / ( totalBets * totalFee * 3 );
 
 		claimed[_referral] = true;
 		amountClaimed += rewardFromCreator + rewardFromProtocol;
