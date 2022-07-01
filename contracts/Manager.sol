@@ -11,8 +11,6 @@ interface IMarket {
 }
 
 contract Manager {
-    uint256 public constant DIVISOR = 10000;
-
     address payable public creator;
     uint256 public creatorFee;
     address payable public protocolTreasury;

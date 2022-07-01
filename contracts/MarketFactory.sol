@@ -29,7 +29,7 @@ contract MarketFactory {
     address public manager;
     uint256 public protocolFee;
 
-    event NewMarket(address indexed market, bytes32 indexed hash);
+    event NewMarket(address indexed market, bytes32 indexed hash, address manager);
 
     /**
      *  @dev Constructor.
@@ -39,7 +39,7 @@ contract MarketFactory {
      *  @param _nftDescriptor Address of the nft contract that is going to be used for each new deployment.
      *  @param _manager Address of the manager contract that is going to be used for each new deployment.
      *  @param _governor Address of the governor of this contract.
-     *  @param _protocolFee protocol fee.
+     *  @param _protocolFee protocol fee in basis points.
      *  @param _protocolTraesury address in which protocol fees will be received.
      *  @param _submissionTimeout Time players have to submit their rankings after the questions were answer in Realitio.
      */
@@ -114,8 +114,8 @@ contract MarketFactory {
             }
         }
 
-        address newManager = address(manager.clone());
-        Manager(payable(newManager)).initialize(
+        address payable newManager = payable(address(manager.clone()));
+        Manager(newManager).initialize(
             payable(creator),
             creatorFee,
             payable(protocolTraesury),
@@ -128,7 +128,7 @@ contract MarketFactory {
         marketInfo.marketSymbol = marketSymbol;
         marketInfo.fee = uint16(protocolFee + creatorFee);
         marketInfo.royaltyFee = uint16(protocolFee);
-        marketInfo.manager = payable(newManager);
+        marketInfo.manager = newManager;
         instance.initialize(
             marketInfo, 
             nftDescriptor,
@@ -140,7 +140,7 @@ contract MarketFactory {
             prizeWeights
         );
 
-        emit NewMarket(address(instance), keccak256(abi.encodePacked(questionIDs)));
+        emit NewMarket(address(instance), keccak256(abi.encodePacked(questionIDs)), newManager);
         markets.push(instance);
 
         return address(instance);
