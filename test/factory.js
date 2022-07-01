@@ -35,6 +35,7 @@ describe("MarketFactory", () => {
   let factory;
   let betNFTDescriptor;
   let Market;
+  let Manager;
   
   const timeout = 129600; // 1.5 days
   const marketData = {
@@ -89,15 +90,21 @@ describe("MarketFactory", () => {
     const BetNFTDescriptor = await ethers.getContractFactory("BetNFTDescriptor");
     betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
 
-    // Deploy a Market contract and Factory
+    // Deploy a Market contract, Manager contract and Factory
     Market = await ethers.getContractFactory("Market");
-    implementation = await Market.deploy();
+    const implementation = await Market.deploy();
+    Manager = await ethers.getContractFactory("Manager");
+    const managerImplementation = await Manager.deploy();
     const Factory = await ethers.getContractFactory("MarketFactory");
     factory = await Factory.deploy(
       implementation.address,
       arbitrator.address,
       realitio.address,
       betNFTDescriptor.address,
+      managerImplementation.address,
+      governor.address,
+      governor.address,
+      150, // protocol fee in basis points
       7*24*60*60
     );
   });
@@ -138,11 +145,12 @@ describe("MarketFactory", () => {
         ) ? 1 : -1);
 
     await factory.createMarket(
-      marketData.info,
+      marketData.info.marketName,
+      marketData.info.marketSymbol,
+      creator.address,
+      marketData.managementFee,
       marketData.closingTime,
       marketData.price,
-      marketData.managementFee,
-      creator.address,
       marketData.minBond,
       orderedQuestions,
       marketData.prizeWeights
@@ -151,14 +159,18 @@ describe("MarketFactory", () => {
     const market = await Market.attach(marketAddress);
     await expect(
       market.initialize(
-        marketData.info,
+        {
+          fee: 0,
+          royaltyFee: 0,
+          manager: creator.address,
+          marketName: marketData.info.marketName, 
+          marketSymbol: marketData.info.marketSymbol
+        },
         betNFTDescriptor.address,
         realitio.address,
         marketData.closingTime,
         marketData.price,
         0,
-        marketData.managementFee,
-        creator.address,
         questionsIDs,
         marketData.prizeWeights
       )
@@ -189,11 +201,12 @@ describe("MarketFactory", () => {
         ) ? 1 : -1);
     await expect(
       factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         marketData.closingTime,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         [100, 200, 300]
@@ -204,11 +217,12 @@ describe("MarketFactory", () => {
 
     await expect(
       factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         marketData.closingTime,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         [10000, 2000, 3000]
@@ -242,11 +256,12 @@ describe("MarketFactory", () => {
         ) ? 1 : -1);
     for (let i = 0; i <= 5; i++) {
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         marketData.closingTime,
         marketData.price + i,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -283,11 +298,12 @@ describe("MarketFactory", () => {
       ) ? -1 : 1);
 
     await expect(factory.createMarket(
-      marketData.info,
+      marketData.info.marketName,
+      marketData.info.marketSymbol,
+      creator.address,
+      marketData.managementFee,
       marketData.closingTime,
       marketData.price,
-      marketData.managementFee,
-      creator.address,
       marketData.minBond,
       unorderedQuestions,
       marketData.prizeWeights

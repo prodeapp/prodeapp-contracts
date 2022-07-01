@@ -53,8 +53,10 @@ describe("Market", () => {
   let factory;
   let Market;
   let market;
+  let Manager;
   
   const timeout = 129600; // 1.5 days
+  const protocolFee = 150; // 1.5 days
   const marketData = {
     info: {
       marketName: "FIFA World Cup 2022", 
@@ -113,13 +115,19 @@ describe("Market", () => {
 
     // Deploy a Market contract and Factory
     Market = await ethers.getContractFactory("Market");
-    implementation = await Market.deploy();
+    const implementation = await Market.deploy();
+    Manager = await ethers.getContractFactory("Manager");
+    const managerImplementation = await Manager.deploy();
     const Factory = await ethers.getContractFactory("MarketFactory");
     factory = await Factory.deploy(
       implementation.address,
       arbitrator.address,
       realitio.address,
       betNFTDescriptor.address,
+      managerImplementation.address,
+      governor.address,
+      governor.address,
+      protocolFee,
       7*24*60*60
     );
   });
@@ -152,11 +160,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -168,23 +177,23 @@ describe("Market", () => {
       let predictions;
 
       predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.placeBet(predictions, { value: 100 });
-      await market.placeBet(predictions, { value: 100 });
+      await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
       await expect(
-        market.placeBet(predictions, { value: 101 })
+        market.placeBet(ZERO_ADDRESS, predictions, { value: 101 })
       ).to.be.revertedWith("Wrong value sent");
       await expect(
-        market.placeBet(predictions, { value: 99 })
+        market.placeBet(ZERO_ADDRESS, predictions, { value: 99 })
       ).to.be.revertedWith("Wrong value sent");
 
       predictions = [numberToBytes32(1), numberToBytes32(40), numberToBytes32(50)];
       await expect(
-        market.placeBet(predictions, { value: 100 })
+        market.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
       ).to.be.revertedWith("Results mismatch");
 
       predictions = [numberToBytes32(1)];
       await expect(
-        market.placeBet(predictions, { value: 100 })
+        market.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
       ).to.be.revertedWith("Results mismatch");
     });
 
@@ -215,11 +224,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -230,7 +240,7 @@ describe("Market", () => {
 
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
       await expect(
-        market.placeBet(predictions, { value: 100 })
+        market.placeBet(ZERO_ADDRESS, predictions, { value: 100 })
       ).to.be.revertedWith("Bets not allowed");
     });
 
@@ -261,11 +271,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -275,7 +286,7 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      const tx = await market.connect(other).placeBet(predictions, { value: 100 });
+      const tx = await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
       const receipt = await tx.wait();
       const [player, tokenID, tokenHash, _predictions] = getEmittedEvent('PlaceBet', receipt).args
       expect(player).to.eq(other.address);
@@ -311,11 +322,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -325,7 +337,7 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.connect(other).placeBet(predictions, { value: 100 });
+      await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
 
       const tokenID = (await market.nextTokenID()).sub(BigNumber.from(1));
       expect(await market.ownerOf(tokenID)).to.eq(other.address);
@@ -362,11 +374,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -375,26 +388,20 @@ describe("Market", () => {
       const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
       market = await Market.attach(marketAddress);
 
-      let providerFee = 5000;
-      let expectedReward = BigNumber.from(100).mul(providerFee).div(10000);
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      tx = await market.placeBetWithProvider(other.address, providerFee, predictions, { value: expectedReward.add(BigNumber.from(100)) });
+      tx = await market.placeBet(other.address, predictions, { value: BigNumber.from(100) });
       receipt = await tx.wait();
-      [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
-      expect(_provider).to.eq(other.address);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      [_attribution] = getEmittedEvent('Attribution', receipt).args;
+      expect(_attribution).to.eq(other.address);
       
-      providerFee = 500;
-      expectedReward = BigNumber.from(100).mul(providerFee).div(10000);
-      tx = await market.placeBetWithProvider(creator.address, providerFee, predictions, { value: expectedReward.add(BigNumber.from(100)) });
+      tx = await market.placeBet(creator.address, predictions, { value: BigNumber.from(100) });
       receipt = await tx.wait();
-      [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
-      expect(_provider).to.eq(creator.address);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      [_attribution] = getEmittedEvent('Attribution', receipt).args;
+      expect(_attribution).to.eq(creator.address);
 
-      tx = await market.placeBet(predictions, { value: 100 });
+      tx = await market.placeBet(ZERO_ADDRESS, predictions, { value: 100 });
       receipt = await tx.wait();
-      console.log(getEmittedEvent('ProviderReward', receipt));
+      console.log(getEmittedEvent('Attribution', receipt));
     });
 
     it("Other functions should not be callable during the betting period, except for funding.", async () => {
@@ -424,11 +431,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -491,11 +499,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -539,11 +548,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -613,11 +623,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         closingTime,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -647,7 +658,7 @@ describe("Market", () => {
       const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
   
       for (let i = 0; i < bets.length; i++) {
-        await market.connect(players[i]).placeBet(bets[i], { value: 100 });
+        await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
       }
       await ethers.provider.send('evm_increaseTime', [bettingTime]);
       await ethers.provider.send('evm_mine');
@@ -662,8 +673,9 @@ describe("Market", () => {
       let tx = await market.registerAvailabilityOfResults();
       let receipt = await tx.wait();
       const [_manager, _managementReward] = getEmittedEvent('ManagementReward', receipt).args
-      expect(_manager).to.eq(creator.address);
-      const managementReward = poolBalance.mul(BigNumber.from(marketData.managementFee)).div(BigNumber.from(10000));
+      const marketInfo = await market.marketInfo();
+      expect(_manager).to.eq(marketInfo.manager);
+      const managementReward = poolBalance.mul(BigNumber.from(marketData.managementFee + protocolFee)).div(BigNumber.from(10000));
       expect(_managementReward).to.eq(managementReward);
       expect(await market.totalPrize()).to.eq(poolBalance.sub(managementReward));
   
@@ -775,11 +787,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         closingTime,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -809,7 +822,7 @@ describe("Market", () => {
       const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
 
       for (let i = 0; i < bets.length; i++) {
-        await market.connect(players[i]).placeBet(bets[i], { value: 100 });
+        await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
       }
       await ethers.provider.send('evm_increaseTime', [bettingTime]);
       await ethers.provider.send('evm_mine');
@@ -1032,11 +1045,12 @@ describe("Market", () => {
             factory.address,
           ) ? 1 : -1);
       await factory.createMarket(
-        marketData.info,
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
         currentTS,
         marketData.price,
-        marketData.managementFee,
-        creator.address,
         marketData.minBond,
         orderedQuestions,
         marketData.prizeWeights
@@ -1046,7 +1060,7 @@ describe("Market", () => {
       market = await Market.attach(marketAddress);
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.connect(other).placeBet(predictions, { value: 100 });
+      await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
 
       const salePrices = [
         ethers.utils.parseUnits("1.0", "wei"),
@@ -1055,10 +1069,11 @@ describe("Market", () => {
         ethers.utils.parseEther("1000.0"),
         ethers.utils.parseEther("100000000.0")
       ];
+      const marketInfo = await market.marketInfo();
       for (let i = 0; i < salePrices.length; i++) {
         const [receiver, amount] = await market.royaltyInfo(i, salePrices[i]);
-        const expectedRoyalty = salePrices[i].mul(marketData.managementFee).div(10000);
-        expect(receiver).to.eq(creator.address);
+        const expectedRoyalty = salePrices[i].mul(protocolFee).div(10000);
+        expect(receiver).to.eq(marketInfo.manager);
         expect(amount).to.eq(expectedRoyalty);
       }
     });
