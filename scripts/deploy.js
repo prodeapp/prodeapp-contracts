@@ -42,14 +42,23 @@ async function main() {
   const betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
   await betNFTDescriptor.deployed();
 
+  // Deploy manager contract
+  const Manager = await ethers.getContractFactory("Manager");
+  const manager = await Manager.deploy();
+  await manager.deployed();
+
   // Deploy factory contract
-  const MarketFactory = await ethers.getContractFactory("MarketFactory");
-  const marketFactory = await MarketFactory
+    const MarketFactory = await ethers.getContractFactory("MarketFactory");
+    const marketFactory = await MarketFactory
     .deploy(
       market.address,
       params[chainId].arbitrator,
       params[chainId].realityEth,
       betNFTDescriptor.address,
+      manager.address,
+      deployer.address,  // TODO: update to proper Governor
+      deployer.address,  // TODO: update to proper treasury
+      150,
       params[chainId].submissionTimeout
     );
   await marketFactory.deployed();
@@ -57,6 +66,7 @@ async function main() {
   console.log("");
   console.log("Market factory address:", marketFactory.address);
   console.log("Curate proxy address:", curateProxy.address);
+  console.log("Manager address:", manager.address);
   console.log("NFT descriptor address:", betNFTDescriptor.address);
   console.log("");
 
@@ -83,6 +93,10 @@ async function main() {
       params[chainId].arbitrator,
       params[chainId].realityEth,
       betNFTDescriptor.address,
+      manager.address,
+      deployer.address,
+      deployer.address,
+      150,
       params[chainId].submissionTimeout
     ],
   });
