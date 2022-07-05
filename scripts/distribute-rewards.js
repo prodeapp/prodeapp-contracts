@@ -57,7 +57,8 @@ async function main() {
     rankIndex = previousPoints == bets[i].points ? rankIndex : i;
     if (rankIndex >= tournamentData.prizes.length) break;
 
-    const claimReward = (await tournament.populateTransaction.claimRewards(i)).data;
+    // TODO: support shared prizes
+    const claimReward = (await tournament.populateTransaction.claimRewards(i, rankIndex, rankIndex)).data;
     datas.push(claimReward);
     
     previousPoints = bets[i].points;

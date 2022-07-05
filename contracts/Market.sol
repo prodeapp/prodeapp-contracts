@@ -6,10 +6,11 @@ import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./IERC2981.sol";
 import "./BetNFTDescriptor.sol";
 
-// If a version for mainnet was needed, gas could be saved by storing merkle hashes instead of all the questions and bets.
-
 contract Market is ERC721, IERC2981 {
     struct MarketInfo {
+        uint16 fee;
+        uint16 royaltyFee;
+        address payable manager;
         string marketName;
         string marketSymbol;
     }
@@ -27,9 +28,8 @@ contract Market is ERC721, IERC2981 {
 
     uint256 public constant DIVISOR = 10000;
 
-    MarketInfo private marketInfo;
+    MarketInfo public marketInfo;
     address public betNFTDescriptor;
-    address public manager;
     RealityETH_v3_0 public realitio;
     uint256 public nextTokenID;
     bool public initialized;
@@ -37,15 +37,18 @@ contract Market is ERC721, IERC2981 {
     uint256 public price;
     uint256 public closingTime;
     uint256 public submissionTimeout;
-    uint256 public managementFee;
     uint256 public totalPrize;
+    uint256 public managementReward;
+    uint256 public totalAttributions;
 
     bytes32 public questionsHash;
     bytes32[] public questionIDs;
     uint16[] public prizeWeights;
     mapping(bytes32 => BetData) public bets; // bets[tokenHash]
     mapping(uint256 => Result) public ranking; // ranking[index]
-    mapping(uint256 => bytes32) public tokenIDtoTokenHash;
+    mapping(uint256 => bytes32) public tokenIDtoTokenHash; // tokenIDtoTokenHash[tokenID]
+    mapping(uint256 => bool) public isRanked; // isRanked[tokenID]
+    mapping(address => uint256) public attributionBalance; // bets[tokenHash]
 
     event FundingReceived(
         address indexed _funder,
@@ -64,9 +67,9 @@ contract Market is ERC721, IERC2981 {
 
     event RankingUpdated(uint256 indexed _tokenID, uint256 _points, uint256 _index);
 
-    event ProviderReward(address indexed _provider, uint256 _providerReward);
+    event Attribution(address indexed _provider);
 
-    event ManagementReward(address indexed _manager, uint256 _managementReward);
+    event ManagementReward(address _manager, uint256 _managementReward);
 
     event QuestionsRegistered(bytes32[] _questionIDs);
 
@@ -81,13 +84,12 @@ contract Market is ERC721, IERC2981 {
         uint256 _closingTime,
         uint256 _price,
         uint256 _submissionTimeout,
-        uint256 _managementFee,
-        address _manager,
         bytes32[] memory _questionIDs,
         uint16[] memory _prizeWeights
     ) external {
         require(!initialized, "Already initialized.");
-        require(_managementFee < DIVISOR, "Management fee too big");
+        require(_marketInfo.fee < DIVISOR, "Management fee too big");
+        require(_marketInfo.royaltyFee < DIVISOR, "Royalty fee too big");
 
         marketInfo = _marketInfo;
         betNFTDescriptor = _nftDescriptor;
@@ -95,8 +97,6 @@ contract Market is ERC721, IERC2981 {
         closingTime = _closingTime;
         price = _price;
         submissionTimeout = _submissionTimeout;
-        managementFee = _managementFee;
-        manager = _manager;
 
         questionsHash = keccak256(abi.encodePacked(_questionIDs));
         questionIDs = _questionIDs;
@@ -114,23 +114,23 @@ contract Market is ERC721, IERC2981 {
     }
 
     /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
-     *  @param _provider Address to which to send a fee. If 0x0, it's ignored. Meant to be used by front-end providers.
+     *  @param _attribution Address that sent the referral. If 0x0, it's ignored.
      *  @param _results Answer predictions to the questions asked in Realitio.
      *  @return the minted token id.
      */
-    function placeBet(address payable _provider, bytes32[] calldata _results)
+    function placeBet(address _attribution, bytes32[] calldata _results)
         external
         payable
         returns (uint256)
     {
+        require(msg.value == price, "Wrong value sent");
         require(_results.length == questionIDs.length, "Results mismatch");
-        require(msg.value >= price, "Not enough funds");
         require(block.timestamp < closingTime, "Bets not allowed");
 
-        if (_provider != payable(0x0)) {
-            uint256 providerReward = (msg.value * managementFee) / DIVISOR;
-            _provider.send(providerReward);
-            emit ProviderReward(_provider, providerReward);
+        if (_attribution != address(0x0)) {
+            attributionBalance[_attribution] += 1;
+            totalAttributions += 1;
+            emit Attribution(_attribution);
         }
 
         bytes32 tokenHash = keccak256(abi.encodePacked(_results));
@@ -157,12 +157,12 @@ contract Market is ERC721, IERC2981 {
         }
 
         resultSubmissionPeriodStart = block.timestamp;
-        uint256 poolBalance = address(this).balance;
-        uint256 managementReward = (poolBalance * managementFee) / DIVISOR;
-        payable(manager).send(managementReward);
-        totalPrize = poolBalance - managementReward;
+        uint256 marketBalance = address(this).balance;
+        managementReward = (marketBalance * marketInfo.fee) / DIVISOR;
+        marketInfo.manager.send(managementReward);
+        totalPrize = marketBalance - managementReward;
 
-        emit ManagementReward(manager, managementReward);
+        emit ManagementReward(marketInfo.manager, managementReward);
     }
 
     /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
@@ -170,14 +170,16 @@ contract Market is ERC721, IERC2981 {
      *  got more points than the ones registered.
      *  @param _tokenID The token id of the bet which points are going to be registered.
      *  @param _rankIndex The alleged ranking position the bet belongs to.
+     *  @param _duplicates The alleged number of tokens that are already registered and have the same points as _tokenID.
      */
-    function registerPoints(uint256 _tokenID, uint256 _rankIndex) external {
+    function registerPoints(uint256 _tokenID, uint256 _rankIndex, uint256 _duplicates) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(
             block.timestamp < resultSubmissionPeriodStart + submissionTimeout,
             "Submission period over"
         );
         require(_exists(_tokenID), "Token does not exist");
+        require(!isRanked[_tokenID], "Token already registered");
 
         bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         uint248 totalPoints;
@@ -194,29 +196,39 @@ contract Market is ERC721, IERC2981 {
             "Invalid ranking index"
         );
         if (totalPoints > ranking[_rankIndex].points) {
+            if (ranking[_rankIndex].points > 0) {
+                // Rank position is being overwritten
+                isRanked[ranking[_rankIndex].tokenID] = false;
+            }
             ranking[_rankIndex].tokenID = _tokenID;
             ranking[_rankIndex].points = totalPoints;
+            isRanked[_tokenID] = true;
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
-            require(ranking[_rankIndex].tokenID != _tokenID, "Token already registered");
-            uint256 i = 1;
-            while (ranking[_rankIndex + i].points == totalPoints) {
-                require(
-                    ranking[_rankIndex + i].tokenID != _tokenID,
-                    "Token already registered"
-                );
-                i += 1;
+            uint256 realRankIndex = _rankIndex + _duplicates;
+            require(totalPoints > ranking[realRankIndex].points, "Wrong _duplicates amount");
+            require(totalPoints == ranking[realRankIndex - 1].points, "Wrong _duplicates amount");
+            if (ranking[realRankIndex].points > 0) {
+                // Rank position is being overwritten
+                isRanked[ranking[realRankIndex].tokenID] = false;
             }
-            ranking[_rankIndex + i].tokenID = _tokenID;
-            ranking[_rankIndex + i].points = totalPoints;
-            emit RankingUpdated(_tokenID, totalPoints, _rankIndex + i);
+            ranking[realRankIndex].tokenID = _tokenID;
+            ranking[realRankIndex].points = totalPoints;
+            isRanked[_tokenID] = true;
+            emit RankingUpdated(_tokenID, totalPoints, realRankIndex);
         }
     }
 
     /** @dev Sends a prize to the token holder if applicable.
      *  @param _rankIndex The ranking position of the bet which reward is being claimed.
+     *  @param _firstSharedIndex If there are many tokens sharing the same score, this is the first ranking position of the batch.
+     *  @param _lastSharedIndex If there are many tokens sharing the same score, this is the last ranking position of the batch.
      */
-    function claimRewards(uint256 _rankIndex) external {
+    function claimRewards(
+        uint256 _rankIndex,
+        uint256 _firstSharedIndex,
+        uint256 _lastSharedIndex
+    ) external {
         require(resultSubmissionPeriodStart != 0, "Not in claim period");
         require(
             block.timestamp > resultSubmissionPeriodStart + submissionTimeout,
@@ -225,21 +237,19 @@ contract Market is ERC721, IERC2981 {
         require(!ranking[_rankIndex].claimed, "Already claimed");
 
         uint248 points = ranking[_rankIndex].points;
-        uint256 numberOfPrizes = prizeWeights.length;
-        uint256 rankingPosition = 0;
-        uint256 cumWeigths = 0;
-        uint256 sharedBetween = 0;
+        // Check that shared indexes are valid.
+        require(points == ranking[_firstSharedIndex].points, "Wrong start index");
+        require(points == ranking[_lastSharedIndex].points, "Wrong end index");
+        require(points > ranking[_lastSharedIndex + 1].points, "Wrong end index");
+        require(
+            _firstSharedIndex == 0 || points < ranking[_firstSharedIndex - 1].points, 
+            "Wrong start index"
+        );
+        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
-        // Infinite loop if ranking[_rankIndex].points = 0.
-        while (true) {
-            if (ranking[rankingPosition].points < points) break;
-            if (ranking[rankingPosition].points == points) {
-                if (rankingPosition < numberOfPrizes) {
-                    cumWeigths += prizeWeights[rankingPosition];
-                }
-                sharedBetween += 1;
-            }
-            rankingPosition += 1;
+        uint256 cumWeigths = 0;
+        for (uint256 i = _firstSharedIndex; i < prizeWeights.length && i <= _lastSharedIndex; i++) {
+            cumWeigths += prizeWeights[i];
         }
 
         uint256 reward = (totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
@@ -296,12 +306,11 @@ contract Market is ERC721, IERC2981 {
         }
     }
 
-    /** @dev Increases the balance of the pool without participating. Only callable during the betting period.
+    /** @dev Increases the balance of the market without participating. Only callable during the betting period.
      *  @param _message The message to publish.
      */
-    function fundPool(string calldata _message) external payable {
+    function fundMarket(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
-        require(msg.value > price, "Insufficient funds");
         emit FundingReceived(msg.sender, msg.value, _message);
     }
 
@@ -348,8 +357,7 @@ contract Market is ERC721, IERC2981 {
         override(IERC2981)
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = manager;
-        // royalty fee = management fee
-        royaltyAmount = (_salePrice * managementFee) / DIVISOR;
+        receiver = marketInfo.manager;
+        royaltyAmount = (_salePrice * marketInfo.royaltyFee) / DIVISOR;
     }
 }
