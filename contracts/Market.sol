@@ -159,8 +159,8 @@ contract Market is ERC721, IERC2981 {
         resultSubmissionPeriodStart = block.timestamp;
         uint256 marketBalance = address(this).balance;
         managementReward = (marketBalance * marketInfo.fee) / DIVISOR;
-        marketInfo.manager.send(managementReward);
         totalPrize = marketBalance - managementReward;
+        marketInfo.manager.send(managementReward);
 
         emit ManagementReward(marketInfo.manager, managementReward);
     }
