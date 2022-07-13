@@ -18,12 +18,12 @@ contract MarketFactory {
     uint32 public constant QUESTION_TIMEOUT = 1.5 days;
     
     Market[] public markets;
-    address public immutable market;
     address public immutable arbitrator;
     address public immutable realitio;
     address public immutable nftDescriptor;
     uint256 public immutable submissionTimeout;
 
+    address public market;
     address public governor;
     address public protocolTraesury;
     address public manager;
@@ -78,6 +78,11 @@ contract MarketFactory {
     function changeProtocolFee(uint256 _protocolFee) external {
         require(msg.sender == governor, "Not authorized");
         protocolFee = _protocolFee;
+    }
+
+    function changeMarket(address _market) external {
+        require(msg.sender == governor, "Not authorized");
+        market = _market;
     }
 
     function changeManager(address _manager) external {

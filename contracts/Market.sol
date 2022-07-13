@@ -48,7 +48,7 @@ contract Market is ERC721, IERC2981 {
     mapping(uint256 => Result) public ranking; // ranking[index]
     mapping(uint256 => bytes32) public tokenIDtoTokenHash; // tokenIDtoTokenHash[tokenID]
     mapping(uint256 => bool) public isRanked; // isRanked[tokenID]
-    mapping(address => uint256) public attributionBalance; // bets[tokenHash]
+    mapping(address => uint256) public attributionBalance; // attributionBalance[attribution]
 
     event FundingReceived(
         address indexed _funder,
