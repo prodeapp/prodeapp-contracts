@@ -27,249 +27,249 @@ const marketData = {
     // Group A
     {
       templateID: 2, 
-      question: "Who will win the Qatar vs Ecuador match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Ecuador\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Qatar vs Ecuador match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Ecuador\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Senegal vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Senegal\",\"Netherlands\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Senegal vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Senegal\",\"Netherlands\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Qatar vs Senegal match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Senegal\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Qatar vs Senegal match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Senegal\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Ecuador vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Ecuador\",\"Netherlands\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Ecuador vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Ecuador\",\"Netherlands\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Qatar vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Netherlands\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Qatar vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Netherlands\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Senegal vs Ecuador match at the FIFA World Cup Qatar 2022 group phase?␟\"Senegal\",\"Ecuador\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Senegal vs Ecuador match at the FIFA World Cup Qatar 2022 group phase?␟\"Senegal\",\"Ecuador\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group B
     {
       templateID: 2, 
-      question: "Who will win the England vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"IR Iran\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the England vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"IR Iran\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the USA vs Wales match at the FIFA World Cup Qatar 2022 group phase?␟\"USA\",\"Wales\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the USA vs Wales match at the FIFA World Cup Qatar 2022 group phase?␟\"USA\",\"Wales\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the England vs Wales match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"Wales\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the England vs Wales match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"Wales\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the USA vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"USA\",\"IR Iran\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the USA vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"USA\",\"IR Iran\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the England vs USA match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"USA\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the England vs USA match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"USA\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Wales vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"Wales\",\"IR Iran\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Wales vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"Wales\",\"IR Iran\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group C
     {
       templateID: 2, 
-      question: "Who will win the Argentina vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Argentina vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Mexico vs Poland match at the FIFA World Cup Qatar 2022 group phase?␟\"Mexico\",\"Poland\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Mexico vs Poland match at the FIFA World Cup Qatar 2022 group phase?␟\"Mexico\",\"Poland\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Argentina vs Poland match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Poland\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Argentina vs Poland match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Poland\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Mexico vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Mexico\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Mexico vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Mexico\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Argentina vs Mexico match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Mexico\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Argentina vs Mexico match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Mexico\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Poland vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Poland\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Poland vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Poland\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group D
     {
       templateID: 2, 
-      question: "Who will win the France vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Denmark\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the France vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Denmark\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Tunisa vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Australia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Tunisa vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Australia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the France vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Australia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the France vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Australia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Tunisa vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Denmark\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Tunisa vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Denmark\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the France vs Tunisa match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Tunisa\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the France vs Tunisa match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Tunisa\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Australia vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Australia\",\"Denmark\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Australia vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Australia\",\"Denmark\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group E
     {
       templateID: 2, 
-      question: "Who will win the Spain vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Germany\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Spain vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Germany\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Japan vs Costa Rica match at the FIFA World Cup Qatar 2022 group phase?␟\"Japan\",\"Costa Rica\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Japan vs Costa Rica match at the FIFA World Cup Qatar 2022 group phase?␟\"Japan\",\"Costa Rica\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Spain vs Costa Rica match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Costa Rica\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Spain vs Costa Rica match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Costa Rica\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Japan vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Japan\",\"Germany\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Japan vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Japan\",\"Germany\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Spain vs Japan match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Japan\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Spain vs Japan match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Japan\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Costa Rica vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Costa Rica\",\"Germany\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Costa Rica vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Costa Rica\",\"Germany\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group F
     {
       templateID: 2, 
-      question: "Who will win the Belgium vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Canada\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Belgium vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Canada\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Morocco vs Croatia match at the FIFA World Cup Qatar 2022 group phase?␟\"Morocco\",\"Croatia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Morocco vs Croatia match at the FIFA World Cup Qatar 2022 group phase?␟\"Morocco\",\"Croatia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Belgium vs Croatia match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Croatia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Belgium vs Croatia match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Croatia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Morocco vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Morocco\",\"Canada\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Morocco vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Morocco\",\"Canada\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Belgium vs Morocco match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Morocco\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Belgium vs Morocco match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Morocco\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Croatia vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Croatia\",\"Canada\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Croatia vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Croatia\",\"Canada\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group G
     {
       templateID: 2, 
-      question: "Who will win the Brazil vs Serbia match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Serbia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Brazil vs Serbia match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Serbia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Switzerland vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Switzerland\",\"Cameroon\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Switzerland vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Switzerland\",\"Cameroon\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Brazil vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Cameroon\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Brazil vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Cameroon\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Switzerland vs Serbia match at the FIFA World Cup Qatar 2022 group phase?␟\"Switzerland\",\"Serbia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Switzerland vs Serbia match at the FIFA World Cup Qatar 2022 group phase?␟\"Switzerland\",\"Serbia\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Brazil vs Switzerland match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Switzerland\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Brazil vs Switzerland match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Switzerland\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Serbia vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Serbia\",\"Cameroon\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Serbia vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Serbia\",\"Cameroon\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Group H
     {
       templateID: 2, 
-      question: "Who will win the Portugal vs Ghana match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Ghana\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Portugal vs Ghana match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Ghana\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Uruguay vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Uruguay\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Uruguay vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Uruguay\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Portugal vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Portugal vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Uruguay vs Ghana match at the FIFA World Cup Qatar 2022 group phase?␟\"Uruguay\",\"Ghana\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Uruguay vs Ghana match at the FIFA World Cup Qatar 2022 group phase?␟\"Uruguay\",\"Ghana\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Portugal vs Uruguay match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Uruguay\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Portugal vs Uruguay match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Uruguay\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     {
       templateID: 2, 
-      question: "Who will win the Ghana vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Ghana\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Ghana vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Ghana\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
       openingTS: 1669075200
     },
     // Round of 16
