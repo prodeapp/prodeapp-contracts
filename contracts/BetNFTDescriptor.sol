@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import '@openzeppelin/contracts/utils/Strings.sol';
 import 'base64-sol/base64.sol';
-import './Market.sol';
+import "./IMarket.sol";
 
 interface ICurate {
     function isRegistered(bytes32 questionsHash) external view returns(bool);
@@ -121,14 +121,15 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function getMarketName() private view returns(string memory) {
-        Market market = Market(msg.sender);
+        IMarket market = IMarket(msg.sender);
         bytes32 questionsHash = market.questionsHash();
         bool isRegistered = ICurate(curatedMarkets).isRegistered(questionsHash);
 
         if (isRegistered) {
             return ICurate(curatedMarkets).getTitle(questionsHash);
         } else {
-            return market.name();
+            IMarket.MarketInfo memory marketInfo = IMarket(msg.sender).marketInfo();
+            return marketInfo.marketName;
         }
     }
 
@@ -148,9 +149,9 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function generateFee() private view returns (string memory) {
-        (uint16 fee,,,,) = Market(msg.sender).marketInfo();
-        uint256 units = fee/100;
-        uint256 decimals = uint256(fee) - 100 * units;
+        IMarket.MarketInfo memory marketInfo = IMarket(msg.sender).marketInfo();
+        uint256 units = marketInfo.fee/100;
+        uint256 decimals = uint256(marketInfo.fee) - 100 * units;
         if (decimals == 0) {
             return string(
                 abi.encodePacked(
@@ -198,7 +199,7 @@ contract BetNFTDescriptor is Initializable {
 
         string memory status = getStatus();
 
-        Market market = Market(msg.sender);
+        IMarket market = IMarket(msg.sender);
         bytes32 tokenHash = market.tokenIDtoTokenHash(tokenId);
         string memory copies = market.bets(tokenHash).toString();
 
@@ -216,7 +217,7 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function getStatus() internal view returns(string memory status) {
-        Market market = Market(msg.sender);
+        IMarket market = IMarket(msg.sender);
         uint256 resultSubmissionPeriodStart = market.resultSubmissionPeriodStart();
         uint256 closingTime = market.closingTime();
         uint256 submissionTimeout = market.submissionTimeout();
@@ -352,7 +353,7 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function generateCurationMark() private view returns (string memory svg) {
-        Market market = Market(msg.sender);
+        IMarket market = IMarket(msg.sender);
         bytes32 questionsHash = market.questionsHash();
         bool isRegistered = ICurate(curatedMarkets).isRegistered(questionsHash);
         uint256 startTime = ICurate(curatedMarkets).getTimestamp(questionsHash);
