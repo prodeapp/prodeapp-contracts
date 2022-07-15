@@ -1,14 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IMarket {
-	function nextTokenID() external view returns(uint256);
-	function totalPrize() external view returns(uint256);
-	function totalAttributions() external view returns(uint256);
-	function attributionBalance(address _attribution) external view returns(uint256);
-	function managementReward() external view returns(uint256);
-	function resultSubmissionPeriodStart() external view returns(uint256);
-}
+import "./IMarket.sol";
 
 contract Manager {
     address payable public creator;
