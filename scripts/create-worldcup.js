@@ -17,7 +17,7 @@ const params = {
 const timeout = 129600; // 1.5 days
 const marketData = {
   marketName: "FIFA World Cup 2022", 
-  marketSymbol: "FWC22",
+  marketSymbol: "PRODE",
   closingTime: 1668988800, // 2022-11-21 00:00:00
   price: ethers.utils.parseUnits("25.0", "ether"), // 25 xDAI
   creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",

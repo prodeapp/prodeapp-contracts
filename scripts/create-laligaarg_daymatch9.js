@@ -17,7 +17,7 @@ const params = {
 const timeout = 129600; // 1.5 days
 const marketData = {
   marketName: "La Liga - Torneo Binance 2022 - Fecha #9", 
-  marketSymbol: "LL22F9",
+  marketSymbol: "PRODE",
   closingTime: 1658253600, // 2022-07-19 15:00:00 GMT -3:00
   price: ethers.utils.parseUnits("3.0", "ether"), // 3 xDAI
   creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
