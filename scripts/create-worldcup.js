@@ -10,7 +10,7 @@ const params = {
   100: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
-    factory: ""
+    factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b"
   }
 };
 

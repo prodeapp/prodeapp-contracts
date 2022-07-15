@@ -10,7 +10,7 @@ const params = {
   100: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
-    factory: "0xf0254936564F85CB139c889976aC17DEC44afeB3"
+    factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b"
   }
 };
 
@@ -18,8 +18,8 @@ const timeout = 129600; // 1.5 days
 const marketData = {
   marketName: "La Liga - Torneo Binance 2022 - Fecha #9", 
   marketSymbol: "LL22F9",
-  closingTime: 1658257200, // 2022-07-19 16:00:00 GMT -3:00
-  price: ethers.utils.parseUnits("10.0", "ether"), // 10 xDAI
+  closingTime: 1658253600, // 2022-07-19 15:00:00 GMT -3:00
+  price: ethers.utils.parseUnits("3.0", "ether"), // 3 xDAI
   creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),
@@ -64,12 +64,12 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Defensa y Justicia vs Independiente match at La Liga - Torneo Binance 2022 - Fecha #9?␟\"Defensa y Justicia\",\"Independiente\",\"Draw\"␟football␟en_US", 
-      openingTS: 1658358000  // 20hs Arg Time
+      openingTS: 1658365200  // 22 hs Arg Time
     },
     {
       templateID: 2, 
       question: "What will be the result of the Estudiantes de la Plata vs Barracas Central match at La Liga - Torneo Binance 2022 - Fecha #9?␟\"Estudiantes de la Plata\",\"Barracas Central\",\"Draw\"␟football␟en_US", 
-      openingTS: 1658358000  // 20 Hs Arg time
+      openingTS: 1658365200  // 22 hs Arg Time
     },
     {
       templateID: 2, 
