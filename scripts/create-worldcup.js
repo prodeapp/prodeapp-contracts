@@ -38,22 +38,22 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Qatar vs Senegal match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Senegal\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669392000 // 16 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Ecuador vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Ecuador\",\"Netherlands\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669402800 // 19 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Qatar vs Netherlands match at the FIFA World Cup Qatar 2022 group phase?␟\"Qatar\",\"Netherlands\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669744800 // 18 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Senegal vs Ecuador match at the FIFA World Cup Qatar 2022 group phase?␟\"Senegal\",\"Ecuador\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669744800 // 18 UTC
     },
     // Group B
     {
@@ -69,22 +69,22 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the England vs Wales match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"Wales\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669759200 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the USA vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"USA\",\"IR Iran\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669759200 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the England vs USA match at the FIFA World Cup Qatar 2022 group phase?␟\"England\",\"USA\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669413600 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Wales vs IR Iran match at the FIFA World Cup Qatar 2022 group phase?␟\"Wales\",\"IR Iran\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669381200 // 13 UTC
     },
     // Group C
     {
@@ -100,33 +100,33 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Argentina vs Poland match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Poland\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669845600 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Mexico vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Mexico\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669845600 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Argentina vs Mexico match at the FIFA World Cup Qatar 2022 group phase?␟\"Argentina\",\"Mexico\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669500000 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Poland vs Saudi Arabia match at the FIFA World Cup Qatar 2022 group phase?␟\"Poland\",\"Saudi Arabia\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669478400 // 16 UTC
     },
     // Group D
     {
       templateID: 2, 
       question: "What will be the result of the France vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Denmark\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669489200 // 19 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Tunisa vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Australia\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669467600 // 13 UTC
     },
     {
       templateID: 2, 
@@ -141,23 +141,23 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the France vs Tunisa match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Tunisa\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669831200 // 18 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Australia vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Australia\",\"Denmark\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669831200 // 18 UTC
     },
     // Group E
     {
       templateID: 2, 
       question: "What will be the result of the Spain vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Germany\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669586400 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Japan vs Costa Rica match at the FIFA World Cup Qatar 2022 group phase?␟\"Japan\",\"Costa Rica\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669554000 // 13 UTC
     },
     {
       templateID: 2, 
@@ -172,12 +172,12 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Spain vs Japan match at the FIFA World Cup Qatar 2022 group phase?␟\"Spain\",\"Japan\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669932000 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Costa Rica vs Germany match at the FIFA World Cup Qatar 2022 group phase?␟\"Costa Rica\",\"Germany\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669932000 // 22 UTC
     },
     // Group F
     {
@@ -193,22 +193,22 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Belgium vs Croatia match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Croatia\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669917600 // 18 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Morocco vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Morocco\",\"Canada\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669917600 // 18 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Belgium vs Morocco match at the FIFA World Cup Qatar 2022 group phase?␟\"Belgium\",\"Morocco\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669564800 // 16 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Croatia vs Canada match at the FIFA World Cup Qatar 2022 group phase?␟\"Croatia\",\"Canada\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669575600 // 19 UTC
     },
     // Group G
     {
@@ -224,22 +224,22 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Brazil vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Cameroon\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670018400 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Switzerland vs Serbia match at the FIFA World Cup Qatar 2022 group phase?␟\"Switzerland\",\"Serbia\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670018400 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Brazil vs Switzerland match at the FIFA World Cup Qatar 2022 group phase?␟\"Brazil\",\"Switzerland\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669662000 // 19 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Serbia vs Cameroon match at the FIFA World Cup Qatar 2022 group phase?␟\"Serbia\",\"Cameroon\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669640400 // 13 UTC
     },
     // Group H
     {
@@ -255,106 +255,106 @@ const marketData = {
     {
       templateID: 2, 
       question: "What will be the result of the Portugal vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670004000 // 18 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Uruguay vs Ghana match at the FIFA World Cup Qatar 2022 group phase?␟\"Uruguay\",\"Ghana\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670004000 // 18 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Portugal vs Uruguay match at the FIFA World Cup Qatar 2022 group phase?␟\"Portugal\",\"Uruguay\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669672800 // 22 UTC
     },
     {
       templateID: 2, 
       question: "What will be the result of the Ghana vs Korea Republic match at the FIFA World Cup Qatar 2022 group phase?␟\"Ghana\",\"Korea Republic\",\"Draw\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1669651200 // 16 UTC
     },
     // Round of 16
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#49) between 1A and 2B at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670090400 // 18 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#50) between 1C and 2D at the FIFA World Cup Qatar 2022?␟\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670104800 // 22 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#51) between 1B and 2A at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670191200 // 22 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#52) between 1D and 2C at the FIFA World Cup Qatar 2022?␟\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670176800 // 18 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#53) between 1E and 2F at the FIFA World Cup Qatar 2022?␟\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670263200 // 18 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#54) between 1G and 2H at the FIFA World Cup Qatar 2022?␟\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670277600 // 22 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#55) between 1F and 2E at the FIFA World Cup Qatar 2022?␟\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670349600 // 18 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the round of 16 match (#56) between 1H and 2G at the FIFA World Cup Qatar 2022?␟\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670364000 // 22 UTC
     },
     // Quarter-finals
     {
       templateID: 2, 
       question: "Who will win the quarter-finals match (#57) between #49 and #50 winners at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\",\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670623200 // 22 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the quarter-finals match (#58) between #53 and #54 winners at the FIFA World Cup Qatar 2022?␟\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\",\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670608800 // 18 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the quarter-finals match (#59) between #51 and #52 winners at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\",\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670709600 // 22 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the quarter-finals match (#60) between #55 and #56 winners at the FIFA World Cup Qatar 2022?␟\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\",\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670695200 // 18 UTC
     },
     // Semi-finals
     {
       templateID: 2, 
       question: "Who will win the semi-finals match (#61) between #57 and #58 winners at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\",\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\",\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\",\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1670968800 // 22 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the semi-finals match (#62) between #59 and #60 winners at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\",\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\",\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\",\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1671055200 // 22 UTC
     },
     // Finals
     {
       templateID: 2, 
       question: "Who will win the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\",\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\",\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\",\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1671386400 // 18 UTC
     },
     {
       templateID: 2, 
       question: "Who will win the third place play-off at the FIFA World Cup Qatar 2022?␟\"Qatar\",\"Ecuador\",\"Senegal\",\"Netherlands\",\"England\",\"IR Iran\",\"USA\",\"Wales\",\"Argentina\",\"Saudi Arabia\",\"Mexico\",\"Poland\",\"France\",\"Australia\",\"Denmark\",\"Tunisia\",\"Spain\",\"Costa Rica\",\"Germany\",\"Japan\",\"Belgium\",\"Canada\",\"Morocco\",\"Croatia\",\"Brazil\",\"Serbia\",\"Switzerland\",\"Cameroon\",\"Portugal\",\"Ghana\",\"Uruguay\",\"Korea Republic\"␟football␟en_US", 
-      openingTS: 1669075200
+      openingTS: 1671300000 // 18 UTC
     }
   ],
   prizeWeights: [6000, 3000, 1000]
