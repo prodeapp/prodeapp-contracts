@@ -95,7 +95,7 @@ contract BetNFTDescriptor is Initializable {
         string memory marketAddress = addressToString(msg.sender);
         string memory link = string(
                 abi.encodePacked(
-                    'https://prode.eth.link/#/markets/',
+                    'https://prode.eth.limo/#/markets/',
                     marketAddress,
                     '/',
                     tokenId.toString()
@@ -128,8 +128,7 @@ contract BetNFTDescriptor is Initializable {
         if (isRegistered) {
             return ICurate(curatedMarkets).getTitle(questionsHash);
         } else {
-            IMarket.MarketInfo memory marketInfo = IMarket(msg.sender).marketInfo();
-            return marketInfo.marketName;
+            return market.name();
         }
     }
 
@@ -149,9 +148,9 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function generateFee() private view returns (string memory) {
-        IMarket.MarketInfo memory marketInfo = IMarket(msg.sender).marketInfo();
-        uint256 units = marketInfo.fee/100;
-        uint256 decimals = uint256(marketInfo.fee) - 100 * units;
+        (uint16 fee,,,,) = IMarket(msg.sender).marketInfo();
+        uint256 units = fee/100;
+        uint256 decimals = uint256(fee) - 100 * units;
         if (decimals == 0) {
             return string(
                 abi.encodePacked(

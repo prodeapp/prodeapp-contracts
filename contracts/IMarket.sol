@@ -2,15 +2,8 @@
 pragma solidity 0.8.9;
 
 interface IMarket {
-    struct MarketInfo {
-        uint16 fee;
-        uint16 royaltyFee;
-        address payable manager;
-        string marketName;
-        string marketSymbol;
-    }
-
-    function marketInfo() external view returns(MarketInfo memory);
+    function marketInfo() external view returns(uint16,uint16,address payable,string memory,string memory);
+    function name() external view returns(string memory);
     function questionsHash() external view returns(bytes32);
     function resultSubmissionPeriodStart() external view returns(uint256);
     function closingTime() external view returns(uint256);
