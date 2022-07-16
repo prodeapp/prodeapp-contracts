@@ -56,7 +56,7 @@ describe("Market", () => {
   let Manager;
   
   const timeout = 129600; // 1.5 days
-  const protocolFee = 150; // 1.5 days
+  const protocolFee = 150; // 1.5 %
   const marketData = {
     info: {
       marketName: "FIFA World Cup 2022", 
@@ -293,6 +293,52 @@ describe("Market", () => {
       expect(tokenID).to.eq((await market.nextTokenID()).sub(BigNumber.from(1)));
       expect(tokenHash).to.eq(ethers.utils.keccak256(ethers.utils.hexConcat(predictions)));
       expect(_predictions).to.deep.equal(predictions);
+    });
+
+    it("Should retrieve token URI correctly.", async () => {
+      const currentTS = await getCurrentTimestamp() + 1000;
+      for (let i = 0; i < marketData.questions.length; i++) {
+        marketData.questions[i].openingTS = currentTS + 1;
+      }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = marketData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
+      await factory.createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        currentTS,
+        marketData.price,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      const totalMarkets = await factory.marketCount();
+      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      market = await Market.attach(marketAddress);
+      
+      const predictions = [numberToBytes32(1), numberToBytes32(40)];
+      const tx = await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      await market.tokenURI(0);
     });
 
     it("Should create and transfer ERC721 Bet item correctly.", async () => {
