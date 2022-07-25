@@ -17,7 +17,7 @@ const BATCHER_ABI = [
   }
 ]
 
-const marketAddress = "0x48cca4b7e5e1c38353295966f6c6b1b1d462b775";
+const marketAddress = "";
 const transactionBatcher = "0xA73A872eFD768bb23efb24CEeB9e330bcCA259D6";
 const subgraphUrl = "https://api.thegraph.com/subgraphs/name/prodeapp/prodeapp";
 

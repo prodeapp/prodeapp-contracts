@@ -15,7 +15,7 @@ const BATCHER_ABI = [
   }
 ]
 
-const tournamentAddress = "0xd5b6f4a82d4750a890166282ac0342d840ff2cc4";
+const marketAddress = "";
 const transactionBatcher = "0xA73A872eFD768bb23efb24CEeB9e330bcCA259D6";
 
 async function main() {
@@ -25,19 +25,19 @@ async function main() {
   console.log("Account balance:", (await signer.getBalance()).toString());
   console.log("Chain Id:", chainId);
 
-  const Tournament = await ethers.getContractFactory("Tournament");
-  const tournament = await Tournament.attach(tournamentAddress);
+  const Market = await ethers.getContractFactory("Market");
+  const market = await Market.attach(marketAddress);
 
-  const numberOfTokens = await tournament.nextTokenID();
+  const numberOfTokens = await market.nextTokenID();
   let datas = [];
   for (let i = 0; i < numberOfTokens; i++) {
-    const reimbursePlayer = (await tournament.populateTransaction.reimbursePlayer(i)).data;
+    const reimbursePlayer = (await market.populateTransaction.reimbursePlayer(i)).data;
     datas.push(reimbursePlayer);
   }
 
   const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
   await batcherContract.batchSend(
-    Array(datas.length).fill(tournamentAddress),
+    Array(datas.length).fill(marketAddress),
     Array(datas.length).fill(0),
     datas
   );
