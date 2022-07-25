@@ -46,7 +46,7 @@ async function main() {
         marketAddress: marketAddress
       }
   );
-  const Tournament = await ethers.getContractFactory("Tournament");
+  const Tournament = await ethers.getContractFactory("Market");
   const tournament = await Tournament.attach(marketAddress);
 
   const passPeriod = (await tournament.populateTransaction.registerAvailabilityOfResults()).data;
