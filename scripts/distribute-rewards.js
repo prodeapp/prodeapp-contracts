@@ -50,18 +50,23 @@ async function main() {
   const market = await Market.attach(marketAddress);
 
   let datas = [];
-  let rankIndex = 0;
-  let previousPoints = bets[0].points;
-  for (let i = 0; i < bets.length; i++) {
-    rankIndex = previousPoints == bets[i].points ? rankIndex : i;
-    if (rankIndex >= marketData.prizes.length) break;
-
-    // TODO: support shared prizes
-    const claimReward = (await market.populateTransaction.claimRewards(i, rankIndex, rankIndex)).data;
+  let firstSharedIndex = 0;
+  let endSharedIndex = 0;
+  for (rankIndex = 0; rankIndex < marketData.prizes.length; rankIndex++) {
+    let currentRankPoints = bets[firstSharedIndex].points;
+    for (let i = firstSharedIndex; i < bets.length; i++) {
+      if (currentRankPoints > bets[i].points) {break;}
+      else {endSharedIndex = i;}
+    }
+    // console.log('Claim inputs:', rankIndex, currentRankPoints, firstSharedIndex, endSharedIndex)
+    const claimReward = (await market.populateTransaction.claimRewards(rankIndex, firstSharedIndex, endSharedIndex)).data;
     datas.push(claimReward);
     
-    previousPoints = bets[i].points;
+    if (endSharedIndex >= marketData.prizes.length) break;
+    firstSharedIndex = endSharedIndex+1
+    endSharedIndex = firstSharedIndex
   }
+  
   if (datas.length < marketData.prizes.length) {
     const remainingPrizes = (await market.populateTransaction.distributeRemainingPrizes()).data;
     datas.push(remainingPrizes);
