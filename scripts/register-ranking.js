@@ -53,6 +53,7 @@ async function main() {
   let datas = [passPeriod];
   let rankIndex = 0;
   let previousPoints = bets[0].points;
+  console.log("TokenID - Ranking - DuplicateRanking")
   for (let i = 0; i < bets.length; i++) {
     rankIndex = previousPoints == bets[i].points ? rankIndex : i;
     if (rankIndex >= marketData.prizes.length) break;
@@ -61,6 +62,7 @@ async function main() {
     datas.push(registerPoints);
    
     previousPoints = bets[i].points;
+    console.log(bets[i].tokenID, ' - ', rankIndex, ' - ', i - rankIndex)
   }
 
   const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
