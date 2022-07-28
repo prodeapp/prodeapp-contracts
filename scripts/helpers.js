@@ -8,10 +8,18 @@ function buildQuestionHomevsAway(team1, team2, market, openingTS) {
   };
 }
 
+function buildQuestionSingleSelect(question, answers, openingTS, category) {
+  return {
+    templateID: 2,
+    question: encodeQuestionText('single-select', question, answers, category, 'en_US'),
+    openingTS: openingTS
+  };
+}
+
 function buildQuestionPosition(position, answers, market, openingTS) {
   return {
     templateID: 2,
-    question: encodeQuestionText('single-select', `Who will finish in the position #${position} at ${market}?`, answers, 'F1', 'en_US'),
+    question: encodeQuestionText('single-select', `Who will finish in the position #${position} at ${market} race?`, answers, 'F1', 'en_US'),
     openingTS: openingTS
   };
 }
@@ -119,6 +127,7 @@ module.exports = {
   buildQuestionHomevsAway,
   buildQuestionPosition,
   buildQuestionTeamMostPoints,
+  buildQuestionSingleSelect,
   encodeQuestionText,
   getQuestionID,
   orderQuestions,
