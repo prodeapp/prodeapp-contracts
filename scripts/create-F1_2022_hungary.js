@@ -38,37 +38,36 @@ const marketData = {
 };
 
 async function main() {
-  // const chainId = hre.network.config.chainId;
-  // const [deployer] = await ethers.getSigners();
+  const chainId = hre.network.config.chainId;
+  const [deployer] = await ethers.getSigners();
 
-  // console.log("Deploying contracts with the account:", deployer.address);
-  // console.log("Account balance:", (await deployer.getBalance()).toString());
-  // console.log("Chain Id:", chainId);
+  console.log("Deploying contracts with the account:", deployer.address);
+  console.log("Account balance:", (await deployer.getBalance()).toString());
+  console.log("Chain Id:", chainId);
 
-  // const chainConfig = getChain(chainId);
-  // // Sort questions by Realitio's question ID.
-  // const orderedQuestions = orderQuestions(
-  //   marketData,
-  //   timeout,
-  //   chainConfig.arbitrator,
-  //   chainConfig.realityEth,
-  //   chainConfig.factory
-  // );
+  const chainConfig = getChain(chainId);
+  // Sort questions by Realitio's question ID.
+  const orderedQuestions = orderQuestions(
+    marketData,
+    timeout,
+    chainConfig.arbitrator,
+    chainConfig.realityEth,
+    chainConfig.factory
+  );
 
-  console.log(marketData);
-  // const MarketFactory = await ethers.getContractFactory("MarketFactory");
-  // const marketFactory = MarketFactory.attach(chainConfig.factory);
-  // await marketFactory.createMarket(
-  //   marketData.marketName,
-  //   marketData.marketSymbol,
-  //   marketData.creator,
-  //   marketData.creatorFee,
-  //   marketData.closingTime,
-  //   marketData.price,
-  //   marketData.minBond,
-  //   orderedQuestions,
-  //   marketData.prizeWeights
-  // );
+  const MarketFactory = await ethers.getContractFactory("MarketFactory");
+  const marketFactory = MarketFactory.attach(chainConfig.factory);
+  await marketFactory.createMarket(
+    marketData.marketName,
+    marketData.marketSymbol,
+    marketData.creator,
+    marketData.creatorFee,
+    marketData.closingTime,
+    marketData.price,
+    marketData.minBond,
+    orderedQuestions,
+    marketData.prizeWeights
+  );
 }
 
 main()
