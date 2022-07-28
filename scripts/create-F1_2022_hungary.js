@@ -7,7 +7,8 @@ const ethers = hre.ethers;
 const timeout = 129600; // 1.5 days
 
 const marketName = "F1 2022 Hungary Grand Prix";
-
+const allDrivers = Object.values(DRIVERS.F1);
+const allTeams = Object.values(TEAMS.F1);
 const marketData = {
   marketName: marketName,
   marketSymbol: "PRODE",
@@ -17,12 +18,12 @@ const marketData = {
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),
   questions: [
-    buildQuestionPosition(1, DRIVERS.F1.values(), marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
-    buildQuestionPosition(2, DRIVERS.F1.values(), marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
-    buildQuestionPosition(3, DRIVERS.F1.values(), marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
-    buildQuestionPosition(4, DRIVERS.F1.values(), marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
-    buildQuestionPosition(5, DRIVERS.F1.values(), marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
-    buildQuestionTeamMostPoints(TEAMS.F1.values(), marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
+    buildQuestionPosition(1, allDrivers, marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
+    buildQuestionPosition(2, allDrivers, marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
+    buildQuestionPosition(3, allDrivers, marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
+    buildQuestionPosition(4, allDrivers, marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
+    buildQuestionPosition(5, allDrivers, marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
+    buildQuestionTeamMostPoints(allTeams, marketName, 1659272400 + F1_RACE_DURATION), // 10hs Arg Time
         
   ],
   prizeWeights: [5000, 3500, 1500]
