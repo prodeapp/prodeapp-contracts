@@ -28,9 +28,9 @@ const marketData = {
     buildQuestionPosition(3, allDrivers, marketName, openingTS), // 10hs Arg Time
     buildQuestionSingleSelect(`Who will get the pole-position at ${marketName}?`, allDrivers, openingTS, 'F1'),
     buildQuestionSingleSelect(`Who will get the fastest lap time at ${marketName}?`, allDrivers, openingTS, 'F1'),
-    buildQuestionSingleSelect(`Who will be the driver of tha day at ${marketName}?`, allDrivers, openingTS, 'F1'),
+    buildQuestionSingleSelect(`Who will be the driver of the day at ${marketName}?`, allDrivers, openingTS, 'F1'),
     buildQuestionSingleSelect(`Wich engine will score the most points at ${marketName}?`, allEngines, openingTS, 'F1'),
-    buildQuestionSingleSelect(`Which tire will the winner finish the race with at ${marketName}?`, allTires, openingTS, 'F1'),
+    buildQuestionSingleSelect(`Which tires type has the race's winner at the ${marketName} race end??`, allTires, openingTS, 'F1'),
     buildQuestionSingleSelect(`Which driver will make the fastest pit stop at ${marketName}?`, allDrivers, openingTS, 'F1'),
     buildQuestionTeamMostPoints(allTeams, marketName, openingTS), // 10hs Arg Time
   ],
