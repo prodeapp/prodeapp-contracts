@@ -58,16 +58,19 @@ async function main() {
       if (currentRankPoints > bets[i].points) {break;}
       else {endSharedIndex = i;}
     }
-    // console.log('Claim inputs:', rankIndex, currentRankPoints, firstSharedIndex, endSharedIndex)
-    const claimReward = (await market.populateTransaction.claimRewards(rankIndex, firstSharedIndex, endSharedIndex)).data;
-    datas.push(claimReward);
+    for (let j=0; j<=endSharedIndex-firstSharedIndex; j++){
+      // console.log('Claim inputs:', rankIndex+j, currentRankPoints, firstSharedIndex, endSharedIndex)
+      const claimReward = (await market.populateTransaction.claimRewards(rankIndex+j, firstSharedIndex, endSharedIndex)).data;
+      datas.push(claimReward);
+    }
     
     if (endSharedIndex >= marketData.prizes.length) break;
     firstSharedIndex = endSharedIndex+1
     endSharedIndex = firstSharedIndex
   }
   
-  if (datas.length < marketData.prizes.length) {
+  if (endSharedIndex < marketData.prizes.length) {
+    // console.log("Distributing remaining prizes for this market")
     const remainingPrizes = (await market.populateTransaction.distributeRemainingPrizes()).data;
     datas.push(remainingPrizes);
   } else if (datas.length == 0) {
