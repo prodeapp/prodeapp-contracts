@@ -46,10 +46,10 @@ async function main() {
         marketAddress: marketAddress
       }
   );
-  const Tournament = await ethers.getContractFactory("Market");
-  const tournament = await Tournament.attach(marketAddress);
+  const Market = await ethers.getContractFactory("Market");
+  const market = await Market.attach(marketAddress);
 
-  const passPeriod = (await tournament.populateTransaction.registerAvailabilityOfResults()).data;
+  const passPeriod = (await market.populateTransaction.registerAvailabilityOfResults()).data;
   let datas = [passPeriod];
   let rankIndex = 0;
   let previousPoints = bets[0].points;
@@ -58,7 +58,7 @@ async function main() {
     rankIndex = previousPoints == bets[i].points ? rankIndex : i;
     if (rankIndex >= marketData.prizes.length) break;
 
-    const registerPoints = (await tournament.populateTransaction.registerPoints(bets[i].tokenID, rankIndex, i - rankIndex)).data;
+    const registerPoints = (await market.populateTransaction.registerPoints(bets[i].tokenID, rankIndex, i - rankIndex)).data;
     datas.push(registerPoints);
    
     previousPoints = bets[i].points;
