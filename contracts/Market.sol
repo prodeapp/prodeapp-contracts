@@ -6,6 +6,10 @@ import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./IERC2981.sol";
 import "./BetNFTDescriptor.sol";
 
+interface IManager {
+    function creator() external view returns(address payable);
+}
+
 contract Market is ERC721, IERC2981 {
     struct MarketInfo {
         uint16 fee;
@@ -160,7 +164,9 @@ contract Market is ERC721, IERC2981 {
         uint256 marketBalance = address(this).balance;
         managementReward = (marketBalance * marketInfo.fee) / DIVISOR;
         totalPrize = marketBalance - managementReward;
-        marketInfo.manager.send(managementReward);
+
+        // The manager contract is immutable, created by the MarketFactory and will never block a transfer of funds.
+        requireSendXDAI(marketInfo.manager, managementReward);
 
         emit ManagementReward(marketInfo.manager, managementReward);
     }
@@ -314,6 +320,11 @@ contract Market is ERC721, IERC2981 {
         emit FundingReceived(msg.sender, msg.value, _message);
     }
 
+	function requireSendXDAI(address payable _to, uint256 _value) internal {
+        (bool success,) = _to.call{value:_value}(new bytes(0));
+        require(success, 'Send XDAI failed');
+    }
+
     /**
      * @dev See {IERC721Metadata-name}.
      */
@@ -357,7 +368,7 @@ contract Market is ERC721, IERC2981 {
         override(IERC2981)
         returns (address receiver, uint256 royaltyAmount)
     {
-        receiver = marketInfo.manager;
+        receiver = IManager(marketInfo.manager).creator();
         royaltyAmount = (_salePrice * marketInfo.royaltyFee) / DIVISOR;
     }
 }

@@ -723,6 +723,7 @@ describe("Market", () => {
       expect(_manager).to.eq(marketInfo.manager);
       const managementReward = poolBalance.mul(BigNumber.from(marketData.managementFee + protocolFee)).div(BigNumber.from(10000));
       expect(_managementReward).to.eq(managementReward);
+      expect(await ethers.provider.getBalance(marketInfo.manager)).to.eq(managementReward);
       expect(await market.totalPrize()).to.eq(poolBalance.sub(managementReward));
   
       // Estimate ranking
@@ -1340,7 +1341,8 @@ describe("Market", () => {
       for (let i = 0; i < salePrices.length; i++) {
         const [receiver, amount] = await market.royaltyInfo(i, salePrices[i]);
         const expectedRoyalty = salePrices[i].mul(protocolFee).div(10000);
-        expect(receiver).to.eq(marketInfo.manager);
+        const managerContract = await Manager.attach(marketInfo.manager);
+        expect(receiver).to.eq(await managerContract.creator());
         expect(amount).to.eq(expectedRoyalty);
       }
     });
