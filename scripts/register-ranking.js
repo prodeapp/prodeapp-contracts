@@ -17,9 +17,9 @@ const BATCHER_ABI = [
   }
 ]
 
-const marketAddress = "";
 const transactionBatcher = "0xA73A872eFD768bb23efb24CEeB9e330bcCA259D6";
 const subgraphUrl = "https://api.thegraph.com/subgraphs/name/prodeapp/prodeapp";
+const graph = new GraphQLClient(subgraphUrl);
 
 async function main() {
   const chainId = hre.network.config.chainId;
@@ -28,7 +28,39 @@ async function main() {
   console.log("Account balance:", (await signer.getBalance()).toString());
   console.log("Chain Id:", chainId);
 
-  const graph = new GraphQLClient(subgraphUrl);
+  // fetch candidate markets
+  const { markets } = await graph.request(
+    gql`
+      query marketsQuery($closingTime: Int!) {
+        markets(where: {resultSubmissionPeriodStart: 0, closingTime_lt: $closingTime, hasPendingAnswers: false}) {
+          id
+          name
+          events {
+            id
+          }
+        }
+      }
+    `, {
+      closingTime: Math.floor(Date.now() / 1000)
+    }
+  );
+
+  for (const market of markets) {
+    console.log(`${market.name} (${market.id})`);
+    await processMarket(market.id, signer);
+  }
+}
+
+async function processMarket(marketAddress, signer) {
+  const Market = await ethers.getContractFactory("Market");
+  const market = await Market.attach(marketAddress);
+
+  try {
+    await market.callStatic.registerAvailabilityOfResults();
+  } catch (e) {
+    console.log(`Market has pending answers`);
+    return;
+  }
 
   const { bets, market: marketData } = await graph.request(
     gql`
@@ -46,8 +78,6 @@ async function main() {
         marketAddress: marketAddress
       }
   );
-  const Market = await ethers.getContractFactory("Market");
-  const market = await Market.attach(marketAddress);
 
   const passPeriod = (await market.populateTransaction.registerAvailabilityOfResults()).data;
   let datas = [passPeriod];
