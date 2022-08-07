@@ -165,7 +165,7 @@ contract Market is ERC721, IERC2981 {
         managementReward = (marketBalance * marketInfo.fee) / DIVISOR;
         totalPrize = marketBalance - managementReward;
 
-        // The manager contract is immutable, created by the MarketFactory and will never block a transfer of funds.
+        // Once the Market is created, the manager contract is immutable, created by the MarketFactory and will never block a transfer of funds.
         requireSendXDAI(marketInfo.manager, managementReward);
 
         emit ManagementReward(marketInfo.manager, managementReward);
@@ -321,7 +321,7 @@ contract Market is ERC721, IERC2981 {
     }
 
 	function requireSendXDAI(address payable _to, uint256 _value) internal {
-        (bool success,) = _to.call{value:_value}(new bytes(0));
+        (bool success,) = _to.call{value: _value}(new bytes(0));
         require(success, 'Send XDAI failed');
     }
 

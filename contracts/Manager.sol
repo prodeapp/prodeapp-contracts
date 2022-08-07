@@ -53,13 +53,15 @@ contract Manager {
 		uint256 totalBets = market.nextTokenID();
 		uint256 nonReferralShare = totalBets - market.totalAttributions();
 
-		creatorReward = totalReward * creatorFee * nonReferralShare / ( totalBets * totalFee * 2 );
-		creatorReward += totalReward * creatorFee / ( totalFee * 2 );
+		uint256 creatorMarketReward = totalReward * creatorFee * nonReferralShare / ( totalBets * totalFee * 2 );
+		creatorMarketReward += totalReward * creatorFee / ( totalFee * 2 );
+		creatorReward += creatorMarketReward;
 
-		protocolReward = totalReward * protocolFee * nonReferralShare / ( totalBets * totalFee * 3 );
-		protocolReward += totalReward * protocolFee * 2 / ( totalFee * 3 );
+		uint256 protocolMarketReward = totalReward * protocolFee * nonReferralShare / ( totalBets * totalFee * 3 );
+		protocolMarketReward += totalReward * protocolFee * 2 / ( totalFee * 3 );
+		protocolReward += protocolMarketReward;
 
-		amountClaimed += creatorReward + protocolReward;
+		amountClaimed += creatorMarketReward + protocolMarketReward;
 	}
 
 	function executeCreatorRewards() external {
