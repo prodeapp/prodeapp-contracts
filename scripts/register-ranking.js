@@ -25,7 +25,7 @@ async function main() {
   const chainId = hre.network.config.chainId;
   const [signer] = await ethers.getSigners();
 
-  console.log("Account balance:", (await signer.getBalance()).toString());
+  console.log("Account balance:", ethers.utils.formatUnits((await signer.getBalance()).toString(), 18));
   console.log("Chain Id:", chainId);
 
   // fetch candidate markets
@@ -44,6 +44,11 @@ async function main() {
       closingTime: Math.floor(Date.now() / 1000)
     }
   );
+
+  if (markets.length === 0) {
+    console.log('No markets found');
+    return;
+  }
 
   for (const market of markets) {
     console.log(`${market.name} (${market.id})`);
