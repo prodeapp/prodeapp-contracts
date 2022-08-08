@@ -789,7 +789,7 @@ describe("Market", () => {
     });
   });
 
-  describe("Claims and reimbursements", () => {
+  describe("Claims and Reimbursements", () => {
     let players;
     let ranking;
     beforeEach("Setup bets", async function () {
@@ -904,7 +904,7 @@ describe("Market", () => {
         if (i > 0 && ranking[bet_i] != ranking[sortedRanking[sortedRanking.length - i]]) {
           currentDuplicateIndex = i;
           currentDuplicates = 0;
-        } else {
+        } else if (i != 0) {
           currentDuplicates += 1;
         }
         tx = await market.registerPoints(bet_i, currentDuplicateIndex, currentDuplicates);
@@ -1067,7 +1067,7 @@ describe("Market", () => {
       }
     });
   });
-
+  
   describe("Huge Markets", () => {
     let players;
     let ranking;
@@ -1180,7 +1180,7 @@ describe("Market", () => {
         if (i > 0 && ranking[bet_i] != ranking[sortedRanking[sortedRanking.length - i]]) {
           currentDuplicateIndex = i;
           currentDuplicates = 0;
-        } else {
+        } else if (i != 0) {
           currentDuplicates += 1;
         }
         tx = await market.registerPoints(bet_i, currentDuplicateIndex, currentDuplicates);
@@ -1355,6 +1355,218 @@ describe("Market", () => {
       expect(await market.supportsInterface("0xffffffff")).to.be.false;
       expect(await market.supportsInterface("0x00000000")).to.be.false;
       expect(await market.supportsInterface("0x12345678")).to.be.false;
+    });
+  });
+
+  describe("Fee Management", () => {
+    let players;
+    let ranking;
+    beforeEach("Setup bets", async function () {
+      const bettingTime = 200;
+      const betPrice = 2000;
+      const closingTime = await getCurrentTimestamp() + bettingTime;
+      const questions = [
+        {
+          templateID: 2, 
+          question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
+          openingTS: closingTime + 1
+        },
+        {
+          templateID: 2, 
+          question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
+          openingTS: closingTime + 1
+        },
+        {
+          templateID: 2, 
+          question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
+          openingTS: closingTime + 1
+        }
+      ];
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
+      await factory.createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        closingTime,
+        betPrice,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      const totalMarkets = await factory.marketCount();
+      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      market = await Market.attach(marketAddress);
+
+      players = [
+        player1,
+        player2,
+        player3,
+        player3,
+        player4,
+        player4,
+        player4,
+      ];
+      const bets = [
+        [numberToBytes32(1), numberToBytes32(1), numberToBytes32(1)], // 2 points
+        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], // 3 points
+        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(2)], // 2 points
+        [numberToBytes32(2), numberToBytes32(2), numberToBytes32(2)], // 1 points
+        [numberToBytes32(0), numberToBytes32(0), numberToBytes32(0)], // 0 points
+      ];
+      const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
+
+      for (let i = 0; i < bets.length; i++) {
+        await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: betPrice });
+      }
+      await ethers.provider.send('evm_increaseTime', [bettingTime]);
+      await ethers.provider.send('evm_mine');
+
+      for (let i = 0; i < results.length; i++) {
+        const questionID = await market.questionIDs(i);
+        await realitio.submitAnswer(questionID, results[i], 0, { value: 10 });
+      }
+      await ethers.provider.send('evm_increaseTime', [timeout]);
+      await ethers.provider.send('evm_mine');
+      await market.registerAvailabilityOfResults();
+
+      // Estimate ranking
+      ranking = []
+      for (let i = 0; i < bets.length; i++) {
+        const predictions_i = bets[i];
+        const points = predictions_i.filter((prediction, idx) => prediction == results[idx]).length;
+        ranking.push(points);
+      }
+    });
+
+    it("Should send fees only after distribution.", async () => {
+      const marketInfo = await market.marketInfo();
+      const managerContract = await Manager.attach(marketInfo.manager);
+
+      const feesGenerated = marketData.managementFee + protocolFee;
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(0)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(0)).to.eq(await managerContract.protocolReward());
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeProtocolRewards();
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeRewards();
+      expect(BigNumber.from(marketData.managementFee)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(protocolFee)).to.eq(await managerContract.protocolReward());
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(marketData.managementFee)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(protocolFee)).to.eq(await managerContract.protocolReward());
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await expect(managerContract.distributeRewards()).to.be.revertedWith("Reward already claimed");
+      
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(protocolFee)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(protocolFee)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeProtocolRewards();
+      expect(BigNumber.from(0)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(0)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      expect(BigNumber.from(0)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(0)).to.eq(await managerContract.protocolReward());
+    });
+
+    it("Should distribute surplus of xDAI correctly.", async () => {const marketInfo = await market.marketInfo();
+      const managerContract = await Manager.attach(marketInfo.manager);
+      const surplus = 100;
+      await other.sendTransaction({
+        to: marketInfo.manager,
+        value: surplus,
+      });
+
+      const feesGenerated = marketData.managementFee + protocolFee;
+      expect(BigNumber.from(feesGenerated + surplus)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(surplus/2)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(surplus/2)).to.eq(await managerContract.protocolReward());
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(feesGenerated + surplus/2)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeProtocolRewards();
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeRewards();
+      expect(BigNumber.from(marketData.managementFee)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(protocolFee)).to.eq(await managerContract.protocolReward());
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(marketData.managementFee)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(protocolFee)).to.eq(await managerContract.protocolReward());
+      expect(BigNumber.from(feesGenerated)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await expect(managerContract.distributeRewards()).to.be.revertedWith("Reward already claimed");
+      
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(protocolFee)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(protocolFee)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeProtocolRewards();
+      expect(BigNumber.from(0)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(0)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      expect(BigNumber.from(0)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(0)).to.eq(await managerContract.protocolReward());
+    });
+
+    it("Should distribute surplus of xDAI + fees correctly.", async () => {const marketInfo = await market.marketInfo();
+      const managerContract = await Manager.attach(marketInfo.manager);
+      const surplus = 100;
+      await other.sendTransaction({
+        to: marketInfo.manager,
+        value: surplus,
+      });
+
+      const feesGenerated = marketData.managementFee + protocolFee;
+      expect(BigNumber.from(feesGenerated + surplus)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(feesGenerated + surplus)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeProtocolRewards();
+      expect(BigNumber.from(feesGenerated + surplus)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeRewards();
+      expect(BigNumber.from(marketData.managementFee)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(protocolFee)).to.eq(await managerContract.protocolReward());
+      expect(BigNumber.from(feesGenerated + surplus)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(marketData.managementFee + surplus/2)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(protocolFee + surplus/2)).to.eq(await managerContract.protocolReward());
+      expect(BigNumber.from(feesGenerated + surplus)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await expect(managerContract.distributeRewards()).to.be.revertedWith("Reward already claimed");
+      
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(protocolFee + surplus/2)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeCreatorRewards();
+      expect(BigNumber.from(protocolFee + surplus/2)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.executeProtocolRewards();
+      expect(BigNumber.from(0)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      await managerContract.distributeSurplus();
+      expect(BigNumber.from(0)).to.eq(await ethers.provider.getBalance(marketInfo.manager));
+      expect(BigNumber.from(0)).to.eq(await managerContract.creatorReward());
+      expect(BigNumber.from(0)).to.eq(await managerContract.protocolReward());
     });
   });
 });

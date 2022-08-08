@@ -16,7 +16,7 @@ contract Manager {
     IMarket public market;
 
     bool public initialized;
-	bool managerRewardDistributed;
+	bool public managerRewardDistributed;
     mapping(address => bool) public claimed; // claimed[referral]
 	uint256 public amountClaimed;
 	uint256 public creatorReward;
@@ -95,8 +95,8 @@ contract Manager {
 
     function distributeSurplus() external {
 		require(market.resultSubmissionPeriodStart() != 0, "Can't distribute surplus yet");
-		uint256 remainingManagementReward = market.managementReward() - amountClaimed + creatorReward + protocolReward;
-        uint256 surplus = address(this).balance - remainingManagementReward;
+		uint256 remainingManagementReward = market.managementReward() - amountClaimed;
+        uint256 surplus = address(this).balance - remainingManagementReward - creatorReward - protocolReward;
 		creatorReward += surplus / 2;
 		protocolReward += surplus / 2;
     }
