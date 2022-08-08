@@ -1,9 +1,33 @@
 const ethers = hre.ethers;
 
-function buildQuestion(team1, team2, market, openingTS) {
+function buildQuestionHomevsAway(team1, team2, market, openingTS) {
   return {
     templateID: 2,
     question: encodeQuestionText('single-select', `What will be the result of the ${team1} vs ${team2} match at ${market}?`, [team1, team2, 'Draw'], 'football', 'en_US'),
+    openingTS: openingTS
+  };
+}
+
+function buildQuestionSingleSelect(question, answers, openingTS, category) {
+  return {
+    templateID: 2,
+    question: encodeQuestionText('single-select', question, answers, category, 'en_US'),
+    openingTS: openingTS
+  };
+}
+
+function buildQuestionPosition(position, answers, market, openingTS) {
+  return {
+    templateID: 2,
+    question: encodeQuestionText('single-select', `Who will finish in the position #${position} at ${market} race?`, answers, 'F1', 'en_US'),
+    openingTS: openingTS
+  };
+}
+
+function buildQuestionTeamMostPoints(answers, market, openingTS) {
+  return {
+    templateID: 2,
+    question: encodeQuestionText('single-select', `Which team will earn more points at ${market}?`, answers, 'F1', 'en_US'),
     openingTS: openingTS
   };
 }
@@ -96,13 +120,18 @@ function getChain(chainId) {
   return params[chainId];
 }
 
-const MATCH_DURATION = 60*60*2.5;
+const SOCCER_MATCH_DURATION = 60*60*2.5;
+const F1_RACE_DURATION = 60*60*3;
 
 module.exports = {
-  buildQuestion,
+  buildQuestionHomevsAway,
+  buildQuestionPosition,
+  buildQuestionTeamMostPoints,
+  buildQuestionSingleSelect,
   encodeQuestionText,
   getQuestionID,
   orderQuestions,
   getChain,
-  MATCH_DURATION,
+  SOCCER_MATCH_DURATION,
+  F1_RACE_DURATION
 }

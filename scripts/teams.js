@@ -51,6 +51,18 @@ const TEAMS = {
     WEST_HAM: 'West Ham',
     WOLVES: 'Wolves',
   },
+  F1: {
+    FERRARI: 'Ferrari',
+    RED_BULL: 'Red Bull Racing',
+    MERCEDES: 'Mercedes',
+    ALPINE: 'Alpine',
+    MCLAREN: 'McLaren',
+    ALFA_ROMEO: 'Alfa Romeo',
+    HAAS: 'Haas F1 Team',
+    ALPHATAURI: 'AlphaTauri',
+    ASTON_MARTIN: 'Aston Martin',
+    WILLIAMS: 'Williams'
+  }
 };
 
 module.exports = {
