@@ -1,9 +1,9 @@
 const hre = require("hardhat");
 const {getChain, orderQuestions, buildQuestionPosition, buildQuestionTeamMostPoints, F1_RACE_DURATION, buildQuestionSingleSelect} = require("./helpers");
-const {TEAMS} = require("./teams");
-const { DRIVERS } = require("./drivers");
-const { ENGINES } = require("./f1_engines");
-const { TIRES } = require("./f1_tires");
+const {TEAMS} = require("./constants/teams");
+const { DRIVERS } = require("./constants/drivers");
+const { ENGINES } = require("./constants/f1_engines");
+const { TIRES } = require("./constants/f1_tires");
 const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days

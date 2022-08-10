@@ -50,7 +50,11 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
-      chainId: 31337
+      chainId: 31337,
+      forking: {
+        url: "https://rpc.gnosischain.com"
+      },
+      loggingEnabled: true,
     },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${alchemyKey}`,
