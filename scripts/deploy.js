@@ -7,17 +7,19 @@ const params = {
     arbitrator: "0xDEd12537dA82C1019b3CA1714A5d58B7c5c19A04",
     realityEth: "0xcB71745d032E16ec838430731282ff6c10D29Dea",
     curate: "",
-    nftDescriptorGovernor: "",
+    governor: "",
     submissionTimeout: 1 * 24 * 60 * 60,
   },
   100: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
-    curate: "0xc96514B3ad962Ae37c2d2c0AeD627306b0418Bf7",
-    nftDescriptorGovernor: "",
+    curate: "0x86E72802D9AbBF7505a889721fD4D6947B02320E",
+    governor: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
     submissionTimeout: 7 * 24 * 60 * 60,
   }
 };
+
+const protocolFee = 150;
 
 async function main() {
   const chainId = hre.network.config.chainId;
@@ -42,14 +44,23 @@ async function main() {
   const betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
   await betNFTDescriptor.deployed();
 
+  // Deploy manager contract
+  const Manager = await ethers.getContractFactory("Manager");
+  const manager = await Manager.deploy();
+  await manager.deployed();
+
   // Deploy factory contract
-  const MarketFactory = await ethers.getContractFactory("MarketFactory");
-  const marketFactory = await MarketFactory
+    const MarketFactory = await ethers.getContractFactory("MarketFactory");
+    const marketFactory = await MarketFactory
     .deploy(
       market.address,
       params[chainId].arbitrator,
       params[chainId].realityEth,
       betNFTDescriptor.address,
+      manager.address,
+      params[chainId].governor,  // governor
+      params[chainId].governor,  // treasury
+      protocolFee,
       params[chainId].submissionTimeout
     );
   await marketFactory.deployed();
@@ -57,6 +68,7 @@ async function main() {
   console.log("");
   console.log("Market factory address:", marketFactory.address);
   console.log("Curate proxy address:", curateProxy.address);
+  console.log("Manager address:", manager.address);
   console.log("NFT descriptor address:", betNFTDescriptor.address);
   console.log("");
 
@@ -70,8 +82,11 @@ async function main() {
 
   // npx hardhat verify --network mainnet PROXY_ADDRESS
 
-
   // Verify contracts
+  await hre.run("verify:verify", {
+    address: manager.address
+  });
+
   await hre.run("verify:verify", {
     address: market.address
   });
@@ -83,6 +98,10 @@ async function main() {
       params[chainId].arbitrator,
       params[chainId].realityEth,
       betNFTDescriptor.address,
+      manager.address,
+      params[chainId].governor,  // governor
+      params[chainId].governor,  // treasury
+      protocolFee,
       params[chainId].submissionTimeout
     ],
   });
