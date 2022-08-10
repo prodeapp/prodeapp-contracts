@@ -338,7 +338,7 @@ describe("Market", () => {
       
       const predictions = [numberToBytes32(1), numberToBytes32(40)];
       const tx = await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
-      await market.tokenURI(0);
+      const svg = await market.tokenURI(0);
     });
 
     it("Should create and transfer ERC721 Bet item correctly.", async () => {
