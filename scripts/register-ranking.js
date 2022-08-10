@@ -100,9 +100,20 @@ async function processMarket(marketAddress, signer) {
     console.log(bets[i].tokenID, ' - ', rankIndex, ' - ', i - rankIndex)
   }
 
+  // Distribute management fees
+  const marketInfo = await market.marketInfo();
+  const Manager = await ethers.getContractFactory("Manager");
+  const manager = await Manager.attach(marketInfo.manager);
+  const distributeRewards = (await manager.populateTransaction.distributeRewards()).data;
+  datas.push(distributeRewards);
+  const executeCreatorRewards = (await manager.populateTransaction.executeCreatorRewards()).data;
+  datas.push(executeCreatorRewards);
+  const executeProtocolRewards = (await manager.populateTransaction.executeProtocolRewards()).data;
+  datas.push(executeProtocolRewards);
+
   const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
   await batcherContract.batchSend(
-    Array(datas.length).fill(marketAddress),
+    Array(datas.length - 3).fill(marketAddress).concat(Array(3).fill(marketInfo.manager)),
     Array(datas.length).fill(0),
     datas
   );
