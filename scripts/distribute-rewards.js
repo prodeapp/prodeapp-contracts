@@ -31,8 +31,8 @@ async function main() {
   // fetch candidate markets
   let {markets} = await graph.request(
     gql`
-      query marketsQuery {
-        markets(where: {resultSubmissionPeriodStart_gt: 0}) {
+      query marketsQuery($resultSubmissionPeriodStart: Int!) {
+        markets(where: {resultSubmissionPeriodStart_gt: $resultSubmissionPeriodStart}) {
           id
           name
           resultSubmissionPeriodStart
@@ -42,7 +42,9 @@ async function main() {
           }
         }
       }
-    `
+    `, {
+      resultSubmissionPeriodStart: Math.floor(Date.now() / 1000) - 60 * 60 * 24 * 14 // Today - 2 weeks
+    }
   );
 
   const now = Math.floor(Date.now() / 1000);
@@ -61,8 +63,6 @@ async function main() {
 }
 
 async function processMarket(marketAddress, totalClaimed, signer) {
-  // TODO: we are reading all the markets, we will need to optimize this if we reach a big amount of markets
-  // (maybe keep track of the markets distributed or limit to the markets closed the last few days)
   const { bets, market: marketData } = await graph.request(
     gql`
       query rankingQuery($marketAddress: String) {
