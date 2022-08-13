@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./Market.sol";
-import "./Manager.sol";
+import "./manager/Manager.sol";
 
 contract MarketFactory {
     using Clones for address;

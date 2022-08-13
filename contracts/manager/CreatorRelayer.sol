@@ -32,10 +32,5 @@ contract CreatorRelayer {
 		_token.transfer(recipient, tokenBalance);
     }
 
-	function requireSendXDAI(address payable _to, uint256 _value) internal {
-        (bool success,) = _to.call{value:_value}(new bytes(0));
-        require(success, 'Send XDAI failed');
-    }
-
     receive() external payable {}
 }
