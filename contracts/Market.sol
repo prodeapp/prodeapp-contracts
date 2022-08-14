@@ -347,10 +347,13 @@ contract Market is ERC721, IERC2981 {
         return questionIDs.length;
     }
 
-    function getPrizes() external view returns (uint256[] memory prizesMultipliers) {
+    function getPrizes() external view returns (uint256[] memory) {
+        uint256[] memory prizeMultipliers = new uint256[](prizeWeights.length);
         for (uint256 i = 0; i < prizeWeights.length; i++) {
-            prizesMultipliers[i] = uint256(prizeWeights[i]);
+            prizeMultipliers[i] = uint256(prizeWeights[i]);
         }
+
+        return prizeMultipliers;
     }
 
     function getPredictions(uint256 _tokenID) external view returns (bytes32[] memory) {
