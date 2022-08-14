@@ -343,6 +343,33 @@ contract Market is ERC721, IERC2981 {
         return BetNFTDescriptor(betNFTDescriptor).tokenURI(tokenId);
     }
 
+    function numberOfQuestions() external view returns(uint256) {
+        return questionIDs.length;
+    }
+
+    function getPrizes() external view returns (uint256[] memory prizesMultipliers) {
+        for (uint256 i = 0; i < prizeWeights.length; i++) {
+            prizesMultipliers[i] = uint256(prizeWeights[i]);
+        }
+    }
+
+    function getPredictions(uint256 _tokenID) external view returns (bytes32[] memory) {
+        require(_exists(_tokenID), "Token does not exist");
+        return bets[tokenIDtoTokenHash[_tokenID]].predictions;
+    }
+
+    function getScore(uint256 _tokenID) external view returns(uint256 totalPoints) {
+        require(resultSubmissionPeriodStart != 0, "Results not available");
+        require(_exists(_tokenID), "Token does not exist");
+
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
+        for (uint256 i = 0; i < questionIDs.length; i++) {
+            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
+                totalPoints += 1;
+            }
+        }
+    }
+
     /**
      * @dev See {IERC165-supportsInterface}.
      */
