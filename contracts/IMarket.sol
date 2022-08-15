@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-interface IMarket {
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+
+interface IMarket is IERC721 {
     function marketInfo() external view returns(uint16,uint16,address payable,string memory,string memory);
     function name() external view returns(string memory);
     function questionsHash() external view returns(bytes32);
