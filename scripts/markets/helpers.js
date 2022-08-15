@@ -32,6 +32,11 @@ function buildQuestionTeamMostPoints(answers, market, openingTS) {
   };
 }
 
+function toTimestamp(strDate) {
+  var datum = Date.parse(strDate);
+  return datum / 1000;
+}
+
 function encodeQuestionText(
   qtype/*: 'bool' | 'single-select' | 'multiple-select' | 'uint' | 'datetime'*/,
   txt/*: string*/,
@@ -134,6 +139,7 @@ module.exports = {
   buildQuestionPosition,
   buildQuestionTeamMostPoints,
   buildQuestionSingleSelect,
+  toTimestamp,
   encodeQuestionText,
   getQuestionID,
   orderQuestions,
