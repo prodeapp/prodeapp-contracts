@@ -5,7 +5,8 @@ import "./../IMarket.sol";
 
 interface IERC20 {
     function balanceOf(address _owner) external view returns (uint256);
-	function transfer(address _to, uint256 _amount) external returns (bool);
+
+    function transfer(address _to, uint256 _amount) external returns (bool);
 }
 
 contract MultiMarketManager {
@@ -13,11 +14,9 @@ contract MultiMarketManager {
     address public owner = msg.sender;
     address payable public creator = payable(msg.sender);
 
-    constructor(
-        IMarket _market
-	) {
-		market = _market;
-	}
+    constructor(IMarket _market) {
+        market = _market;
+    }
 
     function changeOwner(address _owner) external {
         require(msg.sender == owner, "Not authorized");
@@ -28,7 +27,7 @@ contract MultiMarketManager {
         require(msg.sender == owner, "Not authorized");
         creator = _creator;
     }
-    
+
     // TODO
 
     receive() external payable {}

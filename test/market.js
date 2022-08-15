@@ -132,7 +132,6 @@ describe("Market", () => {
     );
   });
 
-  if (false) {
   describe("Betting Period", () => {
     it("Should only accept valid bets.", async () => {
       const currentTS = await getCurrentTimestamp() + 10000;
@@ -1285,7 +1284,7 @@ describe("Market", () => {
       await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Already claimed");
     });
   });
-  }
+
   describe("Getters", () => {
     let players;
     let ranking;
@@ -1406,7 +1405,7 @@ describe("Market", () => {
       expect(score).to.eq(ranking[tokenID]);
     });
   });
-if (false) {
+
   describe("Royalties - ERC2981 & IERC165", () => {
     it("Should return the correct royalty info.", async () => {
       const currentTS = await getCurrentTimestamp() + 1000;
@@ -1691,5 +1690,4 @@ if (false) {
       expect(BigNumber.from(0)).to.eq(await managerContract.protocolReward());
     });
   });
-}
 });

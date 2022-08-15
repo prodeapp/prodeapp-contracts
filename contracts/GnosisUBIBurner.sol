@@ -43,23 +43,32 @@ interface IERC20 {
  * @title ERC677 Interface
  */
 interface IERC677 {
-    function transferAndCall(address receiver, uint amount, bytes memory data) external returns(bool success);
+    function transferAndCall(
+        address receiver,
+        uint256 amount,
+        bytes memory data
+    ) external returns (bool success);
 }
 
 contract GnosisUBIBurner {
-
     /* Events */
 
     event BurnerAdded(address burner);
     event BurnerRemoved(address burner);
     event Received(address indexed from, uint256 amount);
     event BurnUBIRequested(address requester, uint256 UBIAmount);
-    event Burned(address requester, address burner, uint256 amount, uint256 burned);
+    event Burned(
+        address requester,
+        address burner,
+        uint256 amount,
+        uint256 burned
+    );
 
     /* Constants */
 
     /// @dev address of the uniswap v2 router (honeyswap)
-    address private constant UNISWAP_V2_ROUTER = 0x1C232F01118CB8B424793ae03F870aa7D0ac7f77;
+    address private constant UNISWAP_V2_ROUTER =
+        0x1C232F01118CB8B424793ae03F870aa7D0ac7f77;
 
     /// @dev address of WXDAI token. In Uniswap v2 there are no more direct ETH pairs, all ETH must be converted to WETH first.
     address private constant WXDAI = 0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d;
@@ -68,10 +77,12 @@ contract GnosisUBIBurner {
     address private constant WETH = 0x6A023CCd1ff6F2045C3309768eAd9E68F978f6e1;
 
     /// @dev address of UBIBurner contract on mainnet.
-    address private constant ForeignUBIBurner = 0x481B24Ed5feAcB37e282729b9815e27529Cf9ae2;
+    address private constant ForeignUBIBurner =
+        0x481B24Ed5feAcB37e282729b9815e27529Cf9ae2;
 
     /// @dev address of the omnibridge contract on the Gnosis chain.
-    address private constant Omnibridge = 0xf6A78083ca3e2a662D6dd1703c939c8aCE2e268d;
+    address private constant Omnibridge =
+        0xf6A78083ca3e2a662D6dd1703c939c8aCE2e268d;
 
     /* Storage */
 
@@ -86,11 +97,11 @@ contract GnosisUBIBurner {
 
     /* @dev Indicates if the address belongs to a burner. isBurner[address].
      * Burners are addresses with privilege access to the contracts functions.
-     * They decide when and how xDAI is swapped for WETH and when WETH is relayed 
+     * They decide when and how xDAI is swapped for WETH and when WETH is relayed
      * to mainnet's UBI burner. If malicious, compromised or negligent, 2 or more
      * burners could exploit the swap machanism or grief by relaying small WETH
      * amounts valued less than the gas required to claim the ETH on mainnet.
-    */
+     */
     mapping(address => bool) public isBurner;
 
     /// @dev Indicates whether or not there is a request to add a new burner. requestBurnerAddMap[requesterAddress][burnerAddressToAdd].
@@ -121,7 +132,7 @@ contract GnosisUBIBurner {
     // ************************ //
     // *       Requests       * //
     // ************************ //
-    
+
     /** @dev Requests the creation of a new burner.
      *  @param _burnerToAdd Address of the burner requested to be added.
      */
@@ -191,24 +202,35 @@ contract GnosisUBIBurner {
         require(_burnRequester != msg.sender && _burnRequester != address(0));
         currentAmountOutMin = 0;
         currentBurnRequester = address(0);
-        uint256[] memory amounts = IUniswapV2Router(UNISWAP_V2_ROUTER).swapExactETHForTokens{
-            value: _balanceToBurn
-        }(_amountOutMinToUse, path, address(this), _deadline);
+        uint256[] memory amounts = IUniswapV2Router(UNISWAP_V2_ROUTER)
+            .swapExactETHForTokens{value: _balanceToBurn}(
+            _amountOutMinToUse,
+            path,
+            address(this),
+            _deadline
+        );
         emit Burned(_burnRequester, msg.sender, _balanceToBurn, amounts[1]);
     }
 
     /** @dev Sends the WETH balance of this contract to the UBI burner on mainnet. WETH is converted to ETH in the process.
-     *  @param _amount amount of WETH to send to mainnet. 
+     *  @param _amount amount of WETH to send to mainnet.
      *  Prevents small transfers that would cost relatively too much to claim on mainnet.
      *  Prevents big donations to be transferred at once and that would generate big price spikes.
      */
     function bridgeToMainnet(uint256 _amount) external onlyBurner {
-        require(_amount <= IERC20(WETH).balanceOf(address(this)), "Not enough WETH");
+        require(
+            _amount <= IERC20(WETH).balanceOf(address(this)),
+            "Not enough WETH"
+        );
         bytes memory recipientData = abi.encodePacked(
             0xa6439Ca0FCbA1d0F80df0bE6A17220feD9c9038a, // WETH OmniBridge helper contract on mainnet
             ForeignUBIBurner // UBIBurner address on mainnet
         );
-        bool success = IERC677(WETH).transferAndCall(Omnibridge, _amount, recipientData);
+        bool success = IERC677(WETH).transferAndCall(
+            Omnibridge,
+            _amount,
+            recipientData
+        );
         require(success, "Token bridging failed");
     }
 

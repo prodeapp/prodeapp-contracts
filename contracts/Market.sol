@@ -7,7 +7,7 @@ import "./IERC2981.sol";
 import "./BetNFTDescriptor.sol";
 
 interface IManager {
-    function creator() external view returns(address payable);
+    function creator() external view returns (address payable);
 }
 
 contract Market is ERC721, IERC2981 {
@@ -69,7 +69,11 @@ contract Market is ERC721, IERC2981 {
 
     event BetReward(uint256 indexed _tokenID, uint256 _reward);
 
-    event RankingUpdated(uint256 indexed _tokenID, uint256 _points, uint256 _index);
+    event RankingUpdated(
+        uint256 indexed _tokenID,
+        uint256 _points,
+        uint256 _index
+    );
 
     event Attribution(address indexed _provider);
 
@@ -113,7 +117,7 @@ contract Market is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         initialized = true;
-        emit QuestionsRegistered(questionIDs); 
+        emit QuestionsRegistered(questionIDs);
         emit Prizes(_prizeWeights);
     }
 
@@ -166,8 +170,10 @@ contract Market is ERC721, IERC2981 {
         totalPrize = marketBalance - managementReward;
 
         // Once the Market is created, the manager contract is immutable, created by the MarketFactory and will never block a transfer of funds.
-        (bool success,) = marketInfo.manager.call{value: managementReward}(new bytes(0));
-        require(success, 'Send XDAI failed');
+        (bool success, ) = marketInfo.manager.call{value: managementReward}(
+            new bytes(0)
+        );
+        require(success, "Send XDAI failed");
 
         emit ManagementReward(marketInfo.manager, managementReward);
     }
@@ -179,7 +185,11 @@ contract Market is ERC721, IERC2981 {
      *  @param _rankIndex The alleged ranking position the bet belongs to.
      *  @param _duplicates The alleged number of tokens that are already registered and have the same points as _tokenID.
      */
-    function registerPoints(uint256 _tokenID, uint256 _rankIndex, uint256 _duplicates) external {
+    function registerPoints(
+        uint256 _tokenID,
+        uint256 _rankIndex,
+        uint256 _duplicates
+    ) external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
         require(
             block.timestamp < resultSubmissionPeriodStart + submissionTimeout,
@@ -188,10 +198,13 @@ contract Market is ERC721, IERC2981 {
         require(_exists(_tokenID), "Token does not exist");
         require(!isRanked[_tokenID], "Token already registered");
 
-        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
+            .predictions;
         uint248 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
+            if (
+                predictions[i] == realitio.resultForOnceSettled(questionIDs[i])
+            ) {
                 totalPoints += 1;
             }
         }
@@ -199,7 +212,7 @@ contract Market is ERC721, IERC2981 {
         require(totalPoints > 0, "You are not a winner");
         // This ensures that ranking[N].points >= ranking[N+1].points always
         require(
-            _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points, 
+            _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points,
             "Invalid ranking index"
         );
         if (totalPoints > ranking[_rankIndex].points) {
@@ -213,8 +226,14 @@ contract Market is ERC721, IERC2981 {
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 realRankIndex = _rankIndex + _duplicates;
-            require(totalPoints > ranking[realRankIndex].points, "Wrong _duplicates amount");
-            require(totalPoints == ranking[realRankIndex - 1].points, "Wrong _duplicates amount");
+            require(
+                totalPoints > ranking[realRankIndex].points,
+                "Wrong _duplicates amount"
+            );
+            require(
+                totalPoints == ranking[realRankIndex - 1].points,
+                "Wrong _duplicates amount"
+            );
             if (ranking[realRankIndex].points > 0) {
                 // Rank position is being overwritten
                 isRanked[ranking[realRankIndex].tokenID] = false;
@@ -245,17 +264,28 @@ contract Market is ERC721, IERC2981 {
 
         uint248 points = ranking[_rankIndex].points;
         // Check that shared indexes are valid.
-        require(points == ranking[_firstSharedIndex].points, "Wrong start index");
-        require(points == ranking[_lastSharedIndex].points, "Wrong end index");
-        require(points > ranking[_lastSharedIndex + 1].points, "Wrong end index");
         require(
-            _firstSharedIndex == 0 || points < ranking[_firstSharedIndex - 1].points, 
+            points == ranking[_firstSharedIndex].points,
+            "Wrong start index"
+        );
+        require(points == ranking[_lastSharedIndex].points, "Wrong end index");
+        require(
+            points > ranking[_lastSharedIndex + 1].points,
+            "Wrong end index"
+        );
+        require(
+            _firstSharedIndex == 0 ||
+                points < ranking[_firstSharedIndex - 1].points,
             "Wrong start index"
         );
         uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
         uint256 cumWeigths = 0;
-        for (uint256 i = _firstSharedIndex; i < prizeWeights.length && i <= _lastSharedIndex; i++) {
+        for (
+            uint256 i = _firstSharedIndex;
+            i < prizeWeights.length && i <= _lastSharedIndex;
+            i++
+        ) {
             cumWeigths += prizeWeights[i];
         }
 
@@ -338,12 +368,21 @@ contract Market is ERC721, IERC2981 {
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+    function tokenURI(uint256 tokenId)
+        public
+        view
+        virtual
+        override
+        returns (string memory)
+    {
+        require(
+            _exists(tokenId),
+            "ERC721Metadata: URI query for nonexistent token"
+        );
         return BetNFTDescriptor(betNFTDescriptor).tokenURI(tokenId);
     }
 
-    function numberOfQuestions() external view returns(uint256) {
+    function numberOfQuestions() external view returns (uint256) {
         return questionIDs.length;
     }
 
@@ -356,18 +395,29 @@ contract Market is ERC721, IERC2981 {
         return prizeMultipliers;
     }
 
-    function getPredictions(uint256 _tokenID) external view returns (bytes32[] memory) {
+    function getPredictions(uint256 _tokenID)
+        external
+        view
+        returns (bytes32[] memory)
+    {
         require(_exists(_tokenID), "Token does not exist");
         return bets[tokenIDtoTokenHash[_tokenID]].predictions;
     }
 
-    function getScore(uint256 _tokenID) external view returns(uint256 totalPoints) {
+    function getScore(uint256 _tokenID)
+        external
+        view
+        returns (uint256 totalPoints)
+    {
         require(resultSubmissionPeriodStart != 0, "Results not available");
         require(_exists(_tokenID), "Token does not exist");
 
-        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
+            .predictions;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
+            if (
+                predictions[i] == realitio.resultForOnceSettled(questionIDs[i])
+            ) {
                 totalPoints += 1;
             }
         }

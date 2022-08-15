@@ -16,7 +16,7 @@ contract MarketFactory {
     }
 
     uint32 public constant QUESTION_TIMEOUT = 1.5 days;
-    
+
     Market[] public markets;
     address public immutable arbitrator;
     address public immutable realitio;
@@ -29,7 +29,11 @@ contract MarketFactory {
     address public manager;
     uint256 public protocolFee;
 
-    event NewMarket(address indexed market, bytes32 indexed hash, address manager);
+    event NewMarket(
+        address indexed market,
+        bytes32 indexed hash,
+        address manager
+    );
 
     /**
      *  @dev Constructor.
@@ -100,7 +104,7 @@ contract MarketFactory {
         uint256 minBond,
         RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
-    ) external returns(address) {
+    ) external returns (address) {
         Market instance = Market(market.clone());
 
         bytes32[] memory questionIDs = new bytes32[](questionsData.length);
@@ -108,12 +112,15 @@ contract MarketFactory {
             // Extra scope prevents Stack Too Deep error.
             bytes32 previousQuestionID = bytes32(0);
             for (uint256 i = 0; i < questionsData.length; i++) {
-                require(questionsData[i].openingTS > closingTime, "Cannot open question in the betting period");
-                bytes32 questionID = askRealitio(
-                    questionsData[i],
-                    minBond
+                require(
+                    questionsData[i].openingTS > closingTime,
+                    "Cannot open question in the betting period"
                 );
-                require(questionID >= previousQuestionID, "Questions are in incorrect order");
+                bytes32 questionID = askRealitio(questionsData[i], minBond);
+                require(
+                    questionID >= previousQuestionID,
+                    "Questions are in incorrect order"
+                );
                 previousQuestionID = questionID;
                 questionIDs[i] = questionID;
             }
@@ -135,40 +142,48 @@ contract MarketFactory {
         marketInfo.royaltyFee = uint16(protocolFee);
         marketInfo.manager = newManager;
         instance.initialize(
-            marketInfo, 
+            marketInfo,
             nftDescriptor,
             realitio,
             closingTime,
             price,
             submissionTimeout,
-            questionIDs, 
+            questionIDs,
             prizeWeights
         );
 
-        emit NewMarket(address(instance), keccak256(abi.encodePacked(questionIDs)), newManager);
+        emit NewMarket(
+            address(instance),
+            keccak256(abi.encodePacked(questionIDs)),
+            newManager
+        );
         markets.push(instance);
 
         return address(instance);
     }
 
-    function askRealitio(
-        RealitioQuestion memory questionData,
-        uint256 minBond
-    ) internal returns(bytes32 questionID) {
-        bytes32 content_hash = keccak256(abi.encodePacked(
-                questionData.templateID, 
-                questionData.openingTS, 
+    function askRealitio(RealitioQuestion memory questionData, uint256 minBond)
+        internal
+        returns (bytes32 questionID)
+    {
+        bytes32 content_hash = keccak256(
+            abi.encodePacked(
+                questionData.templateID,
+                questionData.openingTS,
                 questionData.question
-        ));
-        bytes32 question_id = keccak256(abi.encodePacked(
-            content_hash,
-            arbitrator,
-            QUESTION_TIMEOUT,
-            minBond,
-            address(realitio),
-            address(this),
-            uint256(0)
-        ));
+            )
+        );
+        bytes32 question_id = keccak256(
+            abi.encodePacked(
+                content_hash,
+                arbitrator,
+                QUESTION_TIMEOUT,
+                minBond,
+                address(realitio),
+                address(this),
+                uint256(0)
+            )
+        );
         if (RealityETH_v3_0(realitio).getTimeout(question_id) != 0) {
             // Question already exists.
             questionID = question_id;
@@ -185,14 +200,11 @@ contract MarketFactory {
         }
     }
 
-    function allMarkets()
-        external view
-        returns (Market[] memory)
-    {
+    function allMarkets() external view returns (Market[] memory) {
         return markets;
     }
 
-    function marketCount() external view returns(uint256) {
+    function marketCount() external view returns (uint256) {
         return markets.length;
     }
 }
