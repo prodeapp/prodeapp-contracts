@@ -4,7 +4,7 @@ const {getChain, orderQuestions, toTimestamp} = require("./helpers");
 
 const timeout = 129600; // 1.5 days
 const marketData = {
-  marketName: "FIFA World Cup Qatar 2022 - Positions", 
+  marketName: "FIFA World Cup Qatar 2022 - Team Performance", 
   marketSymbol: "PRODE",
   closingTime: toTimestamp("2022-11-19 00:00:00 UTC"),
   price: ethers.utils.parseUnits("25.0", "ether"), // 25 xDAI
