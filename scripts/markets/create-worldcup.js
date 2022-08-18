@@ -113,7 +113,7 @@ const marketData = {
     },
     {
       templateID: 2, 
-      question: "What will be the result of the Tunisa vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Denmark\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Tunisia vs Denmark match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisia\",\"Denmark\",\"Draw\"␟football␟en_US", 
       openingTS: toTimestamp("2022-11-22 16:00:00 UTC")
     },
     {
@@ -123,12 +123,12 @@ const marketData = {
     },
     {
       templateID: 2, 
-      question: "What will be the result of the Tunisa vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisa\",\"Australia\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the Tunisia vs Australia match at the FIFA World Cup Qatar 2022 group phase?␟\"Tunisia\",\"Australia\",\"Draw\"␟football␟en_US", 
       openingTS: toTimestamp("2022-11-26 13:00:00 UTC")
     },
     {
       templateID: 2, 
-      question: "What will be the result of the France vs Tunisa match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Tunisa\",\"Draw\"␟football␟en_US", 
+      question: "What will be the result of the France vs Tunisia match at the FIFA World Cup Qatar 2022 group phase?␟\"France\",\"Tunisia\",\"Draw\"␟football␟en_US", 
       openingTS: toTimestamp("2022-11-30 18:00:00 UTC")
     },
     {

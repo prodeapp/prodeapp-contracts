@@ -7,9 +7,9 @@ const marketData = {
   marketName: "FIFA World Cup Qatar 2022 - Team Performance", 
   marketSymbol: "PRODE",
   closingTime: toTimestamp("2022-11-19 00:00:00 UTC"),
-  price: ethers.utils.parseUnits("25.0", "ether"), // 25 xDAI
-  creator: "0xE0Ed01B57920D51c5421b3DBadEC8e5FB5C64Faa", // Ownable creator contract CreatorRelayer.sol
-  creatorFee: 500, // 6%
+  price: ethers.utils.parseUnits("10.0", "ether"), // 10 xDAI
+  creator: "0x3dD7138c3Ae3FB01B92e5504627eB110Aff32732", // Ownable creator contract CreatorRelayer.sol
+  creatorFee: 3, // 3%
   minBond: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
   questions: [
     {
@@ -39,7 +39,7 @@ const marketData = {
     },
     {
       templateID: 2, 
-      question: "How far will Iran go in the FIFA World Cup Qatar 2022?␟\"Champion\",\"Runner-up\",\"Third Place\",\"Fourth Place\",\"Quarterfinals\",\"Round of 16\",\"Eliminated in Group Phase\"␟football␟en_US", 
+      question: "How far will IR Iran go in the FIFA World Cup Qatar 2022?␟\"Champion\",\"Runner-up\",\"Third Place\",\"Fourth Place\",\"Quarterfinals\",\"Round of 16\",\"Eliminated in Group Phase\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
     },
     {
@@ -89,7 +89,7 @@ const marketData = {
     },
     {
       templateID: 2, 
-      question: "How far will Tunisa go in the FIFA World Cup Qatar 2022?␟\"Champion\",\"Runner-up\",\"Third Place\",\"Fourth Place\",\"Quarterfinals\",\"Round of 16\",\"Eliminated in Group Phase\"␟football␟en_US", 
+      question: "How far will Tunisia go in the FIFA World Cup Qatar 2022?␟\"Champion\",\"Runner-up\",\"Third Place\",\"Fourth Place\",\"Quarterfinals\",\"Round of 16\",\"Eliminated in Group Phase\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
     },
     {
