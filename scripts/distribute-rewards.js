@@ -56,10 +56,26 @@ async function main() {
     return;
   }
 
+  const args = {targets: [], values: [], datas: []};
+
   for (const market of markets) {
     console.log(`${market.name} (${market.id})`);
-    await processMarket(market.id, market.bets.filter(bet => bet.claim).length, signer);
+    const datas = await processMarket(market.id, market.bets.filter(bet => bet.claim).length, signer);
+
+    args.targets = args.targets.concat(Array(datas.length).fill(market.id));
+    args.values = args.values.concat(Array(datas.length).fill(0));
+    args.datas = args.datas.concat(datas);
   }
+
+  const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
+
+  await batcherContract.batchSend(
+    args.targets,
+    args.values,
+    args.datas
+  );
+  
+  console.log('distribution completed!');
 }
 
 async function processMarket(marketAddress, totalClaimed, signer) {
@@ -107,27 +123,22 @@ async function processMarket(marketAddress, totalClaimed, signer) {
     endSharedIndex = firstSharedIndex
   }
 
+  if (totalClaimed === datas.length) {
+    console.log('prizes already claimed, reset datas');
+    datas = [];
+  }
+
   if (endSharedIndex < marketData.prizes.length) {
     // console.log("Distributing remaining prizes for this market")
     const remainingPrizes = (await market.populateTransaction.distributeRemainingPrizes()).data;
     datas.push(remainingPrizes);
   } else if (datas.length == 0) {
     console.log('nothing to distribute');
-    return;
+    return [];
   }
 
-  if (totalClaimed === datas.length) {
-    console.log('prizes already claimed');
-    return;
-  }
 
-  const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
-  await batcherContract.batchSend(
-    Array(datas.length).fill(marketAddress),
-    Array(datas.length).fill(0),
-    datas
-  );
-  console.log('distribution ok!');
+  return datas;
 }
 
 main()
