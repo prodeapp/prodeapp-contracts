@@ -67,6 +67,11 @@ async function main() {
     args.datas = args.datas.concat(datas);
   }
 
+  if (args.targets.length === 0) {
+    console.log('nothing to distribute');
+    return;
+  }
+
   const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
 
   await batcherContract.batchSend(
@@ -125,12 +130,12 @@ async function processMarket(marketAddress, totalClaimed, signer) {
   }
 
   if (totalClaimed === datas.length) {
-    console.log('prizes already claimed, reset datas');
-    datas = [];
+    console.log('prizes already claimed');
+    return [];
   }
 
   if (endSharedIndex < marketData.prizes.length) {
-    // console.log("Distributing remaining prizes for this market")
+    console.log("Distributing remaining prizes for this market")
     const remainingPrizes = (await market.populateTransaction.distributeRemainingPrizes()).data;
     datas.push(remainingPrizes);
   } else if (datas.length == 0) {
