@@ -86,6 +86,10 @@ async function processMarket(marketAddress, totalClaimed, signer) {
   let firstSharedIndex = 0;
   let endSharedIndex = 0;
   for (rankIndex = 0; rankIndex < marketData.prizes.length; rankIndex++) {
+    if (bets[firstSharedIndex] === undefined) {
+      break;
+    }
+
     let currentRankPoints = bets[firstSharedIndex].points;
     for (let i = firstSharedIndex; i < bets.length; i++) {
       if (currentRankPoints > bets[i].points) {break;}
