@@ -129,6 +129,23 @@ async function processMarket(marketAddress, totalClaimed, signer) {
     endSharedIndex = firstSharedIndex
   }
 
+  if (datas.length === 0) {
+    console.log('nothing to distribute, reimbursing players');
+    const numberOfTokens = await market.nextTokenID();
+    for (let i = 0; i < numberOfTokens; i++) {
+      try {
+        await market.callStatic.reimbursePlayer(i);
+
+        const reimbursePlayer = (await market.populateTransaction.reimbursePlayer(i)).data;
+        datas.push(reimbursePlayer);
+      } catch (e) {
+        console.log(`player ${i} already reimbursed`);
+      }
+    }
+
+    return datas;
+  }
+
   if (totalClaimed === datas.length) {
     console.log('prizes already claimed');
     return [];
@@ -138,9 +155,6 @@ async function processMarket(marketAddress, totalClaimed, signer) {
     console.log("Distributing remaining prizes for this market")
     const remainingPrizes = (await market.populateTransaction.distributeRemainingPrizes()).data;
     datas.push(remainingPrizes);
-  } else if (datas.length == 0) {
-    console.log('nothing to distribute');
-    return [];
   }
 
   return datas;
