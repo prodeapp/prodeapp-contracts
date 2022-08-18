@@ -74,7 +74,7 @@ async function main() {
     args.values,
     args.datas
   );
-  
+
   console.log('distribution completed!');
 }
 
@@ -101,7 +101,8 @@ async function processMarket(marketAddress, totalClaimed, signer) {
   let datas = [];
   let firstSharedIndex = 0;
   let endSharedIndex = 0;
-  for (rankIndex = 0; rankIndex < marketData.prizes.length; rankIndex++) {
+  let rankIndex = 0;
+  for (prizeIndex = 0; prizeIndex < marketData.prizes.length; prizeIndex++) {
     if (bets[firstSharedIndex] === undefined) {
       break;
     }
@@ -113,8 +114,8 @@ async function processMarket(marketAddress, totalClaimed, signer) {
     }
 
     for (let j=0; j<=endSharedIndex-firstSharedIndex; j++){
-      // console.log('Claim inputs:', rankIndex+j, currentRankPoints, firstSharedIndex, endSharedIndex)
-      const claimReward = (await market.populateTransaction.claimRewards(rankIndex+j, firstSharedIndex, endSharedIndex)).data;
+      // console.log('Claim inputs:', rankIndex, currentRankPoints, firstSharedIndex, endSharedIndex)
+      const claimReward = (await market.populateTransaction.claimRewards(rankIndex++, firstSharedIndex, endSharedIndex)).data;
       datas.push(claimReward);
     }
 
@@ -136,7 +137,6 @@ async function processMarket(marketAddress, totalClaimed, signer) {
     console.log('nothing to distribute');
     return [];
   }
-
 
   return datas;
 }
