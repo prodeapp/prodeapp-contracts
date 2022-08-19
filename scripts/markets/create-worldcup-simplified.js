@@ -9,7 +9,7 @@ const marketData = {
   closingTime: toTimestamp("2022-11-19 00:00:00 UTC"),
   price: ethers.utils.parseUnits("10.0", "ether"), // 10 xDAI
   creator: "0x3dD7138c3Ae3FB01B92e5504627eB110Aff32732", // Ownable creator contract CreatorRelayer.sol
-  creatorFee: 3, // 3%
+  creatorFee: 300, // 3%
   minBond: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
   questions: [
     {
