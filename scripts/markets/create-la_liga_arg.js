@@ -1,39 +1,39 @@
 const hre = require("hardhat");
-const {getChain, orderQuestions, buildQuestionHomevsAway, SOCCER_MATCH_DURATION} = require("./helpers");
+const {getChain, orderQuestions, buildQuestionHomevsAway, SOCCER_MATCH_DURATION, toTimestamp} = require("./helpers");
 const {TEAMS} = require("./constants/teams");
 const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days
 
-const marketName = "La Liga - Torneo Binance 2022 - Fecha #11";
+const marketName = "La Liga - Torneo Binance 2022 - Fecha #16";
 
 const marketData = {
   marketName: marketName,
   marketSymbol: "PRODE",
-  closingTime: 1659135600 - SOCCER_MATCH_DURATION,
+  closingTime: toTimestamp("2022-08-26 21:00:00 UTC") - SOCCER_MATCH_DURATION,
   price: ethers.utils.parseUnits("3.0", "ether"), // 3 xDAI
-  creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
+  creator: "0xa3954B4aDB7caca9C188c325CF9F2991AbB3cF71", // UBIBurner
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),
   questions: [
-    // Day1: 29/7
-    buildQuestionHomevsAway(TEAMS.AR.GODOY_CRUZ, TEAMS.AR.VELEZ, marketName, 1659135600 + SOCCER_MATCH_DURATION), // 20hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.TALLERES, TEAMS.AR.UNION, marketName, 1659135600 + SOCCER_MATCH_DURATION), // 20hs Arg Time
-    // Day2: 30/7
-    buildQuestionHomevsAway(TEAMS.AR.ARGENTINOS_JUNIORS, TEAMS.AR.SAN_LORENZO, marketName, 1659205800 + SOCCER_MATCH_DURATION), // 15:30hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.ESTUDIANTES_LP, TEAMS.AR.BANFIELD, marketName, 1659214800 + SOCCER_MATCH_DURATION), // 18hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.ATLETICO_TUCUMAN, TEAMS.AR.NEWELLS, marketName, 1659223800 + SOCCER_MATCH_DURATION), // 20:30hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.HURACAN, TEAMS.AR.GIMNASIA_LP, marketName, 1659223800 + SOCCER_MATCH_DURATION), // 20:30Hs Arg time
-    // Day3: 31/7
-    buildQuestionHomevsAway(TEAMS.AR.LANUS, TEAMS.AR.ALDOSIVI, marketName, 1659283200 + SOCCER_MATCH_DURATION), // 13hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.PLATENSE, TEAMS.AR.BARRACAS_CENTRAL, marketName, 1659283200 + SOCCER_MATCH_DURATION), // 13hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.RACING, TEAMS.AR.TIGRE, marketName, 1659292200 + SOCCER_MATCH_DURATION), // 15:30hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.PATRONATO, TEAMS.AR.BOCA_JUNIORS, marketName, 1659301200 + SOCCER_MATCH_DURATION), // 18:00hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.RIVER, TEAMS.AR.SARMIENTO, marketName, 1659310200 + SOCCER_MATCH_DURATION), // 20:30hs Arg Time
-    // Day4: 1/8
-    buildQuestionHomevsAway(TEAMS.AR.ROSARIO_CENTRAL, TEAMS.AR.CENTRAL_CORDOBA, marketName, 1659391200 + SOCCER_MATCH_DURATION), // 19hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.DEFENSA_JUSTICIA, TEAMS.AR.ARSENAL, marketName, 1659391200 + SOCCER_MATCH_DURATION), // 19hs Arg Time
-    buildQuestionHomevsAway(TEAMS.AR.COLON, TEAMS.AR.INDEPENDIENTE, marketName, 1659400200 + SOCCER_MATCH_DURATION), // 21:30hs Arg Time
+    // Day1:
+    buildQuestionHomevsAway(TEAMS.AR.CENTRAL_CORDOBA, TEAMS.AR.LANUS, marketName, toTimestamp("2022-08-26 21:00:00 UTC") + SOCCER_MATCH_DURATION), // 20hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.ARSENAL, TEAMS.AR.HURACAN, marketName, toTimestamp("2022-08-27 00:00:00 UTC") + SOCCER_MATCH_DURATION), // 20hs Arg Time
+    // Day2:
+    buildQuestionHomevsAway(TEAMS.AR.SAN_LORENZO, TEAMS.AR.ROSARIO_CENTRAL, marketName, toTimestamp("2022-08-27 16:00:00 UTC") + SOCCER_MATCH_DURATION), // 15:30hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.BANFIELD, TEAMS.AR.DEFENSA_JUSTICIA, marketName, toTimestamp("2022-08-27 18:30:00 UTC") + SOCCER_MATCH_DURATION), // 18hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.NEWELLS, TEAMS.AR.GODOY_CRUZ, marketName, toTimestamp("2022-08-27 18:30:00 UTC") + SOCCER_MATCH_DURATION), // 20:30hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.TALLERES, TEAMS.AR.RACING, marketName, toTimestamp("2022-08-27 21:00:00 UTC") + SOCCER_MATCH_DURATION), // 20:30Hs Arg time
+    buildQuestionHomevsAway(TEAMS.AR.ARGENTINOS_JUNIORS, TEAMS.AR.PLATENSE, marketName, toTimestamp("2022-08-27 21:00:00 UTC") + SOCCER_MATCH_DURATION), // 13hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.TIGRE, TEAMS.AR.RIVER, marketName, toTimestamp("2022-08-27 23:30:00 UTC") + SOCCER_MATCH_DURATION), // 13hs Arg Time
+    // Day3:
+    buildQuestionHomevsAway(TEAMS.AR.SARMIENTO, TEAMS.AR.GIMNASIA_LP, marketName, toTimestamp("2022-08-28 16:00:00 UTC") + SOCCER_MATCH_DURATION), // 15:30hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.INDEPENDIENTE, TEAMS.AR.VELEZ, marketName, toTimestamp("2022-08-28 18:30:00 UTC") + SOCCER_MATCH_DURATION), // 18:00hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.BOCA_JUNIORS, TEAMS.AR.ATLETICO_TUCUMAN, marketName, toTimestamp("2022-08-28 21:00:00 UTC") + SOCCER_MATCH_DURATION), // 20:30hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.ESTUDIANTES_LP, TEAMS.AR.PATRONATO, marketName, toTimestamp("2022-08-28 23:30:00 UTC") + SOCCER_MATCH_DURATION), // 19hs Arg Time
+    buildQuestionHomevsAway(TEAMS.AR.UNION, TEAMS.AR.ALDOSIVI, marketName, toTimestamp("2022-08-28 23:30:00 UTC") + SOCCER_MATCH_DURATION), // 19hs Arg Time
+    // Day4:
+    buildQuestionHomevsAway(TEAMS.AR.BARRACAS_CENTRAL, TEAMS.AR.COLON, marketName, toTimestamp("2022-08-29 18:30:00 UTC") + SOCCER_MATCH_DURATION), // 21:30hs Arg Time
   ],
   prizeWeights: [5000, 3500, 1500]
 };
