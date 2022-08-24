@@ -14,6 +14,8 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
+const FORK_GNOSIS = false;
+
 // You need to export an object to set up your config
 // Go to https://hardhat.org/config/ to learn more
 
@@ -50,7 +52,11 @@ module.exports = {
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
-      chainId: 31337
+      chainId: 31337,
+      forking: FORK_GNOSIS ? {
+        url: "https://rpc.gnosischain.com"
+      } : undefined,
+      loggingEnabled: FORK_GNOSIS ? true : false,
     },
     kovan: {
       url: `https://eth-kovan.alchemyapi.io/v2/${alchemyKey}`,

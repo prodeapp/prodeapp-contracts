@@ -2,7 +2,6 @@
 pragma solidity 0.8.9;
 
 contract Distributor {
-
     address payable[] public recipients;
 
     constructor(address payable[] memory _recipients) {

@@ -1,11 +1,11 @@
 const hre = require("hardhat");
 const {getChain, orderQuestions, buildQuestionHomevsAway, SOCCER_MATCH_DURATION} = require("./helpers");
-const {TEAMS} = require("./teams");
+const {TEAMS} = require("./constants/teams");
 const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days
 
-const marketName = "England Premier League - Matchday 1";
+const marketName = "English Premier League - Matchday 1";
 
 const marketData = {
   marketName: marketName,

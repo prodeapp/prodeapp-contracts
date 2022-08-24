@@ -1,6 +1,6 @@
 const hre = require("hardhat");
 const {getChain, orderQuestions, buildQuestionHomevsAway, SOCCER_MATCH_DURATION} = require("./helpers");
-const {TEAMS} = require("./teams");
+const {TEAMS} = require("./constants/teams");
 const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days

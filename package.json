@@ -4,6 +4,7 @@
   "description": "A betting sports platform.",
   "license": "MIT",
   "scripts": {
+    "prettier": "prettier --write 'contracts/**/*.sol'",
     "deploy:kovan": "npx hardhat run --network kovan scripts/deploy.js",
     "deploy:gnosis": "npx hardhat run --network gnosis scripts/deploy.js",
     "deploy:burner:gnosis": "npx hardhat run --network gnosis scripts/deploy-burner.js",
@@ -20,7 +21,9 @@
     "chai": "^4.3.6",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.2",
-    "hardhat": "^2.9.2"
+    "hardhat": "^2.9.2",
+    "prettier": "^2.7.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.24"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",

@@ -32,6 +32,11 @@ function buildQuestionTeamMostPoints(answers, market, openingTS) {
   };
 }
 
+function toTimestamp(strDate) {
+  var datum = Date.parse(strDate);
+  return datum / 1000;
+}
+
 function encodeQuestionText(
   qtype/*: 'bool' | 'single-select' | 'multiple-select' | 'uint' | 'datetime'*/,
   txt/*: string*/,
@@ -109,12 +114,18 @@ const params = {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
     factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b"
-  }
+  },
+  31337: {
+    arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
+    realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
+    factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b"
+  },
 };
 
 function getChain(chainId) {
   if (!params[chainId]) {
-    throw `getChain: ${chainId} does not exists`;
+    console.log(`Invalid chainId "${String(chainId)}", using 31337`);
+    chainId = 31337;
   }
 
   return params[chainId];
@@ -128,6 +139,7 @@ module.exports = {
   buildQuestionPosition,
   buildQuestionTeamMostPoints,
   buildQuestionSingleSelect,
+  toTimestamp,
   encodeQuestionText,
   getQuestionID,
   orderQuestions,
