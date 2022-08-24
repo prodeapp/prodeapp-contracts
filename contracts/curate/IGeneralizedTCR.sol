@@ -2,34 +2,36 @@
 pragma solidity 0.6.12;
 
 interface IGeneralizedTCR {
-	/// @dev see https://github.com/kleros/tcr/blob/059372068ae3ed380e74d653b713f2a33a3e9551/contracts/GeneralizedTCR.sol
-	enum Status {
+    /// @dev see https://github.com/kleros/tcr/blob/059372068ae3ed380e74d653b713f2a33a3e9551/contracts/GeneralizedTCR.sol
+    enum Status {
         Absent, // The item is not in the registry.
         Registered, // The item is in the registry.
         RegistrationRequested, // The item has a request to be added to the registry.
         ClearingRequested // The item has a request to be removed from the registry.
     }
 
-	enum Party {
+    enum Party {
         None, // Party per default when there is no challenger or requester. Also used for unconclusive ruling.
         Requester, // Party that made the request to change a status.
         Challenger // Party that challenges the request to change a status.
     }
 
-	/** @dev Returns item's information. Includes length of requests array.
+    /** @dev Returns item's information. Includes length of requests array.
      *  @param _itemID The ID of the queried item.
      *  @return data The data describing the item.
      *  @return status The current status of the item.
      *  @return numberOfRequests Length of list of status change requests made for the item.
      */
     function getItemInfo(bytes32 _itemID)
-        external view returns (
+        external
+        view
+        returns (
             bytes memory data,
             Status status,
             uint256 numberOfRequests
         );
 
-	function getRequestInfo(bytes32 _itemID, uint256 _request)
+    function getRequestInfo(bytes32 _itemID, uint256 _request)
         external
         view
         returns (
