@@ -16,6 +16,14 @@ function buildQuestionSingleSelect(question, answers, openingTS, category) {
   };
 }
 
+function buildQuestionMultipleSelect(question, answers, openingTS, category) {
+  return {
+    templateID: 3,
+    question: encodeQuestionText('multiple-select', question, answers, category, 'en_US'),
+    openingTS: openingTS
+  };
+}
+
 function buildQuestionPosition(position, answers, market, openingTS) {
   return {
     templateID: 2,
@@ -26,8 +34,8 @@ function buildQuestionPosition(position, answers, market, openingTS) {
 
 function buildQuestionTeamMostPoints(answers, market, openingTS) {
   return {
-    templateID: 2,
-    question: encodeQuestionText('single-select', `Which team will earn more points at ${market}?`, answers, 'F1', 'en_US'),
+    templateID: 3,
+    question: encodeQuestionText('multiple-select', `Which team will earn more points at ${market}?`, answers, 'F1', 'en_US'),
     openingTS: openingTS
   };
 }
@@ -139,6 +147,7 @@ module.exports = {
   buildQuestionPosition,
   buildQuestionTeamMostPoints,
   buildQuestionSingleSelect,
+  buildQuestionMultipleSelect,
   toTimestamp,
   encodeQuestionText,
   getQuestionID,
