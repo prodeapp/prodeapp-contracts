@@ -21,19 +21,18 @@ contract FirstPriceAuction {
         uint256 bidPerSecond;
         uint256 balance;
         bytes32 itemID; // on curate
-        address market;
     }
 
     bytes32 public constant QUEUE_START =
         0x0000000000000000000000000000000000000000000000000000000000000000;
-    uint256 public constant MIN_OFFER_DURATION = 60; // 1 min
+    uint256 public constant MIN_OFFER_DURATION = 300; // 5 min
 
-    ICurate public curate;
+    ICurate public curatedAds;
     address payable public billing;
     mapping(bytes32 => Bid) public bids;
 
-    constructor(ICurate _curate) {
-        curate = _curate;
+    constructor(ICurate _curatedAds) {
+        curatedAds = _curatedAds;
     }
 
     /** @dev Creates and places a new bid or replaces one that has been removed.
@@ -50,7 +49,7 @@ contract FirstPriceAuction {
             msg.value / _bidPerSecond > MIN_OFFER_DURATION,
             "Not enough funds"
         );
-        require(curate.isRegistered(_itemID), "Item must be registered");
+        require(curatedAds.isRegistered(_itemID), "Item must be registered");
 
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage newBid = bids[bidID];
@@ -62,7 +61,6 @@ contract FirstPriceAuction {
         newBid.bidPerSecond = _bidPerSecond;
         newBid.balance = msg.value;
         newBid.itemID = _itemID;
-        newBid.market = _market;
         newBid.removed = false;
 
         _insertBid(_market, bidID);
@@ -79,7 +77,7 @@ contract FirstPriceAuction {
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage bid = bids[bidID];
         bid.balance += msg.value;
-        require(curate.isRegistered(_itemID), "Item must be registered");
+        require(curatedAds.isRegistered(_itemID), "Item must be registered");
         require(bid.bidder == msg.sender, "Bid does not exist");
         require(
             bid.balance / bid.bidPerSecond > MIN_OFFER_DURATION,
@@ -104,7 +102,7 @@ contract FirstPriceAuction {
     ) external payable {
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage bid = bids[bidID];
-        require(curate.isRegistered(_itemID), "Item must be registered");
+        require(curatedAds.isRegistered(_itemID), "Item must be registered");
         require(bid.bidder == msg.sender, "Bid does not exist");
 
         if (!bid.removed) {
@@ -171,8 +169,9 @@ contract FirstPriceAuction {
             }
         }
 
-        payable(msg.sender).send(bid.balance);
+        uint256 remainingBalance = bid.balance;
         bid.balance = 0;
+        payable(msg.sender).send(remainingBalance);
     }
 
     /** @dev Removes the current highest bid if the balance is empty or if it was removed from curate.
@@ -195,12 +194,13 @@ contract FirstPriceAuction {
             highestBid.bidPerSecond;
         require(
             price >= highestBid.balance ||
-                !curate.isRegistered(highestBid.itemID),
+                !curatedAds.isRegistered(highestBid.itemID),
             "Highest bid is still active"
         );
         highestBid.startTimestamp = 0;
-        billing.send(highestBid.balance);
+        uint256 remainingBalance = highestBid.balance;
         highestBid.balance = 0;
+        billing.send(remainingBalance);
 
         if (highestBid.nextBidPointer != 0x0) {
             Bid storage newHighestBid = bids[highestBid.nextBidPointer];
@@ -215,7 +215,7 @@ contract FirstPriceAuction {
         Bid storage startElement = bids[startID];
         bytes32 currentID = startID;
         bytes32 nextID = startElement.nextBidPointer;
-        while (bids[nextID].bidPerSecond > bid.bidPerSecond) {
+        while (bids[nextID].bidPerSecond >= bid.bidPerSecond) {
             currentID = nextID;
             nextID = bids[nextID].nextBidPointer;
         }
@@ -225,7 +225,7 @@ contract FirstPriceAuction {
         bids[nextID].previousBidPointer = _bidID;
 
         if (currentID == startID) {
-            // Hightest bid! Activate the new bid and process the previous highest bid.
+            // Highest bid! Activate the new bid and process the previous highest bid.
             bid.startTimestamp = uint64(block.timestamp);
 
             if (nextID != 0x0) {
@@ -257,7 +257,7 @@ contract FirstPriceAuction {
         } else {
             Bid storage bid = bids[highestBidID];
             // Look for highest bid?
-            address svgAddress = curate.getAddress(bid.itemID);
+            address svgAddress = curatedAds.getAddress(bid.itemID);
             try ISVGContract(svgAddress).getSVG() returns (string memory svg) {
                 return svg;
             } catch {
