@@ -11,6 +11,10 @@ interface ISVGContract {
     function getSVG() external view returns (string memory);
 }
 
+interface IBilling {
+    function registerPayment(address _market) external payable;
+}
+
 contract FirstPriceAuction {
     struct Bid {
         bytes32 previousBidPointer;
@@ -28,11 +32,15 @@ contract FirstPriceAuction {
     uint256 public constant MIN_OFFER_DURATION = 300; // 5 min
 
     ICurate public curatedAds;
-    address payable public billing;
+    IBilling public billing;
     mapping(bytes32 => Bid) public bids;
 
-    constructor(ICurate _curatedAds) {
+    constructor(
+        ICurate _curatedAds,
+        IBilling _billing
+    ) {
         curatedAds = _curatedAds;
+        billing = _billing;
     }
 
     /** @dev Creates and places a new bid or replaces one that has been removed.
@@ -113,7 +121,7 @@ contract FirstPriceAuction {
                 uint256 bill = price > bid.balance ? bid.balance : price;
                 bid.startTimestamp = 0;
                 bid.balance -= bill;
-                billing.send(bill);
+                billing.registerPayment{value: bill}(_market);
 
                 if (bid.nextBidPointer != 0x0) {
                     Bid storage newHighestBid = bids[bid.nextBidPointer];
@@ -159,7 +167,7 @@ contract FirstPriceAuction {
             uint256 bill = price > bid.balance ? bid.balance : price;
             bid.startTimestamp = 0;
             bid.balance -= bill;
-            billing.send(bill);
+            billing.registerPayment{value: bill}(_market);
 
             if (bid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[bid.nextBidPointer];
@@ -175,7 +183,7 @@ contract FirstPriceAuction {
     /** @dev Removes the current highest bid if the balance is empty or if it was removed from curate.
      *  @param _market The address of the market.
      */
-    function reportBid(address _market) public {
+    function reportBid(address _market) external {
         bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         require(highestBidID != 0x0, "No bid found");
@@ -197,7 +205,7 @@ contract FirstPriceAuction {
         highestBid.startTimestamp = 0;
         uint256 remainingBalance = highestBid.balance;
         highestBid.balance = 0;
-        billing.send(remainingBalance);
+        billing.registerPayment{value: remainingBalance}(_market);
 
         if (highestBid.nextBidPointer != 0x0) {
             Bid storage newHighestBid = bids[highestBid.nextBidPointer];
@@ -208,7 +216,7 @@ contract FirstPriceAuction {
     /** @dev Collects the current highest bid billing.
      *  @param _market The address of the market.
      */
-    function collectPayment(address _market) public {
+    function collectPayment(address _market) external {
         bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         require(highestBidID != 0x0, "No bid found");
@@ -219,7 +227,7 @@ contract FirstPriceAuction {
         require(price < highestBid.balance, "Highest bid is still active");
         highestBid.startTimestamp = uint64(block.timestamp);
         highestBid.balance -= price;
-        billing.send(price);
+        billing.registerPayment{value: price}(_market);
     }
 
     function _insertBid(address _market, bytes32 _bidID) internal {
@@ -250,7 +258,7 @@ contract FirstPriceAuction {
                     : price;
                 bids[nextID].startTimestamp = 0;
                 bids[nextID].balance -= bill;
-                billing.send(bill);
+                billing.registerPayment{value: bill}(_market);
 
                 if (bids[nextID].balance == 0) {
                     // remove bid from list.
