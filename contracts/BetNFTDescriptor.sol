@@ -12,6 +12,10 @@ interface ICurate {
 	function getTimestamp(bytes32 _questionsHash) external view returns(uint256);
 }
 
+interface IFirstPriceAuction {
+    function getAd(address _market) external view returns (string memory);
+}
+
 library HexStrings {
     bytes16 internal constant ALPHABET = '0123456789abcdef';
 
@@ -33,9 +37,15 @@ contract BetNFTDescriptor is Initializable {
 	using HexStrings for uint256;
 
     address public curatedMarkets;
+    address public ads;
 
     function initialize(address _curatedMarkets) public initializer {
         curatedMarkets = _curatedMarkets;
+    }
+
+    function setAdsAddress(address _ads) external {
+        require(ads == address(0x0), "address already set");
+        ads = _ads;
     }
 
     function tokenURI(uint256 tokenId) public view returns (string memory) {
@@ -211,6 +221,7 @@ contract BetNFTDescriptor is Initializable {
                     generateSVGFootText(marketName),
                     generateCurationMark(),
                     generatePredictionsFingerprint(tokenHash),
+                    generateAd(),
                     '</svg>'
                 )
             );
@@ -278,6 +289,7 @@ contract BetNFTDescriptor is Initializable {
           		'<feDisplacementMap in2="turbulence" in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/>'
         		'</filter>'
 				'<clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>',
+				'<clipPath id="ad-margin"><rect width="290" height="430" /></clipPath>',
                 '<path id="minimap" d="M234 444C234 457.949 242.21 463 253 463" />',
                 '<filter id="top-region-blur"><feGaussianBlur in="SourceGraphic" stdDeviation="24" /></filter>',
                 '<mask id="none" maskContentUnits="objectBoundingBox"><rect width="1" height="1" fill="white" /></mask>',
@@ -406,6 +418,26 @@ contract BetNFTDescriptor is Initializable {
                 '<g style="transform:translate(220px, 142px)">',
                 svg,
 				'</g>'
+            )
+        );
+    }
+
+    function generateAd() private view returns (string memory svg) {
+        string memory adSvg = IFirstPriceAuction(ads).getAd(address(this));
+        if (bytes(adSvg).length == 0) {
+            // TODO: add default base64 ad
+            adSvg = '';
+        }
+
+        svg = string(
+            abi.encodePacked(
+                '<g clip-path="url(#corners)">',
+                '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0)" stroke="rgba(14,14,14)" />',
+                '<g clip-path="url(#ad-margin)" style="transform:translate(0px, 35px)" >',
+                '<image xlink:href="data:image/svg+xml;base64,',
+                adSvg,
+                '" /></g><text y="25px" x="50px" fill="#D0D0D0A8" font-family="\'Courier New\', monospace" font-size="15px">Ad curated by Kleros</text>',
+                '<animate dur="1s" attributeName="opacity" from="1" to="0" begin="2s" repeatCount="1" fill="freeze" /></g>'
             )
         );
     }
