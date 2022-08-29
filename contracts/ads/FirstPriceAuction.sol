@@ -108,7 +108,6 @@ contract FirstPriceAuction {
         if (!bid.removed) {
             bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
             if (bid.previousBidPointer == startID) {
-                // send balance back
                 uint256 price = (block.timestamp - bid.startTimestamp) *
                     bid.bidPerSecond;
                 uint256 bill = price > bid.balance ? bid.balance : price;
@@ -155,7 +154,6 @@ contract FirstPriceAuction {
 
         bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
         if (bid.previousBidPointer == startID) {
-            // send balance back
             uint256 price = (block.timestamp - bid.startTimestamp) *
                 bid.bidPerSecond;
             uint256 bill = price > bid.balance ? bid.balance : price;
@@ -189,7 +187,6 @@ contract FirstPriceAuction {
         bids[highestBid.previousBidPointer].nextBidPointer = highestBid
             .nextBidPointer;
 
-        // send balance back
         uint256 price = (block.timestamp - highestBid.startTimestamp) *
             highestBid.bidPerSecond;
         require(
@@ -206,6 +203,23 @@ contract FirstPriceAuction {
             Bid storage newHighestBid = bids[highestBid.nextBidPointer];
             newHighestBid.startTimestamp = uint64(block.timestamp);
         }
+    }
+
+    /** @dev Collects the current highest bid billing.
+     *  @param _market The address of the market.
+     */
+    function collectPayment(address _market) public {
+        bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+        bytes32 highestBidID = bids[startID].nextBidPointer;
+        require(highestBidID != 0x0, "No bid found");
+
+        Bid storage highestBid = bids[highestBidID];
+        uint256 price = (block.timestamp - highestBid.startTimestamp) *
+            highestBid.bidPerSecond;
+        require(price < highestBid.balance, "Highest bid is still active");
+        highestBid.startTimestamp = uint64(block.timestamp);
+        highestBid.balance -= price;
+        billing.send(price);
     }
 
     function _insertBid(address _market, bytes32 _bidID) internal {
