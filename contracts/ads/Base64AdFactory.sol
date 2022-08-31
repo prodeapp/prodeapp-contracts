@@ -26,7 +26,7 @@ contract Base64AdFactory {
 
         emit NewAd(address(instance));
         ads.push(instance);
-	
+
         return address(instance);
     }
 

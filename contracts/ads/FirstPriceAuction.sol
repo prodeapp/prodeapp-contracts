@@ -35,10 +35,7 @@ contract FirstPriceAuction {
     IBilling public billing;
     mapping(bytes32 => Bid) public bids;
 
-    constructor(
-        ICurate _curatedAds,
-        IBilling _billing
-    ) {
+    constructor(ICurate _curatedAds, IBilling _billing) {
         curatedAds = _curatedAds;
         billing = _billing;
     }
