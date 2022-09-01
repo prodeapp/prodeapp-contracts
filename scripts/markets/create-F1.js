@@ -8,30 +8,30 @@ const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days
 
-const marketName = "F1 Rolex Belgian Grand Prix 2022";
+const marketName = "F1 Heineken Dutch Grand Prix 2022";
 const allDrivers = Object.values(DRIVERS.F1);
 const allEngines = Object.values(ENGINES.F1);
 const allTires = Object.values(TIRES.F1);
 const allTeams = Object.values(TEAMS.F1);
-const openingTS = toTimestamp("2022-08-28 13:00:00 UTC") + F1_RACE_DURATION  // time where the questions can be answered
+const openingTS = toTimestamp("2022-09-04 10:00:00 GMT-3") + F1_RACE_DURATION  // time where the questions can be answered
 const marketData = {
   marketName: marketName,
   marketSymbol: "PRODE",
-  closingTime: toTimestamp("2022-08-26 12:00:00 UTC") - F1_RACE_DURATION,
-  price: ethers.utils.parseUnits("5.0", "ether"), // 3 xDAI
-  creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
+  closingTime: toTimestamp("2022-09-02 07:30:00 GMT-3") - F1_RACE_DURATION,
+  price: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
+  creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d", // protocol treasury
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),
   questions: [
     buildQuestionPosition(1, allDrivers, marketName, openingTS),
     buildQuestionPosition(2, allDrivers, marketName, openingTS),
     buildQuestionPosition(3, allDrivers, marketName, openingTS),
-    buildQuestionSingleSelect(`Who will get the pole-position at ${marketName}?`, allDrivers, toTimestamp("2022-08-27 15:00:00 UTC") + F1_RACE_DURATION, 'F1'),
+    buildQuestionSingleSelect(`Who will set the fastest time in the Q3 at ${marketName}?`, allDrivers, toTimestamp("2022-09-03 10:00:00 GMT-3") + F1_RACE_DURATION, 'F1'),
     buildQuestionSingleSelect(`Who will get the fastest lap time at ${marketName}?`, allDrivers, openingTS, 'F1'),
     buildQuestionSingleSelect(`Who will be the driver of the day at ${marketName}?`, allDrivers, openingTS, 'F1'),
     buildQuestionMultipleSelect(`Wich engine will score the most points at ${marketName}?`, allEngines, openingTS, 'F1'),
     buildQuestionSingleSelect(`Which tires type has the race's winner at the ${marketName} race end??`, allTires, openingTS, 'F1'),
-    buildQuestionSingleSelect(`Which driver will make the fastest pit stop at ${marketName}?`, allDrivers, openingTS, 'F1'),
+    buildQuestionSingleSelect(`Which driver will receive the DHL Fastest Pit Stop award at ${marketName}?`, allDrivers, openingTS, 'F1'),
     buildQuestionTeamMostPoints(allTeams, marketName, openingTS),
   ],
   prizeWeights: [5000, 3500, 1500]
