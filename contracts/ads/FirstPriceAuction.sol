@@ -27,9 +27,7 @@ contract FirstPriceAuction {
         bytes32 itemID; // on curate
     }
 
-    bytes32 public constant QUEUE_START =
-        0x0000000000000000000000000000000000000000000000000000000000000000;
-    uint256 public constant MIN_OFFER_DURATION = 300; // 5 min
+    uint256 public constant MIN_OFFER_DURATION = 600; // 10 min. Can be avoided if manually removed.
 
     ICurate public curatedAds;
     IBilling public billing;
@@ -99,7 +97,7 @@ contract FirstPriceAuction {
         require(bid.bidder == msg.sender, "Bid does not exist");
 
         if (!bid.removed) {
-            bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+            bytes32 startID = keccak256(abi.encode(_market));
             if (bid.previousBidPointer == startID) {
                 uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
                 uint256 bill = price > bid.balance ? bid.balance : price;
@@ -140,7 +138,7 @@ contract FirstPriceAuction {
         bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
         bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
 
-        bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+        bytes32 startID = keccak256(abi.encode(_market));
         if (bid.previousBidPointer == startID) {
             uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
             uint256 bill = price > bid.balance ? bid.balance : price;
@@ -156,14 +154,14 @@ contract FirstPriceAuction {
 
         uint256 remainingBalance = bid.balance;
         bid.balance = 0;
-        payable(msg.sender).send(remainingBalance);
+        requireSendXDAI(payable(msg.sender), remainingBalance);
     }
 
     /** @dev Removes the current highest bid if the balance is empty or if it was removed from curate.
      *  @param _market The address of the market.
      */
     function reportBid(address _market) external {
-        bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+        bytes32 startID = keccak256(abi.encode(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         require(highestBidID != 0x0, "No bid found");
 
@@ -192,7 +190,7 @@ contract FirstPriceAuction {
      *  @param _market The address of the market.
      */
     function collectPayment(address _market) external {
-        bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+        bytes32 startID = keccak256(abi.encode(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         require(highestBidID != 0x0, "No bid found");
 
@@ -207,7 +205,7 @@ contract FirstPriceAuction {
     function _insertBid(address _market, bytes32 _bidID) internal {
         // Insert the bid in the ordered list.
         Bid storage bid = bids[_bidID];
-        bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+        bytes32 startID = keccak256(abi.encode(_market));
         Bid storage startElement = bids[startID];
         bytes32 currentID = startID;
         bytes32 nextID = startElement.nextBidPointer;
@@ -242,8 +240,13 @@ contract FirstPriceAuction {
         }
     }
 
+    function requireSendXDAI(address payable _to, uint256 _value) internal {
+        (bool success, ) = _to.call{value: _value}(new bytes(0));
+        require(success, "Send XDAI failed");
+    }
+
     function getAd(address _market) external view returns (string memory) {
-        bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
+        bytes32 startID = keccak256(abi.encodePacked(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         if (highestBidID == 0x0) {
             return "";
