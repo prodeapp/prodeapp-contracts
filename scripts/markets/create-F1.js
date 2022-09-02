@@ -19,7 +19,7 @@ const marketData = {
   marketSymbol: "PRODE",
   closingTime: toTimestamp("2022-09-02 07:30:00 GMT-3") - F1_RACE_DURATION,
   price: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
-  creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d", // protocol treasury
+  creator: "0xbca74372C17597Fa9dA905C7c2B530766768027C", // protocol treasury relayer
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),
   questions: [
