@@ -33,6 +33,8 @@ contract FirstPriceAuction {
     IBilling public billing;
     mapping(bytes32 => Bid) public bids;
 
+    event NewHighestBid(address indexed _market);
+
     constructor(ICurate _curatedAds, IBilling _billing) {
         curatedAds = _curatedAds;
         billing = _billing;
@@ -104,6 +106,7 @@ contract FirstPriceAuction {
                 bid.startTimestamp = 0;
                 bid.balance -= bill;
                 billing.registerPayment{value: bill}(_market);
+                emit NewHighestBid(_market);
 
                 if (bid.nextBidPointer != 0x0) {
                     Bid storage newHighestBid = bids[bid.nextBidPointer];
@@ -145,6 +148,7 @@ contract FirstPriceAuction {
             bid.startTimestamp = 0;
             bid.balance -= bill;
             billing.registerPayment{value: bill}(_market);
+            emit NewHighestBid(_market);
 
             if (bid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[bid.nextBidPointer];
@@ -157,58 +161,49 @@ contract FirstPriceAuction {
         requireSendXDAI(payable(msg.sender), remainingBalance);
     }
 
-    /** @dev Removes the current highest bid if the balance is empty or if it was removed from curate.
+    /** @dev Either:
+     *    - removes the current highest bid if the balance is empty or if it was removed from curate.
+     *    - collects the current highest bid billing.
      *  @param _market The address of the market.
      */
-    function reportBid(address _market) external {
+    function executeHighestBid(address _market) external {
         bytes32 startID = keccak256(abi.encode(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         require(highestBidID != 0x0, "No bid found");
 
         Bid storage highestBid = bids[highestBidID];
-        highestBid.removed = true;
-        bids[highestBid.nextBidPointer].previousBidPointer = highestBid.previousBidPointer;
-        bids[highestBid.previousBidPointer].nextBidPointer = highestBid.nextBidPointer;
 
         uint256 price = (block.timestamp - highestBid.startTimestamp) * highestBid.bidPerSecond;
-        require(
-            price >= highestBid.balance || !curatedAds.isRegistered(highestBid.itemID),
-            "Highest bid is still active"
-        );
-        highestBid.startTimestamp = 0;
-        uint256 remainingBalance = highestBid.balance;
-        highestBid.balance = 0;
-        billing.registerPayment{value: remainingBalance}(_market);
+        if (price >= highestBid.balance || !curatedAds.isRegistered(highestBid.itemID)) {
+            // Report bid
+            highestBid.removed = true;
+            bids[highestBid.nextBidPointer].previousBidPointer = highestBid.previousBidPointer;
+            bids[highestBid.previousBidPointer].nextBidPointer = highestBid.nextBidPointer;
 
-        if (highestBid.nextBidPointer != 0x0) {
-            Bid storage newHighestBid = bids[highestBid.nextBidPointer];
-            newHighestBid.startTimestamp = uint64(block.timestamp);
+            highestBid.startTimestamp = 0;
+            uint256 remainingBalance = highestBid.balance;
+            highestBid.balance = 0;
+            billing.registerPayment{value: remainingBalance}(_market);
+            emit NewHighestBid(_market);
+
+            if (highestBid.nextBidPointer != 0x0) {
+                Bid storage newHighestBid = bids[highestBid.nextBidPointer];
+                newHighestBid.startTimestamp = uint64(block.timestamp);
+            }
+        } else {
+            // Collect payment from active bid
+            highestBid.startTimestamp = uint64(block.timestamp);
+            highestBid.balance -= price;
+            billing.registerPayment{value: price}(_market);
         }
-    }
-
-    /** @dev Collects the current highest bid billing.
-     *  @param _market The address of the market.
-     */
-    function collectPayment(address _market) external {
-        bytes32 startID = keccak256(abi.encode(_market));
-        bytes32 highestBidID = bids[startID].nextBidPointer;
-        require(highestBidID != 0x0, "No bid found");
-
-        Bid storage highestBid = bids[highestBidID];
-        uint256 price = (block.timestamp - highestBid.startTimestamp) * highestBid.bidPerSecond;
-        require(price < highestBid.balance, "Highest bid is still active");
-        highestBid.startTimestamp = uint64(block.timestamp);
-        highestBid.balance -= price;
-        billing.registerPayment{value: price}(_market);
     }
 
     function _insertBid(address _market, bytes32 _bidID) internal {
         // Insert the bid in the ordered list.
         Bid storage bid = bids[_bidID];
         bytes32 startID = keccak256(abi.encode(_market));
-        Bid storage startElement = bids[startID];
         bytes32 currentID = startID;
-        bytes32 nextID = startElement.nextBidPointer;
+        bytes32 nextID = bids[startID].nextBidPointer;
         while (bids[nextID].bidPerSecond >= bid.bidPerSecond) {
             currentID = nextID;
             nextID = bids[nextID].nextBidPointer;
@@ -221,6 +216,7 @@ contract FirstPriceAuction {
         if (currentID == startID) {
             // Highest bid! Activate the new bid and process the previous highest bid.
             bid.startTimestamp = uint64(block.timestamp);
+            emit NewHighestBid(_market);
 
             if (nextID != 0x0) {
                 uint256 price = (block.timestamp - bids[nextID].startTimestamp) *
@@ -259,5 +255,29 @@ contract FirstPriceAuction {
                 return "";
             }
         }
+    }
+
+    function getBids(
+        address _market,
+        uint256 _from,
+        uint256 _to
+    ) external view returns (Bid[] memory) {
+        Bid[] memory bidsArray = new Bid[](_to - _from);
+        bytes32 startID = keccak256(abi.encode(_market));
+        bytes32 currentID = startID;
+        bytes32 nextID = bids[startID].nextBidPointer;
+
+        for (uint256 i = 0; i <= _to; i++) {
+            if (bids[nextID].nextBidPointer != 0x0) break;
+
+            if (i >= _from) {
+                bidsArray[i] = bids[nextID];
+            }
+
+            currentID = nextID;
+            nextID = bids[nextID].nextBidPointer;
+        }
+
+        return bidsArray;
     }
 }
