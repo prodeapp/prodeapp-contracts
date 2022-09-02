@@ -50,18 +50,12 @@ contract FirstPriceAuction {
         address _market,
         uint256 _bidPerSecond
     ) external payable {
-        require(
-            msg.value / _bidPerSecond > MIN_OFFER_DURATION,
-            "Not enough funds"
-        );
+        require(msg.value / _bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
         require(curatedAds.isRegistered(_itemID), "Item must be registered");
 
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage newBid = bids[bidID];
-        require(
-            newBid.bidder == address(0x0) || newBid.removed,
-            "Bid is active"
-        );
+        require(newBid.bidder == address(0x0) || newBid.removed, "Bid is active");
         newBid.bidder = msg.sender;
         newBid.bidPerSecond = _bidPerSecond;
         newBid.balance = msg.value;
@@ -75,19 +69,13 @@ contract FirstPriceAuction {
      *  @param _itemID The id of curated ad.
      *  @param _market The address of the market the bid will be placed to.
      */
-    function increaseBalance(bytes32 _itemID, address _market)
-        external
-        payable
-    {
+    function increaseBalance(bytes32 _itemID, address _market) external payable {
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage bid = bids[bidID];
         bid.balance += msg.value;
         require(curatedAds.isRegistered(_itemID), "Item must be registered");
         require(bid.bidder == msg.sender, "Bid does not exist");
-        require(
-            bid.balance / bid.bidPerSecond > MIN_OFFER_DURATION,
-            "Not enough funds"
-        );
+        require(bid.balance / bid.bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
 
         if (bid.removed) {
             bid.removed = false;
@@ -113,8 +101,7 @@ contract FirstPriceAuction {
         if (!bid.removed) {
             bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
             if (bid.previousBidPointer == startID) {
-                uint256 price = (block.timestamp - bid.startTimestamp) *
-                    bid.bidPerSecond;
+                uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
                 uint256 bill = price > bid.balance ? bid.balance : price;
                 bid.startTimestamp = 0;
                 bid.balance -= bill;
@@ -127,16 +114,12 @@ contract FirstPriceAuction {
             }
 
             // force remove
-            bids[bid.nextBidPointer].previousBidPointer = bid
-                .previousBidPointer;
+            bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
             bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
         }
 
         bid.balance += msg.value;
-        require(
-            bid.balance / _bidPerSecond > MIN_OFFER_DURATION,
-            "Not enough funds"
-        );
+        require(bid.balance / _bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
         bid.bidPerSecond = _bidPerSecond;
 
         // Insert back
@@ -159,8 +142,7 @@ contract FirstPriceAuction {
 
         bytes32 startID = keccak256(abi.encode(_market, QUEUE_START));
         if (bid.previousBidPointer == startID) {
-            uint256 price = (block.timestamp - bid.startTimestamp) *
-                bid.bidPerSecond;
+            uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
             uint256 bill = price > bid.balance ? bid.balance : price;
             bid.startTimestamp = 0;
             bid.balance -= bill;
@@ -187,16 +169,12 @@ contract FirstPriceAuction {
 
         Bid storage highestBid = bids[highestBidID];
         highestBid.removed = true;
-        bids[highestBid.nextBidPointer].previousBidPointer = highestBid
-            .previousBidPointer;
-        bids[highestBid.previousBidPointer].nextBidPointer = highestBid
-            .nextBidPointer;
+        bids[highestBid.nextBidPointer].previousBidPointer = highestBid.previousBidPointer;
+        bids[highestBid.previousBidPointer].nextBidPointer = highestBid.nextBidPointer;
 
-        uint256 price = (block.timestamp - highestBid.startTimestamp) *
-            highestBid.bidPerSecond;
+        uint256 price = (block.timestamp - highestBid.startTimestamp) * highestBid.bidPerSecond;
         require(
-            price >= highestBid.balance ||
-                !curatedAds.isRegistered(highestBid.itemID),
+            price >= highestBid.balance || !curatedAds.isRegistered(highestBid.itemID),
             "Highest bid is still active"
         );
         highestBid.startTimestamp = 0;
@@ -219,8 +197,7 @@ contract FirstPriceAuction {
         require(highestBidID != 0x0, "No bid found");
 
         Bid storage highestBid = bids[highestBidID];
-        uint256 price = (block.timestamp - highestBid.startTimestamp) *
-            highestBid.bidPerSecond;
+        uint256 price = (block.timestamp - highestBid.startTimestamp) * highestBid.bidPerSecond;
         require(price < highestBid.balance, "Highest bid is still active");
         highestBid.startTimestamp = uint64(block.timestamp);
         highestBid.balance -= price;
@@ -248,11 +225,9 @@ contract FirstPriceAuction {
             bid.startTimestamp = uint64(block.timestamp);
 
             if (nextID != 0x0) {
-                uint256 price = (block.timestamp -
-                    bids[nextID].startTimestamp) * bids[nextID].bidPerSecond;
-                uint256 bill = price > bids[nextID].balance
-                    ? bids[nextID].balance
-                    : price;
+                uint256 price = (block.timestamp - bids[nextID].startTimestamp) *
+                    bids[nextID].bidPerSecond;
+                uint256 bill = price > bids[nextID].balance ? bids[nextID].balance : price;
                 bids[nextID].startTimestamp = 0;
                 bids[nextID].balance -= bill;
                 billing.registerPayment{value: bill}(_market);
@@ -260,8 +235,7 @@ contract FirstPriceAuction {
                 if (bids[nextID].balance == 0) {
                     // remove bid from list.
                     bids[nextID].removed = true;
-                    bids[bids[nextID].nextBidPointer]
-                        .previousBidPointer = _bidID;
+                    bids[bids[nextID].nextBidPointer].previousBidPointer = _bidID;
                     bid.nextBidPointer = bids[nextID].nextBidPointer;
                 }
             }
@@ -275,7 +249,6 @@ contract FirstPriceAuction {
             return "";
         } else {
             Bid storage bid = bids[highestBidID];
-            // Look for highest bid?
             address svgAddress = curatedAds.getAddress(bid.itemID);
             try ISVGContract(svgAddress).getSVG() returns (string memory svg) {
                 return svg;

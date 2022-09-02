@@ -18,11 +18,7 @@ contract CurateProxySVG {
         gtcrClassic = _gtcrClassic;
     }
 
-    function decodeAddress(RLPReader.RLPItem memory rawAddress)
-        internal
-        pure
-        returns (address)
-    {
+    function decodeAddress(RLPReader.RLPItem memory rawAddress) internal pure returns (address) {
         return rawAddress.toAddress();
     }
 
