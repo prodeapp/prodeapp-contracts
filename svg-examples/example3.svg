@@ -61,19 +61,4 @@
         <rect style="filter: url(#f2)" width="20px" height="20px" y="154px" x="0px" rx="20px" ry="5px" fill="#5aadce" />
         <rect style="filter: url(#f2)" width="20px" height="20px" y="184px" x="0px" rx="20px" ry="5px" fill="#db8d8d" />
     </g>
-
-    /* Injected Ad */
-    <g clip-path="url(#corners)">
-        <rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0)" stroke="rgba(14,14,14)" />
-        <g clip-path="url(#ad-margin)" style="transform:translate(0px, 35px)">
-            <rect width="290" height="430" fill="rgba(152,207,239)" stroke="rgba(14,14,14)"/>
-            <a href="https://www.nike.com/">
-                <path transform="translate(50, 65)" d="M42.741 71.477c-9.881 11.604-19.355 25.994-19.45 36.75-.037 4.047 1.255 7.58 4.354 10.256 4.46 3.854 9.374 5.213 14.264 5.221 7.146.01 14.242-2.873 19.798-5.096 9.357-3.742 112.79-48.659 112.79-48.659.998-.5.811-1.123-.438-.812-.504.126-112.603 30.505-112.603 30.505a24.771 24.771 0 0 1-6.524.934c-8.615.051-16.281-4.731-16.219-14.808.024-3.943 1.231-8.698 4.028-14.291z"/>
-                <text y="240px" x="90px" fill="#222222" font-family="'Futura', monospace" font-weight="bolder" font-size="20px">JUST DO IT.</text>
-            </a>
-        </g>
-        <text y="25px" x="50px" fill="#D0D0D0A7" font-family="'Courier New', monospace" font-size="15px">Ad curated by Kleros</text>
-        <animate dur="1s" attributeName="opacity" from="1" to="0" begin="2s" repeatCount="1" fill="freeze" />
-        <animate dur="1s" attributeName="visibility" from="visible" to="collapse" begin="2s" repeatCount="1" fill="freeze" />
-    </g>
 </svg>
