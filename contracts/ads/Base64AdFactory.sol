@@ -14,7 +14,7 @@ contract Base64AdFactory {
 
     /**
      *  @dev Constructor.
-     *  @param _adContract Address of the market contract that is going to be used for each new deployment.
+     *  @param _adContract Address of the base64 ad contract that is going to be used for each new deployment.
      */
     constructor(address _adContract) {
         adContract = _adContract;
@@ -30,11 +30,11 @@ contract Base64AdFactory {
         return address(instance);
     }
 
-    function allMarkets() external view returns (Base64Ad[] memory) {
+    function allAds() external view returns (Base64Ad[] memory) {
         return ads;
     }
 
-    function marketCount() external view returns (uint256) {
+    function adCount() external view returns (uint256) {
         return ads.length;
     }
 }
