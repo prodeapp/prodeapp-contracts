@@ -16,6 +16,8 @@ async function main() {
 
   console.log("VoucherManager address:", voucherManager.address);
 
+  await voucherManager.whitelistMarketFactory("0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b");
+
   // Verify contracts
   await hre.run("verify:verify", {
     address: voucherManager.address
