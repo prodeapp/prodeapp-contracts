@@ -27,6 +27,8 @@ interface IMarket is IERC721 {
 
     function nextTokenID() external view returns (uint256);
 
+    function price() external view returns (uint256);
+
     function totalPrize() external view returns (uint256);
 
     function totalAttributions() external view returns (uint256);
@@ -42,6 +44,11 @@ interface IMarket is IERC721 {
         external
         view
         returns (bytes32);
+
+    function placeBet(address _attribution, bytes32[] calldata _results)
+        external
+        payable
+        returns (uint256);
 
     function bets(bytes32 _tokenHash) external view returns (uint256);
 }
