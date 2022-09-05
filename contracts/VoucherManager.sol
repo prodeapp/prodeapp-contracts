@@ -3,16 +3,12 @@ pragma solidity 0.8.9;
 
 import "./IMarket.sol";
 
-interface IMarketFactory {
-    function markets(uint256) external view returns (IMarket);
-}
-
 contract VoucherManager {
 
     address public owner = msg.sender;
 
     mapping(address => uint256) public balance;
-    mapping(address => bool) public factoryWhitelist;
+    mapping(address => bool) public marketsWhitelist;
 
     event VoucherUsed(
         address indexed _player,
@@ -32,8 +28,8 @@ contract VoucherManager {
         uint256 _amount
     );
 
-    event FactoryWhitelisted(
-        address indexed _marketFactory
+    event MarketWhitelisted(
+        address indexed _market
     );
 
     constructor() {}
@@ -44,32 +40,29 @@ contract VoucherManager {
     }
 
     /** @dev Places a bet using the voucher balance and transfers the NFT to the sender.
-     *  @param _marketFactory Address of the market factory.
-     *  @param _marketIndex Index of the market in the factory.
+     *  @param _market Address of the market.
      *  @param _attribution Address that sent the referral. If 0x0, it's ignored.
      *  @param _results Answer predictions to the questions asked in Realitio.
      *  @return the minted token id.
      */
-    function placeBet(address _marketFactory, uint256 _marketIndex, address _attribution, bytes32[] calldata _results)
+    function placeBet(address _market, address _attribution, bytes32[] calldata _results)
         external
         payable
         returns (uint256)
     {
-        require(factoryWhitelist[_marketFactory] == true, "Invalid market factory");
+        require(marketsWhitelist[_market] == true, "Market not whitelisted");
 
-        IMarket market = IMarketFactory(_marketFactory).markets(_marketIndex);
-
-        uint256 price = market.price();
+        uint256 price = IMarket(_market).price();
 
         require(balance[msg.sender] >= price, "Insufficient voucher balance");
 
         balance[msg.sender] -= price;
 
-        uint256 tokenId = market.placeBet{value: price}(_attribution, _results);
+        uint256 tokenId = IMarket(_market).placeBet{value: price}(_attribution, _results);
 
-        market.transferFrom(address(this), msg.sender, tokenId);
+        IMarket(_market).transferFrom(address(this), msg.sender, tokenId);
 
-        emit VoucherUsed(msg.sender, address(market), tokenId);
+        emit VoucherUsed(msg.sender, _market, tokenId);
 
         return tokenId;
     }
@@ -98,14 +91,14 @@ contract VoucherManager {
         emit VoucherTransfered(_from, _to, _amount);
     }
 
-    /** @dev Adds a market factory to the whitelist.
-     *  @param _marketFactory Address of the market factory.
+    /** @dev Adds a market to the whitelist.
+     *  @param _market Address of the market.
      */
-    function whitelistMarketFactory(address _marketFactory) external {
+    function whitelistMarket(address _market) external {
         require(msg.sender == owner, "Not authorized");
 
-        factoryWhitelist[_marketFactory] = true;
+        marketsWhitelist[_market] = true;
 
-        emit FactoryWhitelisted(_marketFactory);
+        emit MarketWhitelisted(_market);
     }
 }
