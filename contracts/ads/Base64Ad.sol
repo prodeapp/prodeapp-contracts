@@ -7,7 +7,7 @@ contract Base64Ad {
     constructor() {}
 
     function setSVG(string memory _svg) external {
-        require(bytes(svg).length > 0, "SVG already set");
+        require(bytes(svg).length == 0, "SVG already set");
         require(bytes(_svg).length > 0, "SVG must not be empty");
         svg = _svg;
     }

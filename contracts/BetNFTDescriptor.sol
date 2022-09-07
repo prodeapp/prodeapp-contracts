@@ -409,14 +409,13 @@ contract BetNFTDescriptor is Initializable {
         );
     }
 
-    function generateAd() private view returns (string memory svg) {
+    function generateAd() private view returns (string memory) {
         string memory adSvg = IFirstPriceAuction(ads).getAd(address(this));
         if (bytes(adSvg).length == 0) {
-            // TODO: add default base64 ad
-            adSvg = '';
+            return '';
         }
 
-        svg = string(
+        return string(
             abi.encodePacked(
                 '<g clip-path="url(#corners)">',
                 '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0)" stroke="rgba(14,14,14)" />',

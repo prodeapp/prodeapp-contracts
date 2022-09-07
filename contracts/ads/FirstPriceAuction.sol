@@ -268,14 +268,14 @@ contract FirstPriceAuction {
         bytes32 nextID = bids[startID].nextBidPointer;
 
         for (uint256 i = 0; i <= _to; i++) {
-            if (bids[nextID].nextBidPointer != 0x0) break;
-
             if (i >= _from) {
                 bidsArray[i] = bids[nextID];
             }
 
             currentID = nextID;
             nextID = bids[nextID].nextBidPointer;
+
+            if (bids[nextID].nextBidPointer == 0x0) break;
         }
 
         return bidsArray;
