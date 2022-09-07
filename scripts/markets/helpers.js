@@ -139,8 +139,8 @@ function getChain(chainId) {
   return params[chainId];
 }
 
-const SOCCER_MATCH_DURATION = 60*60*2.5;
-const F1_RACE_DURATION = 60*60*3;
+const SOCCER_MATCH_DURATION = 60*60*2;
+const F1_RACE_DURATION = 60*60*2;
 
 module.exports = {
   buildQuestionHomevsAway,
