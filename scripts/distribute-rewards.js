@@ -84,7 +84,7 @@ async function main() {
 }
 
 async function processMarket(marketAddress, totalClaimed, signer) {
-  const { bets, market: marketData } = await graph.request(
+  let { bets, market: marketData } = await graph.request(
     gql`
       query rankingQuery($marketAddress: String) {
         bets(where: {market: $marketAddress, points_not: 0}, orderBy: points, orderDirection: desc) {
@@ -99,6 +99,11 @@ async function processMarket(marketAddress, totalClaimed, signer) {
         marketAddress: marketAddress,
       }
   );
+
+  bets = bets.map(bet => {
+    bet.points = Number(bet.points);
+    return bet;
+  });
 
   const Market = await ethers.getContractFactory("Market");
   const market = await Market.attach(marketAddress);
