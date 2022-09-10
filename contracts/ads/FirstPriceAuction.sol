@@ -272,10 +272,10 @@ contract FirstPriceAuction {
                 bidsArray[i] = bids[nextID];
             }
 
+            if (bids[nextID].nextBidPointer == 0x0) break;
+            
             currentID = nextID;
             nextID = bids[nextID].nextBidPointer;
-
-            if (bids[nextID].nextBidPointer == 0x0) break;
         }
 
         return bidsArray;
