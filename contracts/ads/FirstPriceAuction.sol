@@ -33,7 +33,15 @@ contract FirstPriceAuction {
     IBilling public billing;
     mapping(bytes32 => Bid) public bids;
 
-    event NewHighestBid(address indexed _market);
+    event BidUpdate(
+        address indexed _market,
+        address indexed _bidder,
+        bytes32 _itemID,
+        uint256 indexed _bidPerSecond,
+        uint256 _newBalance
+    );
+
+    event NewHighestBid(address indexed _market, address _bidder, bytes32 _itemID);
 
     constructor(ICurate _curatedAds, IBilling _billing) {
         curatedAds = _curatedAds;
@@ -62,7 +70,7 @@ contract FirstPriceAuction {
         newBid.itemID = _itemID;
         newBid.removed = false;
 
-        _insertBid(_market, bidID);
+        _insertBid(_market, _itemID, bidID);
     }
 
     /** @dev Increases the balance of an existing bid. If the bid was removed, it is inserted back.
@@ -79,7 +87,7 @@ contract FirstPriceAuction {
 
         if (bid.removed) {
             bid.removed = false;
-            _insertBid(_market, bidID);
+            _insertBid(_market, _itemID, bidID);
         }
     }
 
@@ -106,11 +114,11 @@ contract FirstPriceAuction {
                 bid.startTimestamp = 0;
                 bid.balance -= bill;
                 billing.registerPayment{value: bill}(_market);
-                emit NewHighestBid(_market);
 
                 if (bid.nextBidPointer != 0x0) {
                     Bid storage newHighestBid = bids[bid.nextBidPointer];
                     newHighestBid.startTimestamp = uint64(block.timestamp);
+                    emit NewHighestBid(_market, newHighestBid.bidder, newHighestBid.itemID);
                 }
             }
 
@@ -125,7 +133,7 @@ contract FirstPriceAuction {
 
         // Insert back
         bid.removed = false;
-        _insertBid(_market, bidID);
+        _insertBid(_market, _itemID, bidID);
     }
 
     /** @dev Removes an existing bid.
@@ -148,13 +156,15 @@ contract FirstPriceAuction {
             bid.startTimestamp = 0;
             bid.balance -= bill;
             billing.registerPayment{value: bill}(_market);
-            emit NewHighestBid(_market);
 
             if (bid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[bid.nextBidPointer];
                 newHighestBid.startTimestamp = uint64(block.timestamp);
+                emit NewHighestBid(_market, newHighestBid.bidder, newHighestBid.itemID);
             }
         }
+
+        emit BidUpdate(_market, msg.sender, _itemID, bid.bidPerSecond, 0);
 
         uint256 remainingBalance = bid.balance;
         bid.balance = 0;
@@ -184,11 +194,18 @@ contract FirstPriceAuction {
             uint256 remainingBalance = highestBid.balance;
             highestBid.balance = 0;
             billing.registerPayment{value: remainingBalance}(_market);
-            emit NewHighestBid(_market);
+            emit BidUpdate(
+                _market,
+                highestBid.bidder,
+                highestBid.itemID,
+                highestBid.bidPerSecond,
+                0
+            );
 
             if (highestBid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[highestBid.nextBidPointer];
                 newHighestBid.startTimestamp = uint64(block.timestamp);
+                emit NewHighestBid(_market, newHighestBid.bidder, newHighestBid.itemID);
             }
         } else {
             // Collect payment from active bid
@@ -198,7 +215,11 @@ contract FirstPriceAuction {
         }
     }
 
-    function _insertBid(address _market, bytes32 _bidID) internal {
+    function _insertBid(
+        address _market,
+        bytes32 _itemID,
+        bytes32 _bidID
+    ) internal {
         // Insert the bid in the ordered list.
         Bid storage bid = bids[_bidID];
         bytes32 startID = keccak256(abi.encode(_market));
@@ -216,24 +237,32 @@ contract FirstPriceAuction {
         if (currentID == startID) {
             // Highest bid! Activate the new bid and process the previous highest bid.
             bid.startTimestamp = uint64(block.timestamp);
-            emit NewHighestBid(_market);
 
             if (nextID != 0x0) {
-                uint256 price = (block.timestamp - bids[nextID].startTimestamp) *
-                    bids[nextID].bidPerSecond;
-                uint256 bill = price > bids[nextID].balance ? bids[nextID].balance : price;
-                bids[nextID].startTimestamp = 0;
-                bids[nextID].balance -= bill;
+                Bid storage nextBid = bids[nextID];
+                uint256 price = (block.timestamp - nextBid.startTimestamp) * nextBid.bidPerSecond;
+                uint256 bill = price > nextBid.balance ? nextBid.balance : price;
+                nextBid.startTimestamp = 0;
+                nextBid.balance -= bill;
                 billing.registerPayment{value: bill}(_market);
 
-                if (bids[nextID].balance == 0) {
+                if (nextBid.balance == 0) {
                     // remove bid from list.
-                    bids[nextID].removed = true;
-                    bids[bids[nextID].nextBidPointer].previousBidPointer = _bidID;
-                    bid.nextBidPointer = bids[nextID].nextBidPointer;
+                    nextBid.removed = true;
+                    bids[nextBid.nextBidPointer].previousBidPointer = _bidID;
+                    bid.nextBidPointer = nextBid.nextBidPointer;
                 }
+                emit BidUpdate(
+                    _market,
+                    nextBid.bidder,
+                    nextBid.itemID,
+                    nextBid.bidPerSecond,
+                    nextBid.balance
+                );
             }
+            emit NewHighestBid(_market, msg.sender, _itemID);
         }
+        emit BidUpdate(_market, msg.sender, _itemID, bid.bidPerSecond, bid.balance);
     }
 
     function requireSendXDAI(address payable _to, uint256 _value) internal {
@@ -273,7 +302,7 @@ contract FirstPriceAuction {
             }
 
             if (bids[nextID].nextBidPointer == 0x0) break;
-            
+
             currentID = nextID;
             nextID = bids[nextID].nextBidPointer;
         }

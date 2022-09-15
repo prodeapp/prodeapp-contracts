@@ -4,15 +4,11 @@ pragma solidity 0.8.9;
 import "./../IMarket.sol";
 
 contract Billing {
-
     address public governor;
     address public fallbackRecipient;
     mapping(IMarket => uint256) public balances;
 
-    constructor(
-        address _governor,
-        address _fallbackRecipient
-    ) {
+    constructor(address _governor, address _fallbackRecipient) {
         governor = _governor;
         fallbackRecipient = _fallbackRecipient;
     }
