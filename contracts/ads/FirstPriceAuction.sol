@@ -8,7 +8,7 @@ interface ICurate {
 }
 
 interface ISVGContract {
-    function getSVG() external view returns (string memory);
+    function getSVG(address _market, uint256 _tokenID) external view returns (string memory);
 }
 
 interface IBilling {
@@ -270,7 +270,7 @@ contract FirstPriceAuction {
         require(success, "Send XDAI failed");
     }
 
-    function getAd(address _market) external view returns (string memory) {
+    function getAd(address _market, uint256 _tokenID) external view returns (string memory) {
         bytes32 startID = keccak256(abi.encodePacked(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
         if (highestBidID == 0x0) {
@@ -278,7 +278,7 @@ contract FirstPriceAuction {
         } else {
             Bid storage bid = bids[highestBidID];
             address svgAddress = curatedAds.getAddress(bid.itemID);
-            try ISVGContract(svgAddress).getSVG() returns (string memory svg) {
+            try ISVGContract(svgAddress).getSVG(_market, _tokenID) returns (string memory svg) {
                 return svg;
             } catch {
                 return "";

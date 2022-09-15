@@ -13,7 +13,7 @@ interface ICurate {
 }
 
 interface IFirstPriceAuction {
-    function getAd(address _market) external view returns (string memory);
+    function getAd(address _market, uint256 _tokenID) external view returns (string memory);
 }
 
 library HexStrings {
@@ -220,7 +220,7 @@ contract BetNFTDescriptor is Initializable {
                     generateSVGFootText(marketName),
                     generateCurationMark(),
                     generatePredictionsFingerprint(tokenHash),
-                    generateAd(),
+                    generateAd(tokenId),
                     '</svg>'
                 )
             );
@@ -409,8 +409,8 @@ contract BetNFTDescriptor is Initializable {
         );
     }
 
-    function generateAd() private view returns (string memory) {
-        string memory adSvg = IFirstPriceAuction(ads).getAd(address(this));
+    function generateAd(uint256 tokenId) private view returns (string memory) {
+        string memory adSvg = IFirstPriceAuction(ads).getAd(address(this), tokenId);
         if (bytes(adSvg).length == 0) {
             return '';
         }

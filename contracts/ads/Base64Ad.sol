@@ -12,7 +12,7 @@ contract Base64Ad {
         svg = _svg;
     }
 
-    function getSVG() external view returns (string memory) {
+    function getSVG(address _market, uint256 _tokenID) external view returns (string memory) {
         return svg;
     }
 }
