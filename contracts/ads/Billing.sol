@@ -40,9 +40,15 @@ contract Billing {
         uint256 revenue = balances[_market];
         balances[_market] = 0;
 
-        try _market.fundMarket{value: revenue}("ads") {
-            // _market.resultSubmissionPeriodStart() == 0
-        } catch {
+        if (address(_market).code.length > 0) {
+            // Address is not a contract. See @openzeppelin/contracts/utils/Address.sol
+            try _market.fundMarket{value: revenue}("ads") {
+                // _market.resultSubmissionPeriodStart() == 0
+            } catch {
+                (bool success, ) = fallbackRecipient.call{value: revenue}(new bytes(0));
+                require(success, "Send XDAI failed");
+            }
+        } else {
             (bool success, ) = fallbackRecipient.call{value: revenue}(new bytes(0));
             require(success, "Send XDAI failed");
         }
