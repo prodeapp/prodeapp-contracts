@@ -70,7 +70,8 @@ contract FirstPriceAuction {
         newBid.itemID = _itemID;
         newBid.removed = false;
 
-        _insertBid(_market, _itemID, bidID);
+        _insertBid(_market, bidID);
+        emit BidUpdate(_market, msg.sender, _itemID, _bidPerSecond, msg.value);
     }
 
     /** @dev Increases the balance of an existing bid. If the bid was removed, it is inserted back.
@@ -87,8 +88,9 @@ contract FirstPriceAuction {
 
         if (bid.removed) {
             bid.removed = false;
-            _insertBid(_market, _itemID, bidID);
+            _insertBid(_market, bidID);
         }
+        emit BidUpdate(_market, msg.sender, _itemID, bid.bidPerSecond, bid.balance);
     }
 
     /** @dev Places a new bid or replaces one that has been removed.
@@ -133,7 +135,8 @@ contract FirstPriceAuction {
 
         // Insert back
         bid.removed = false;
-        _insertBid(_market, _itemID, bidID);
+        _insertBid(_market, bidID);
+        emit BidUpdate(_market, msg.sender, _itemID, _bidPerSecond, bid.balance);
     }
 
     /** @dev Removes an existing bid.
@@ -215,11 +218,7 @@ contract FirstPriceAuction {
         }
     }
 
-    function _insertBid(
-        address _market,
-        bytes32 _itemID,
-        bytes32 _bidID
-    ) internal {
+    function _insertBid(address _market, bytes32 _bidID) internal {
         // Insert the bid in the ordered list.
         Bid storage bid = bids[_bidID];
         bytes32 startID = keccak256(abi.encode(_market));
@@ -260,9 +259,8 @@ contract FirstPriceAuction {
                     nextBid.balance
                 );
             }
-            emit NewHighestBid(_market, msg.sender, _itemID);
+            emit NewHighestBid(_market, msg.sender, bid.itemID);
         }
-        emit BidUpdate(_market, msg.sender, _itemID, bid.bidPerSecond, bid.balance);
     }
 
     function requireSendXDAI(address payable _to, uint256 _value) internal {
