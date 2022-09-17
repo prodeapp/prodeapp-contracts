@@ -14,17 +14,24 @@ contract CurateProxySVG {
         address svgAddress;
     }
 
-    address public immutable gtcrContent;
-    address public immutable gtcrTechnical;
+    IGeneralizedTCR public immutable gtcrContent;
+    IGeneralizedTCR public immutable gtcrTechnical;
 
     mapping(bytes32 => Item) public hashToCurateIDs; // hashToCurateIDs[ID]
+
+    event newItemMapped(
+        address indexed _svgAddress,
+        bytes32 indexed _itemID,
+        bytes32 _contentItemID,
+        bytes32 _technicalItemID
+    );
 
     /**
      *  @dev Constructor.
      *  @param _gtcrContent Address of the Curate registry that holds ads compliant with the content moderation policy.
      *  @param _gtcrTechnical Address of the Curate registry that holds ads compliant with the technical policy.
      */
-    constructor(address _gtcrContent, address _gtcrTechnical) public {
+    constructor(IGeneralizedTCR _gtcrContent, IGeneralizedTCR _gtcrTechnical) public {
         gtcrContent = _gtcrContent;
         gtcrTechnical = _gtcrTechnical;
     }
@@ -39,10 +46,8 @@ contract CurateProxySVG {
         item.contentItemID = _contentItemID;
         item.technicalItemID = _technicalItemID;
 
-        (bytes memory contentData, , ) = IGeneralizedTCR(gtcrContent).getItemInfo(_contentItemID);
-        (bytes memory technicalData, , ) = IGeneralizedTCR(gtcrTechnical).getItemInfo(
-            _technicalItemID
-        );
+        (bytes memory contentData, , ) = gtcrContent.getItemInfo(_contentItemID);
+        (bytes memory technicalData, , ) = gtcrTechnical.getItemInfo(_technicalItemID);
 
         RLPReader.RLPItem[] memory contentRlpData = contentData.toRlpItem().toList();
         RLPReader.RLPItem[] memory technicalRlpData = technicalData.toRlpItem().toList();
@@ -52,14 +57,13 @@ contract CurateProxySVG {
         require(contentAdr != address(0x0), "Addresses not found");
 
         item.svgAddress = contentAdr;
+        emit newItemMapped(contentAdr, itemID, _contentItemID, _technicalItemID);
     }
 
     function isRegistered(bytes32 _itemID) public view returns (bool) {
         Item storage item = hashToCurateIDs[_itemID];
-        (, IGeneralizedTCR.Status contentStatus, ) = IGeneralizedTCR(gtcrContent).getItemInfo(
-            item.contentItemID
-        );
-        (, IGeneralizedTCR.Status technicalStatus, ) = IGeneralizedTCR(gtcrTechnical).getItemInfo(
+        (, IGeneralizedTCR.Status contentStatus, ) = gtcrContent.getItemInfo(item.contentItemID);
+        (, IGeneralizedTCR.Status technicalStatus, ) = gtcrTechnical.getItemInfo(
             item.technicalItemID
         );
 

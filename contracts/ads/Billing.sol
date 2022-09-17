@@ -41,7 +41,7 @@ contract Billing {
         balances[_market] = 0;
 
         if (address(_market).code.length > 0) {
-            // Address is not a contract. See @openzeppelin/contracts/utils/Address.sol
+            // Address is a contract. See @openzeppelin/contracts/utils/Address.sol
             try _market.fundMarket{value: revenue}("ads") {
                 // _market.resultSubmissionPeriodStart() == 0
             } catch {
