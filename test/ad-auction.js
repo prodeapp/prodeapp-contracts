@@ -27,9 +27,11 @@ describe("Market", () => {
   let bidder2;
   let bidder3;
   let bidder4;
+  let market1;
+  let market2;
 
   let arbitrator;
-  let curate;
+  let curateProxy;
   let auctionContract;
   const markets = [
     "0x000000000000000000000000000000000000000A",
@@ -39,6 +41,14 @@ describe("Market", () => {
   ]
 
   const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+  const NIKE_AD = "PHN2ZyB3aWR0aD0iMjkwIiBoZWlnaHQ9IjQzMCIgdmlld0JveD0iMCAwIDI5MCA0MzAiCiAgICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICB4bWxuczp4bGluaz0naHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayc+CgogICAgPHJlY3Qgd2lkdGg9IjI5MCIgaGVpZ2h0PSI0MzAiIGZpbGw9InJnYmEoMTUyLDIwNywyMzkpIiBzdHJva2U9InJnYmEoMTQsMTQsMTQpIi8+CiAgICA8YSBocmVmPSJodHRwczovL3d3dy5uaWtlLmNvbS8iPgogICAgICAgIDxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwLCA2NSkiIGQ9Ik00Mi43NDEgNzEuNDc3Yy05Ljg4MSAxMS42MDQtMTkuMzU1IDI1Ljk5NC0xOS40NSAzNi43NS0uMDM3IDQuMDQ3IDEuMjU1IDcuNTggNC4zNTQgMTAuMjU2IDQuNDYgMy44NTQgOS4zNzQgNS4yMTMgMTQuMjY0IDUuMjIxIDcuMTQ2LjAxIDE0LjI0Mi0yLjg3MyAxOS43OTgtNS4wOTYgOS4zNTctMy43NDIgMTEyLjc5LTQ4LjY1OSAxMTIuNzktNDguNjU5Ljk5OC0uNS44MTEtMS4xMjMtLjQzOC0uODEyLS41MDQuMTI2LTExMi42MDMgMzAuNTA1LTExMi42MDMgMzAuNTA1YTI0Ljc3MSAyNC43NzEgMCAwIDEtNi41MjQuOTM0Yy04LjYxNS4wNTEtMTYuMjgxLTQuNzMxLTE2LjIxOS0xNC44MDguMDI0LTMuOTQzIDEuMjMxLTguNjk4IDQuMDI4LTE0LjI5MXoiLz4KICAgICAgICA8dGV4dCB5PSIyNDBweCIgeD0iOTBweCIgZmlsbD0iIzIyMjIyMiIgZm9udC1mYW1pbHk9IidGdXR1cmEnLCBtb25vc3BhY2UiIGZvbnQtd2VpZ2h0PSJib2xkZXIiIGZvbnQtc2l6ZT0iMjBweCI+SlVTVCBETyBJVC48L3RleHQ+CiAgICA8L2E+Cjwvc3ZnPg==";
+  const NIKE_PINK_AD = "PHN2ZyB3aWR0aD0iMjkwIiBoZWlnaHQ9IjQzMCIgdmlld0JveD0iMCAwIDI5MCA0MzAiCiAgICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICB4bWxuczp4bGluaz0naHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayc+CiAgICA8cmVjdCB3aWR0aD0iMjkwIiBoZWlnaHQ9IjQzMCIgZmlsbD0icmdiYSgxODAsMTI1LDE1NSkiIHN0cm9rZT0icmdiYSgxNCwxNCwxNCkiLz4KICAgIDxhIGhyZWY9Imh0dHBzOi8vd3d3Lm5pa2UuY29tLyI+CiAgICAgICAgPHBhdGggdHJhbnNmb3JtPSJ0cmFuc2xhdGUoNTAsIDY1KSIgZD0iTTQyLjc0MSA3MS40NzdjLTkuODgxIDExLjYwNC0xOS4zNTUgMjUuOTk0LTE5LjQ1IDM2Ljc1LS4wMzcgNC4wNDcgMS4yNTUgNy41OCA0LjM1NCAxMC4yNTYgNC40NiAzLjg1NCA5LjM3NCA1LjIxMyAxNC4yNjQgNS4yMjEgNy4xNDYuMDEgMTQuMjQyLTIuODczIDE5Ljc5OC01LjA5NiA5LjM1Ny0zLjc0MiAxMTIuNzktNDguNjU5IDExMi43OS00OC42NTkuOTk4LS41LjgxMS0xLjEyMy0uNDM4LS44MTItLjUwNC4xMjYtMTEyLjYwMyAzMC41MDUtMTEyLjYwMyAzMC41MDVhMjQuNzcxIDI0Ljc3MSAwIDAgMS02LjUyNC45MzRjLTguNjE1LjA1MS0xNi4yODEtNC43MzEtMTYuMjE5LTE0LjgwOC4wMjQtMy45NDMgMS4yMzEtOC42OTggNC4wMjgtMTQuMjkxeiIvPgogICAgICAgIDx0ZXh0IHk9IjI0MHB4IiB4PSI5MHB4IiBmaWxsPSIjMjIyMjIyIiBmb250LWZhbWlseT0iJ0Z1dHVyYScsIG1vbm9zcGFjZSIgZm9udC13ZWlnaHQ9ImJvbGRlciIgZm9udC1zaXplPSIyMHB4Ij5KVVNUIERPIElULjwvdGV4dD4KICAgIDwvYT4KPC9zdmc+";
+  const ITEM_ID_1 = "0x0000000000000000000000000000000000000000000000000000000000000001";
+  const ITEM_ID_PINK = "0x0000000000000000000000000000000000000000000000000000000000000002";
+  const ITEM_ID_EMPTY = "0x0000000000000000000000000000000000000000000000000000000000000003";
+
+  let nikeAdContract;
+  let nikePinkAdContract;
 
   before("Get accounts", async () => {
     const accounts = await ethers.getSigners();
@@ -50,965 +60,331 @@ describe("Market", () => {
     bidder2 = accounts[5];
     bidder3 = accounts[6];
     bidder4 = accounts[7];
+    market1 = accounts[8];
+    market2 = accounts[9];
+  });
 
-    const curateAddress = ZERO_ADDRESS;
-    const CurateProxy = await ethers.getContractFactory("CurateProxy");
-    const curateProxy = await CurateProxy.deploy(curateAddress);
+  beforeEach("initialize the contract", async function () {
+    const CurateProxy = await ethers.getContractFactory("CurateProxySVGMock");
+    curateProxy = await CurateProxy.deploy();
     await curateProxy.deployed();
+
+    // Deploy SVG contract
+    const Base64Ad = await ethers.getContractFactory("Base64Ad");
+    const base64Ad = await Base64Ad.deploy();
+    await base64Ad.deployed();
+
+    // Deploy SVG Factory contract
+    const Base64AdFactory = await ethers.getContractFactory("Base64AdFactory");
+    const svgFactory = await Base64AdFactory.deploy(base64Ad.address);
+    await svgFactory.deployed();
+
+    // Deploy Billing contract
+    const Billing = await ethers.getContractFactory("Billing");
+    const billing = await Billing.deploy(governor.address, governor.address);
+    await billing.deployed();
 
     // Deploy NFT Descriptor contract
     const FirstPriceAuction = await ethers.getContractFactory("FirstPriceAuction");
-    const auctionContract = await FirstPriceAuction.deploy(curateProxy.address);
+    auctionContract = await FirstPriceAuction.deploy(curateProxy.address, billing.address);
     await auctionContract.deployed();
+
+    await svgFactory.createAd(NIKE_AD);
+    nikeAdContract = await svgFactory.ads(0);
+    await svgFactory.createAd(NIKE_PINK_AD);
+    nikePinkAdContract = await svgFactory.ads(1);
+
+    await curateProxy.setItem(ITEM_ID_1, nikeAdContract, true);
+    await curateProxy.setItem(ITEM_ID_PINK, nikePinkAdContract, true);
   });
 
-  describe("Betting Period", () => {
-    it("Should only accept valid bets.", async () => {
-      const currentTS = await getCurrentTimestamp() + 10000;
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+  describe("Placing Bids", () => {
+    it("Should only accept valid bids.", async () => {
+      await expect(
+        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 0, { value: 100 })
+      ).to.be.revertedWith("reverted with panic code 0x12 (Division or modulo division by zero)");
+
+      await expect(
+        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 1, { value: 0 })
+      ).to.be.revertedWith("Not enough funds");
+      await expect(
+        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 1, { value: 600 })
+      ).to.be.revertedWith("Not enough funds");
+
+      await expect(
+        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 1, { value: 601 })
+      ).to.be.revertedWith("Item must be registered");
+
+      await auctionContract.placeBid(ITEM_ID_1, market1.address, 1, { value: 601 });
+      await expect(
+        auctionContract.placeBid(ITEM_ID_1, market1.address, 1, { value: 601 })
+      ).to.be.revertedWith("Bid is active");
+
+      await auctionContract.placeBid(ITEM_ID_PINK, market2.address, 2, { value: 1202 });
+    });
+
+    it("Should insert bids correctly.", async () => {
+      let bids;
+
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
       
-      let predictions;
+      await auctionContract.connect(bidder2).placeBid(ITEM_ID_1, market1.address, 2, { value: 2404 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
 
-      predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.placeBet(predictions, { value: 100 });
-      await market.placeBet(predictions, { value: 100 });
-      await expect(
-        market.placeBet(predictions, { value: 101 })
-      ).to.be.revertedWith("Wrong value sent");
-      await expect(
-        market.placeBet(predictions, { value: 99 })
-      ).to.be.revertedWith("Wrong value sent");
+      await ethers.provider.send('evm_increaseTime', [1202]);
+      await ethers.provider.send('evm_mine');
 
-      predictions = [numberToBytes32(1), numberToBytes32(40), numberToBytes32(50)];
-      await expect(
-        market.placeBet(predictions, { value: 100 })
-      ).to.be.revertedWith("Results mismatch");
+      await auctionContract.connect(bidder3).placeBid(ITEM_ID_PINK, market1.address, 1, { value: 601 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(bidder3.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
 
-      predictions = [numberToBytes32(1)];
-      await expect(
-        market.placeBet(predictions, { value: 100 })
-      ).to.be.revertedWith("Results mismatch");
+      await auctionContract.executeHighestBid(market1.address);
+
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder2.address);
+      expect(bids[1].bidder).to.eq(bidder3.address);
+      expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.executeHighestBid(market1.address);
+
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder2.address);
+      expect(bids[1].bidder).to.eq(bidder3.address);
+      expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.connect(bidder4).placeBid(ITEM_ID_PINK, market1.address, 10, { value: 10000 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder4.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(bidder3.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
     });
 
-    it("Should not accept bets after closingTime has passed.", async () => {
-      const currentTS = await getCurrentTimestamp();
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+    it("Should remove bid correctly.", async () => {
+      let bids;
 
-      const predictions = [numberToBytes32(1), numberToBytes32(40)];
       await expect(
-        market.placeBet(predictions, { value: 100 })
-      ).to.be.revertedWith("Bets not allowed");
-    });
+        auctionContract.removeBid(ITEM_ID_EMPTY, market1.address)
+      ).to.be.revertedWith("Bid does not exist");
 
-    it("Should emit PlaceBet event.", async () => {
-      const currentTS = await getCurrentTimestamp() + 1000;
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      await expect(
+        auctionContract.connect(user1).removeBid(ITEM_ID_1, market1.address)
+      ).to.be.revertedWith("Bid does not exist");
+
+      await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
+      await expect(
+        auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address)
+      ).to.be.revertedWith("Bid already removed");
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      await auctionContract.connect(bidder2).placeBid(ITEM_ID_1, market1.address, 2, { value: 2404 });
+      await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder2.address);
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+      await auctionContract.connect(bidder2).removeBid(ITEM_ID_1, market1.address);
       
-      const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      const tx = await market.connect(other).placeBet(predictions, { value: 100 });
-      const receipt = await tx.wait();
-      const [player, tokenID, tokenHash, _predictions] = getEmittedEvent('PlaceBet', receipt).args
-      expect(player).to.eq(other.address);
-      expect(tokenID).to.eq((await market.nextTokenID()).sub(BigNumber.from(1)));
-      expect(tokenHash).to.eq(ethers.utils.keccak256(ethers.utils.hexConcat(predictions)));
-      expect(_predictions).to.deep.equal(predictions);
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      await auctionContract.connect(bidder2).placeBid(ITEM_ID_1, market1.address, 2, { value: 2404 });
+      await auctionContract.connect(bidder3).placeBid(ITEM_ID_1, market1.address, 1, { value: 2404 });
+      await auctionContract.connect(bidder2).removeBid(ITEM_ID_1, market1.address);
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder3.address);
+      expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.connect(bidder2).placeBid(ITEM_ID_1, market1.address, 2, { value: 2404 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(bidder3.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
     });
 
-    it("Should create and transfer ERC721 Bet item correctly.", async () => {
-      const currentTS = await getCurrentTimestamp() + 1000;
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+    it("Should increase bid's balance correctly.", async () => {
+      let bids;
+
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 32 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].balance).to.eq(BigNumber.from(1234));
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
+      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 1234 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].balance).to.eq(BigNumber.from(1234));
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+
+      await ethers.provider.send('evm_increaseTime', [500]);
+      await ethers.provider.send('evm_mine');
+      await auctionContract.executeHighestBid(market1.address);
+
+      await expect(
+        auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 32 })
+      ).to.be.revertedWith("Not enough funds");
+
+      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 2000 });
       
-      const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.connect(other).placeBet(predictions, { value: 100 });
-
-      const tokenID = (await market.nextTokenID()).sub(BigNumber.from(1));
-      expect(await market.ownerOf(tokenID)).to.eq(other.address);
-
-      await market.connect(other).transferFrom(other.address, user1.address, tokenID);
-      expect(await market.ownerOf(tokenID)).to.eq(user1.address);
-      expect(await market.balanceOf(user1.address)).to.eq(BigNumber.from(1));
-    });
-
-    it("Should send fees to providers if specified in the call.", async () => {
-      const currentTS = await getCurrentTimestamp() + 10000;
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
-
-      let providerFee = 5000;
-      let expectedReward = BigNumber.from(100).mul(providerFee).div(10000);
-      const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      tx = await market.placeBetWithProvider(other.address, providerFee, predictions, { value: expectedReward.add(BigNumber.from(100)) });
-      receipt = await tx.wait();
-      [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
-      expect(_provider).to.eq(other.address);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      await ethers.provider.send('evm_increaseTime', [2000]);
+      await ethers.provider.send('evm_mine');
       
-      providerFee = 500;
-      expectedReward = BigNumber.from(100).mul(providerFee).div(10000);
-      tx = await market.placeBetWithProvider(creator.address, providerFee, predictions, { value: expectedReward.add(BigNumber.from(100)) });
-      receipt = await tx.wait();
-      [_provider, _reward] = getEmittedEvent('ProviderReward', receipt).args;
-      expect(_provider).to.eq(creator.address);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      await auctionContract.executeHighestBid(market1.address);
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(ZERO_ADDRESS);
 
-      tx = await market.placeBet(predictions, { value: 100 });
-      receipt = await tx.wait();
-      console.log(getEmittedEvent('ProviderReward', receipt));
+      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 1234 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].balance).to.eq(BigNumber.from(1234));
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
     });
 
-    it("Other functions should not be callable during the betting period, except for funding.", async () => {
-      const currentTS = await getCurrentTimestamp() + 1000;
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+    it("Should update bid's balance correctly.", async () => {
+      let bids;
+
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 32 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+
+      await ethers.provider.send('evm_increaseTime', [500]);
+      await ethers.provider.send('evm_mine');
+      await auctionContract.executeHighestBid(market1.address);
 
       await expect(
-        market.registerAvailabilityOfResults()
-      ).to.be.revertedWith("Bets ongoing");
-      await expect(
-        market.registerPoints(0, 0, 0)
-      ).to.be.revertedWith("Not in submission period");
-      await expect(
-        market.claimRewards(0, 0, 0)
-      ).to.be.revertedWith("Not in claim period");
-      await expect(
-        market.reimbursePlayer(0)
-      ).to.be.revertedWith("Not in claim period");
-      await expect(
-        market.distributeRemainingPrizes()
-      ).to.be.revertedWith("Not in claim period");
+        auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 32 })
+      ).to.be.revertedWith("Not enough funds");
+
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 2000 });
       
-      const tx = await market.connect(user1).fundMarket("Brrrrr", { value: 1000});
-      const receipt = await tx.wait();
-      const [funder, value, message] = getEmittedEvent('FundingReceived', receipt).args
-      expect(funder).to.eq(user1.address);
-      expect(value).to.eq(1000);
-      expect(message).to.eq("Brrrrr");
-      expect(await ethers.provider.getBalance(market.address)).to.eq(BigNumber.from(1000));
-    });
-  });
+      await ethers.provider.send('evm_increaseTime', [2000]);
+      await ethers.provider.send('evm_mine');
+      
+      await auctionContract.executeHighestBid(market1.address);
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(ZERO_ADDRESS);
 
-  describe("Register Points Period", () => {
-    it("Should not register points if questions were not settled.", async () => {
-      const currentTS = await getCurrentTimestamp();
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].balance).to.eq(BigNumber.from(1234));
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+    });
+
+    it("Should update bid correctly.", async () => {
+      let bids;
+
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
+      
+      await auctionContract.connect(bidder2).placeBid(ITEM_ID_1, market1.address, 2, { value: 2404 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
+
+      await ethers.provider.send('evm_increaseTime', [1202]);
+      await ethers.provider.send('evm_mine');
+
+      await auctionContract.connect(bidder3).placeBid(ITEM_ID_PINK, market1.address, 1, { value: 601 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(bidder3.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.executeHighestBid(market1.address);
+
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder2.address);
+      expect(bids[1].bidder).to.eq(bidder3.address);
+      expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.executeHighestBid(market1.address);
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 1, { value: 601 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder2.address);
+      expect(bids[1].bidder).to.eq(bidder3.address);
+      expect(bids[2].bidder).to.eq(bidder1.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
 
       await expect(
-        market.registerAvailabilityOfResults()
-      ).to.be.revertedWith("question must be finalized");
+        auctionContract.connect(bidder4).updateBid(ITEM_ID_1, market1.address, 2, { value: 32 })
+      ).to.be.revertedWith("Bid does not exist");
 
-      // Should still allow sponsors after bettings closed, only if questions were not settled.
-      await market.connect(user1).fundMarket("Brrrrr", { value: 1000});
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 10, { value: 10000 });
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder1.address);
+      expect(bids[1].bidder).to.eq(bidder2.address);
+      expect(bids[2].bidder).to.eq(bidder3.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
+
+      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2);
+      bids = await auctionContract.getBids(market1.address, 0, 5);
+      expect(bids[0].bidder).to.eq(bidder2.address);
+      expect(bids[1].bidder).to.eq(bidder1.address);
+      expect(bids[2].bidder).to.eq(bidder3.address);
+      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
     });
 
-    it("Should enter the submission period once questions are settled.", async () => {
-      const currentTS = await getCurrentTimestamp();
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
+    it("Should get ads correctly.", async () => {
+      let svg;
 
-      //predictions = [numberToBytes32(1), numberToBytes32(40)];
-      const questionID1 = await market.questionIDs(0);
-      const questionID2 = await market.questionIDs(1);
-      await realitio.submitAnswer(questionID1, numberToBytes32(1), 0, { value: 10 });
-      await realitio.submitAnswer(questionID2, numberToBytes32(40), 0, { value: 10 });
-      await ethers.provider.send('evm_increaseTime', [timeout]);
-      await ethers.provider.send('evm_mine');
-      const tx = await market.registerAvailabilityOfResults();
-      const receipt = await tx.wait();
-      const timestamp = BigNumber.from(await getCurrentTimestamp(receipt.blockNumber));
-      expect(await market.resultSubmissionPeriodStart()).to.eq(timestamp);
-      expect(await market.totalPrize()).to.eq(BigNumber.from(0));
-      // Should not allow sponsors.
-      await expect(
-        market.connect(user1).fundMarket("Brrrrr", { value: 1000})
-      ).to.be.revertedWith("Results already available");
-    });
-
-    it("Should allow only valid rankings.", async () => {
-      const bettingTime = 200;
-      const closingTime = await getCurrentTimestamp() + bettingTime;
-      const questions = [
-        {
-          templateID: 2, 
-          question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
-          openingTS: closingTime + 1
-        },
-        {
-          templateID: 2, 
-          question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
-          openingTS: closingTime + 1
-        },
-        {
-          templateID: 2, 
-          question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
-          openingTS: closingTime + 1
-        }
-      ];
-
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        closingTime,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
-  
-      const players = [
-        player1,
-        player2,
-        player3,
-        player3,
-        player4,
-        player4,
-        player4,
-      ];
-      const bets = [
-        [numberToBytes32(1), numberToBytes32(1), numberToBytes32(1)], // 2 points
-        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], // 3 points
-        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(2)], // 2 points
-        [numberToBytes32(2), numberToBytes32(2), numberToBytes32(2)], // 1 points
-        [numberToBytes32(0), numberToBytes32(0), numberToBytes32(0)], // 0 points
-        [numberToBytes32(1), numberToBytes32(5), numberToBytes32(1)], // 2 points 
-        [numberToBytes32(2), numberToBytes32(1), numberToBytes32(2)]  // 0 points
-      ];
-      const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
-  
-      for (let i = 0; i < bets.length; i++) {
-        await market.connect(players[i]).placeBet(bets[i], { value: 100 });
-      }
-      await ethers.provider.send('evm_increaseTime', [bettingTime]);
-      await ethers.provider.send('evm_mine');
-  
-      for (let i = 0; i < results.length; i++) {
-        const questionID = await market.questionIDs(i);
-        await realitio.submitAnswer(questionID, results[i], 0, { value: 10 });
-      }
-      const poolBalance = await ethers.provider.getBalance(market.address);
-      await ethers.provider.send('evm_increaseTime', [timeout]);
-      await ethers.provider.send('evm_mine');
-      let tx = await market.registerAvailabilityOfResults();
-      let receipt = await tx.wait();
-      const [_manager, _managementReward] = getEmittedEvent('ManagementReward', receipt).args
-      expect(_manager).to.eq(creator.address);
-      const managementReward = poolBalance.mul(BigNumber.from(marketData.managementFee)).div(BigNumber.from(10000));
-      expect(_managementReward).to.eq(managementReward);
-      expect(await market.totalPrize()).to.eq(poolBalance.sub(managementReward));
-  
-      // Estimate ranking
-      const ranking = []
-      for (let i = 0; i < bets.length; i++) {
-        const predictions_i = bets[i];
-        const points = predictions_i.filter((prediction, idx) => prediction == results[idx]).length;
-        ranking.push(points);
-      }
-  
-      // Register ranking
-      await expect(market.registerPoints(100, 0, 0)).to.be.revertedWith("Token does not exist");
-  
-      // Cannot register a token with 0 points
-      await expect(market.registerPoints(4, 0, 0)).to.be.revertedWith("You are not a winner");
-      await expect(market.registerPoints(4, 2, 0)).to.be.revertedWith("You are not a winner");
-      await expect(market.registerPoints(2, 2, 0)).to.be.revertedWith("Invalid ranking index");
-  
-      tx = await market.registerPoints(2, 0, 0);
-      receipt = await tx.wait();
-      let [_tokenID, _totalPoints, _index] = getEmittedEvent('RankingUpdated', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(2));
-      expect(_totalPoints).to.eq(BigNumber.from(ranking[2]));
-      expect(_index).to.eq(BigNumber.from(0));
-  
-      await expect(market.registerPoints(4, 0, 0)).to.be.revertedWith("You are not a winner");
-      await expect(market.registerPoints(4, 1, 0)).to.be.revertedWith("You are not a winner");
-      await expect(market.registerPoints(4, 2, 0)).to.be.revertedWith("You are not a winner");
-  
-      // Cannot register a token at a position with fewer points than the current token
-      tx = await market.registerPoints(3, 0, 0);
-      receipt = await tx.wait();
-      expect(receipt.events.length).to.eq(0); // No events = ranking was not modified
-      // A token can only be registered at its current best possible position, not worse.
-      await expect(market.registerPoints(3, 2, 0)).to.be.revertedWith("Invalid ranking index");
-      tx = await market.registerPoints(3, 1, 0);
-      receipt = await tx.wait();
-      [_tokenID, _totalPoints, _index] = getEmittedEvent('RankingUpdated', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(3));
-      expect(_totalPoints).to.eq(BigNumber.from(ranking[3]));
-      expect(_index).to.eq(BigNumber.from(1));
-  
-      // If there is a tie between 2 tokens, the second one should be registered pointing to the first token
-      tx = await market.registerPoints(0, 0, 1);
-      receipt = await tx.wait();
-      [_tokenID, _totalPoints, _index] = getEmittedEvent('RankingUpdated', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(0));
-      expect(_totalPoints).to.eq(BigNumber.from(ranking[0]));
-      expect(_index).to.eq(BigNumber.from(1));
-  
-      await expect(market.registerPoints(2, 1, 0)).to.be.revertedWith("Token already registered");
-      await expect(market.registerPoints(2, 0, 0)).to.be.revertedWith("Token already registered");
-      await expect(market.registerPoints(0, 1, 0)).to.be.revertedWith("Token already registered");
-      await expect(market.registerPoints(0, 0, 0)).to.be.revertedWith("Token already registered");
-  
-      // If overwritten, a token can get registered again
-      tx = await market.registerPoints(3, 2, 0);
-      receipt = await tx.wait();
-      [_tokenID, _totalPoints, _index] = getEmittedEvent('RankingUpdated', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(3));
-      expect(_totalPoints).to.eq(BigNumber.from(ranking[3]));
-      expect(_index).to.eq(BigNumber.from(2));
-    });
-  });
-
-  describe("Claims and reimbursements", () => {
-    let players;
-    let ranking;
-    beforeEach("Setup bets", async function () {
-      const bettingTime = 200;
-      const closingTime = await getCurrentTimestamp() + bettingTime;
-      const questions = [
-        {
-          templateID: 2, 
-          question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
-          openingTS: closingTime + 1
-        },
-        {
-          templateID: 2, 
-          question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
-          openingTS: closingTime + 1
-        },
-        {
-          templateID: 2, 
-          question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
-          openingTS: closingTime + 1
-        }
-      ];
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        closingTime,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
-
-      players = [
-        player1,
-        player2,
-        player3,
-        player3,
-        player4,
-        player4,
-        player4,
-      ];
-      const bets = [
-        [numberToBytes32(1), numberToBytes32(1), numberToBytes32(1)], // 2 points
-        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], // 3 points
-        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(2)], // 2 points
-        [numberToBytes32(2), numberToBytes32(2), numberToBytes32(2)], // 1 points
-        [numberToBytes32(0), numberToBytes32(0), numberToBytes32(0)], // 0 points
-        [numberToBytes32(1), numberToBytes32(5), numberToBytes32(1)], // 2 points 
-        [numberToBytes32(2), numberToBytes32(1), numberToBytes32(2)]  // 0 points
-      ];
-      const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
-
-      for (let i = 0; i < bets.length; i++) {
-        await market.connect(players[i]).placeBet(bets[i], { value: 100 });
-      }
-      await ethers.provider.send('evm_increaseTime', [bettingTime]);
-      await ethers.provider.send('evm_mine');
-
-      for (let i = 0; i < results.length; i++) {
-        const questionID = await market.questionIDs(i);
-        await realitio.submitAnswer(questionID, results[i], 0, { value: 10 });
-      }
-      await ethers.provider.send('evm_increaseTime', [timeout]);
-      await ethers.provider.send('evm_mine');
-      await market.registerAvailabilityOfResults();
-
-      // Estimate ranking
-      ranking = []
-      for (let i = 0; i < bets.length; i++) {
-        const predictions_i = bets[i];
-        const points = predictions_i.filter((prediction, idx) => prediction == results[idx]).length;
-        ranking.push(points);
-      }
-    });
-
-    it("Should register all non zero bets when submitted in the right order.", async () => {
-      let tx;
-      let receipt;
-      // Register all points in the correct order
-      const sortedRanking = Array.from(Array(ranking.length).keys()).sort((a, b) => ranking[a] < ranking[b] ? -1 : (ranking[b] < ranking[a]) | 0);
-      let currentDuplicateIndex = 0;
-      let currentDuplicates = 0;
-      for (let i = 0; i < sortedRanking.length; i++) {
-        const bet_i = sortedRanking[sortedRanking.length - i - 1];
-        if (ranking[bet_i] == 0) break;
-        if (i > 0 && ranking[bet_i] != ranking[sortedRanking[sortedRanking.length - i]]) {
-          currentDuplicateIndex = i;
-          currentDuplicates = 0;
-        } else {
-          currentDuplicates += 1;
-        }
-        tx = await market.registerPoints(bet_i, currentDuplicateIndex, currentDuplicates);
-        receipt = await tx.wait();
-        [_tokenID, _totalPoints, _index] = getEmittedEvent('RankingUpdated', receipt).args;
-        expect(_tokenID).to.eq(BigNumber.from(bet_i));
-        expect(_totalPoints).to.eq(BigNumber.from(ranking[bet_i]));
-        expect(_index).to.eq(BigNumber.from(i));
-      }
-    });
-
-    it("Should claim all prizes only once.", async () => {
-      // Register all points in the correct order
-      const sortedRanking = Array.from(Array(ranking.length).keys()).sort((a, b) => ranking[a] < ranking[b] ? -1 : (ranking[b] < ranking[a]) | 0);
-      let currentDuplicateIndex = 0;
-      let prizeShare = [];
-      let realPrizeWeights = [];
-      for (let i = 0; i < sortedRanking.length; i++) {
-        const bet_i = sortedRanking[sortedRanking.length - i - 1];
-        if (ranking[bet_i] == 0) {
-          prizeShare.push(i - currentDuplicateIndex);
-          realPrizeWeights.push(marketData.prizeWeights.slice(currentDuplicateIndex, i).reduce((a, b) => a + b, 0));
-          break;
-        }
-        if (i > 0 && ranking[bet_i] != ranking[sortedRanking[sortedRanking.length - i]]) {
-          prizeShare.push(i - currentDuplicateIndex);
-          realPrizeWeights.push(marketData.prizeWeights.slice(currentDuplicateIndex, i).reduce((a, b) => a + b, 0));
-          currentDuplicateIndex = i;
-        }
-        await market.registerPoints(bet_i, currentDuplicateIndex, i - currentDuplicateIndex);
-      }
-
-      await expect(market.claimRewards(0, 0, 0)).to.be.revertedWith("Submission period not over");
-      await expect(market.reimbursePlayer(0)).to.be.revertedWith("Submission period not over");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Submission period not over");
-
-      await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
-      await ethers.provider.send('evm_mine');
-
-      await expect(market.reimbursePlayer(0)).to.be.revertedWith("Can't reimburse if there are winners");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No vacant prizes");
-
-      const totalPrize = await market.totalPrize();
-      let rankIndex = 0;
-      let bet_i
-      for (let i = 0; i < realPrizeWeights.length; i++) {
-        bet_i = sortedRanking[sortedRanking.length - rankIndex - 1];
-        if (ranking[bet_i] == 0) break;
-
-        const firstBatchRankedIndex = rankIndex;
-        const lastBatchRankedIndex = firstBatchRankedIndex + prizeShare[i] - 1;
-        for (let j = 0; j < prizeShare[i]; j++) {
-          tx = await market.claimRewards(rankIndex, firstBatchRankedIndex, lastBatchRankedIndex);
-          receipt = await tx.wait();
-          [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-          bet_i = sortedRanking[sortedRanking.length - rankIndex - 1];
-          expect(_tokenID).to.eq(BigNumber.from(bet_i));
-          const expectedReward = totalPrize.mul(realPrizeWeights[i]).div(10000 * prizeShare[i]);
-          expect(_reward).to.eq(BigNumber.from(expectedReward));
-          rankIndex += 1;
-        }
-      }
-
-      for (let i = 0; i < sortedRanking.length; i++) {
-        const bet_i = sortedRanking[sortedRanking.length - i - 1];
-        if (ranking[bet_i] == 0) break;
-        await expect(market.claimRewards(i, 0, 0)).to.be.revertedWith("Already claimed");
-      }
-
-    });
-
-    it("Should reimburse players if nobody won/was registered.", async () => {
-      // Go straight to the rewards period
-      await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
-      await ethers.provider.send('evm_mine');
-
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No winners");
-      const totalPrize = await market.totalPrize();
-      const totalTokens = players.length;
-      const individualReimbursement = totalPrize.div(BigNumber.from(totalTokens));
-      let poolBalance = await ethers.provider.getBalance(market.address);
-      for (let i = 0; i < players.length; i++) {
-        await market.reimbursePlayer(i);
-        await expect(market.ownerOf(i)).to.be.revertedWith("ERC721: owner query for nonexistent token");
-        poolBalance = poolBalance.sub(individualReimbursement);
-        expect(await ethers.provider.getBalance(market.address)).to.eq(poolBalance);
-      }
-
-      for (let i = 0; i < players.length + 2; i++) {
-        await expect(market.reimbursePlayer(i)).to.be.revertedWith("ERC721: owner query for nonexistent token");
-      }
-    });
-
-    it("Should distribute vacant prices.", async () => {
-      // Register only one player's results
-      const tokenID = 0;
-      await market.registerPoints(tokenID, 0, 0);
-
-      await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
-      await ethers.provider.send('evm_mine');
-
-      await expect(market.reimbursePlayer(tokenID)).to.be.revertedWith("Can't reimburse if there are winners");
-
-      tx = await market.claimRewards(0, 0, 0);
-      receipt = await tx.wait();
-      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(tokenID));
-      const totalPrize = await market.totalPrize();
-      expectedReward = totalPrize.mul(marketData.prizeWeights[0]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
-
-      tx = await market.distributeRemainingPrizes();
-      receipt = await tx.wait();
-      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(tokenID));
-      const cumWeights = marketData.prizeWeights[1] + marketData.prizeWeights[2];
-      expectedReward = totalPrize.mul(cumWeights).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
+      svg = await auctionContract.getAd(market1.address, 0);
+      expect(svg).to.eq(NIKE_AD);
       
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Already claimed");
-    });
+      await auctionContract.connect(bidder2).placeBid(ITEM_ID_1, market1.address, 2, { value: 2404 });
+      svg = await auctionContract.getAd(market1.address, 10000);
+      expect(svg).to.eq(NIKE_AD);
 
-    it("Should distribute vacant prices 2.", async () => {
-      // Register only two player's results
-      await market.registerPoints(1, 0, 0);
-      await market.registerPoints(2, 1, 0);
-
-      await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_increaseTime', [1202]);
       await ethers.provider.send('evm_mine');
 
-      await expect(market.reimbursePlayer(1)).to.be.revertedWith("Can't reimburse if there are winners");
-      await expect(market.reimbursePlayer(2)).to.be.revertedWith("Can't reimburse if there are winners");
+      await auctionContract.connect(bidder3).placeBid(ITEM_ID_PINK, market1.address, 1, { value: 601 });
+      svg = await auctionContract.getAd(market1.address, 0);
+      expect(svg).to.eq(NIKE_AD);
 
-      tx = await market.claimRewards(0, 0, 0);
-      receipt = await tx.wait();
-      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(1));
-      const totalPrize = await market.totalPrize();
-      expectedReward = totalPrize.mul(marketData.prizeWeights[0]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      await auctionContract.executeHighestBid(market1.address);
 
-      tx = await market.claimRewards(1, 1, 1);
-      receipt = await tx.wait();
-      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(2));
-      expectedReward = totalPrize.mul(marketData.prizeWeights[1]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      svg = await auctionContract.getAd(market1.address, 0);
+      expect(svg).to.eq(NIKE_AD);
 
-      tx = await market.distributeRemainingPrizes();
-      receipt = await tx.wait();
-      expectedReward = totalPrize.mul(marketData.prizeWeights[2]).div(10000 * 2);
-      for (let i = 0; i < receipt.events.length; i++) {
-        [_tokenID, _reward] = receipt.events[i].args;
-        expect(_tokenID).to.eq(BigNumber.from(i + 1));
-        expect(_reward).to.eq(BigNumber.from(expectedReward));
-      }
-    });
-  });
+      await auctionContract.executeHighestBid(market1.address);
 
-  describe("Royalties - ERC2981 & IERC165", () => {
-    it("Should return the correct royalty info.", async () => {
-      const currentTS = await getCurrentTimestamp() + 1000;
-      for (let i = 0; i < marketData.questions.length; i++) {
-        marketData.questions[i].openingTS = currentTS + 1;
-      }
-      // Sort questions by Realitio's question ID.
-      const orderedQuestions = marketData.questions
-        .sort((a, b) => getQuestionID(
-            a.templateID,
-            a.openingTS,
-            a.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) > getQuestionID(
-            b.templateID,
-            b.openingTS,
-            b.question,
-            arbitrator.address,
-            timeout,
-            marketData.minBond,
-            realitio.address,
-            factory.address,
-          ) ? 1 : -1);
-      await factory.createMarket(
-        marketData.info,
-        currentTS,
-        marketData.price,
-        marketData.managementFee,
-        creator.address,
-        marketData.minBond,
-        orderedQuestions,
-        marketData.prizeWeights
-      );
-      const totalMarkets = await factory.marketCount();
-      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-      market = await Market.attach(marketAddress);
-      
-      const predictions = [numberToBytes32(1), numberToBytes32(40)];
-      await market.connect(other).placeBet(predictions, { value: 100 });
+      svg = await auctionContract.getAd(market1.address, 0);
+      expect(svg).to.eq(NIKE_AD);
 
-      const salePrices = [
-        ethers.utils.parseUnits("1.0", "wei"),
-        ethers.utils.parseUnits("100.0", "gwei"),
-        ethers.utils.parseEther("1.0"),
-        ethers.utils.parseEther("1000.0"),
-        ethers.utils.parseEther("100000000.0")
-      ];
-      for (let i = 0; i < salePrices.length; i++) {
-        const [receiver, amount] = await market.royaltyInfo(i, salePrices[i]);
-        const expectedRoyalty = salePrices[i].mul(marketData.managementFee).div(10000);
-        expect(receiver).to.eq(creator.address);
-        expect(amount).to.eq(expectedRoyalty);
-      }
-    });
+      await auctionContract.connect(bidder4).placeBid(ITEM_ID_PINK, market1.address, 10, { value: 10000 });
+      svg = await auctionContract.getAd(market1.address, 0);
+      expect(svg).to.eq(NIKE_PINK_AD);
 
-    it("Should support interfaces ERC165, ERC721, ERC721Metadata and ERC2981.", async () => {
-      expect(await market.supportsInterface("0x01ffc9a7")).to.be.true; // IERC165
-      expect(await market.supportsInterface("0x80ac58cd")).to.be.true; // IERC721
-      expect(await market.supportsInterface("0x5b5e139f")).to.be.true; // IERC721Metadata
-      expect(await market.supportsInterface("0x2a55205a")).to.be.true; // IERC2981
-      expect(await market.supportsInterface("0xffffffff")).to.be.false;
-      expect(await market.supportsInterface("0x00000000")).to.be.false;
-      expect(await market.supportsInterface("0x12345678")).to.be.false;
+      svg = await auctionContract.getAd(market2.address, 0);
+      expect(svg).to.eq("");
+
+      const corruptedItemID = "0x0000000000000000000000000000000000000000000000000000000000000005";
+      await curateProxy.setItem(corruptedItemID, user1.address, true);
+      await auctionContract.connect(bidder4).placeBid(corruptedItemID, market1.address, 11, { value: 110000 });
+      svg = await auctionContract.getAd(market1.address, 0);
+      expect(svg).to.eq("");
     });
   });
 });
