@@ -197,13 +197,6 @@ contract FirstPriceAuction {
             uint256 remainingBalance = highestBid.balance;
             highestBid.balance = 0;
             billing.registerPayment{value: remainingBalance}(_market);
-            emit BidUpdate(
-                _market,
-                highestBid.bidder,
-                highestBid.itemID,
-                highestBid.bidPerSecond,
-                0
-            );
 
             if (highestBid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[highestBid.nextBidPointer];
@@ -216,6 +209,14 @@ contract FirstPriceAuction {
             highestBid.balance -= price;
             billing.registerPayment{value: price}(_market);
         }
+
+        emit BidUpdate(
+            _market,
+            highestBid.bidder,
+            highestBid.itemID,
+            highestBid.bidPerSecond,
+            highestBid.balance
+        );
     }
 
     function _insertBid(address _market, bytes32 _bidID) internal {
