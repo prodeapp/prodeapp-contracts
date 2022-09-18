@@ -7,7 +7,7 @@ interface ICurate {
     function getAddress(bytes32 _itemID) external view returns (address);
 }
 
-interface ISVGContract {
+interface IBase64Ad {
     function getSVG(address _market, uint256 _tokenID) external view returns (string memory);
 }
 
@@ -281,7 +281,7 @@ contract FirstPriceAuction {
                 // Address is not a contract. See @openzeppelin/contracts/utils/Address.sol
                 return "";
             }
-            try ISVGContract(svgAddress).getSVG(_market, _tokenID) returns (string memory svg) {
+            try IBase64Ad(svgAddress).getSVG(_market, _tokenID) returns (string memory svg) {
                 return svg;
             } catch {
                 return "";
