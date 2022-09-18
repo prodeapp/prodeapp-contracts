@@ -111,11 +111,7 @@ contract FirstPriceAuction {
         if (!bid.removed) {
             bytes32 startID = keccak256(abi.encode(_market));
             if (bid.previousBidPointer == startID) {
-                uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
-                uint256 bill = price > bid.balance ? bid.balance : price;
-                bid.startTimestamp = 0;
-                bid.balance -= bill;
-                billing.registerPayment{value: bill}(_market);
+                _registerPayment(bid, _market);
 
                 if (bid.nextBidPointer != 0x0) {
                     Bid storage newHighestBid = bids[bid.nextBidPointer];
@@ -154,11 +150,7 @@ contract FirstPriceAuction {
 
         bytes32 startID = keccak256(abi.encode(_market));
         if (bid.previousBidPointer == startID) {
-            uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
-            uint256 bill = price > bid.balance ? bid.balance : price;
-            bid.startTimestamp = 0;
-            bid.balance -= bill;
-            billing.registerPayment{value: bill}(_market);
+            _registerPayment(bid, _market);
 
             if (bid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[bid.nextBidPointer];
@@ -240,11 +232,7 @@ contract FirstPriceAuction {
 
             if (nextID != 0x0) {
                 Bid storage nextBid = bids[nextID];
-                uint256 price = (block.timestamp - nextBid.startTimestamp) * nextBid.bidPerSecond;
-                uint256 bill = price > nextBid.balance ? nextBid.balance : price;
-                nextBid.startTimestamp = 0;
-                nextBid.balance -= bill;
-                billing.registerPayment{value: bill}(_market);
+                _registerPayment(nextBid, _market);
 
                 if (nextBid.balance == 0) {
                     // remove bid from list.
@@ -262,6 +250,14 @@ contract FirstPriceAuction {
             }
             emit NewHighestBid(_market, msg.sender, bid.itemID);
         }
+    }
+
+    function _registerPayment(Bid storage _bid, address _market) internal {
+        uint256 price = (block.timestamp - _bid.startTimestamp) * _bid.bidPerSecond;
+        uint256 bill = price > _bid.balance ? _bid.balance : price;
+        _bid.startTimestamp = 0;
+        _bid.balance -= bill;
+        billing.registerPayment{value: bill}(_market);
     }
 
     function requireSendXDAI(address payable _to, uint256 _value) internal {
