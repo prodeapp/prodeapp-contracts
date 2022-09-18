@@ -70,12 +70,12 @@ describe("Market", () => {
     await curateProxy.deployed();
 
     // Deploy SVG contract
-    const Base64Ad = await ethers.getContractFactory("Base64Ad");
+    const Base64Ad = await ethers.getContractFactory("Base64AdMock");
     const base64Ad = await Base64Ad.deploy();
     await base64Ad.deployed();
 
     // Deploy SVG Factory contract
-    const Base64AdFactory = await ethers.getContractFactory("Base64AdFactory");
+    const Base64AdFactory = await ethers.getContractFactory("Base64AdFactoryMock");
     const svgFactory = await Base64AdFactory.deploy(base64Ad.address);
     await svgFactory.deployed();
 
