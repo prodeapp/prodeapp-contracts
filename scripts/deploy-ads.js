@@ -77,42 +77,46 @@ async function main() {
     console.log("Auction deployed at ", auctionContract.address);
 
 
-    // Verify contracts
-    await hre.run("verify:verify", {
-        address: curateProxy.address,
-    });
-
-    await hre.run("verify:verify", {
-        address: base64Ad.address,
-    });
-
-    await hre.run("verify:verify", {
-        address: base64AdFactory.address,
-        constructorArguments: [
-            base64Ad.address,
-            params[chainId].curateTechnical,
-            params[chainId].curateContent,
-            curateProxy.address
-        ],
-    });
-
-    await hre.run("verify:verify", {
-        address: billing.address,
-        constructorArguments: [
-            params[chainId].governor,
-            params[chainId].governor
-        ],
-    });
-
-    await hre.run("verify:verify", {
-        address: auctionContract.address,
-        constructorArguments: [
-            curateProxy.address,
-            billing.address
-        ],
-    });
+    if (chainId === 100) {
 
 
+        // Verify contracts
+        await hre.run("verify:verify", {
+            address: curateProxy.address,
+        });
+
+        await hre.run("verify:verify", {
+            address: base64Ad.address,
+        });
+
+        await hre.run("verify:verify", {
+            address: base64AdFactory.address,
+            constructorArguments: [
+                base64Ad.address,
+                params[chainId].curateTechnical,
+                params[chainId].curateContent,
+                curateProxy.address
+            ],
+        });
+
+        await hre.run("verify:verify", {
+            address: billing.address,
+            constructorArguments: [
+                params[chainId].governor,
+                params[chainId].governor
+            ],
+        });
+
+        await hre.run("verify:verify", {
+            address: auctionContract.address,
+            constructorArguments: [
+                curateProxy.address,
+                billing.address
+            ],
+        });
+
+
+    }
 }
 
 main()
