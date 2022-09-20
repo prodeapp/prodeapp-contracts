@@ -97,7 +97,19 @@ describe("Market", () => {
     await curateProxy.setItem(ITEM_ID_1, nikeAdContract, true);
     await curateProxy.setItem(ITEM_ID_PINK, nikePinkAdContract, true);
   });
+  describe("CurateProxySVGMock", () => {
+    it("Should emit event", async () => {
+      const itemID = "0x0000000000000000000000000000000000000000000000000000000000000005";
+      expect(await curateProxy.setItem(itemID, user1.address, true)).to.emit(curateProxy, "newItemMapped");
+    });
 
+    it("Should not emit event if item already exist", async () => {
+      const itemID = "0x0000000000000000000000000000000000000000000000000000000000000005";
+      await curateProxy.setItem(itemID, user1.address, false);
+      expect(await curateProxy.setItem(itemID, user1.address, true)).to.not.emit(curateProxy, "newItemMapped");
+
+    });
+  });
   describe("Placing Bids", () => {
     it("Should only accept valid bids.", async () => {
       await expect(
