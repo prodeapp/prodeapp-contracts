@@ -79,6 +79,23 @@ contract CurateProxySVG {
         }
     }
 
+    function isReported(bytes32 _itemID) public view returns (bool) {
+        Item storage item = hashToCurateIDs[_itemID];
+        (, IGeneralizedTCR.Status contentStatus, ) = gtcrContent.getItemInfo(item.contentItemID);
+        (, IGeneralizedTCR.Status technicalStatus, ) = gtcrTechnical.getItemInfo(
+            item.technicalItemID
+        );
+
+        if (
+            contentStatus == IGeneralizedTCR.Status.ClearingRequested ||
+            technicalStatus == IGeneralizedTCR.Status.ClearingRequested
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     function getAddress(bytes32 _itemID) external view returns (address) {
         Item storage item = hashToCurateIDs[_itemID];
         if (isRegistered(_itemID)) {
