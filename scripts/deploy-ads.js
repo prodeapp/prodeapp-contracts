@@ -17,8 +17,8 @@ const params = {
         curate: "0x86E72802D9AbBF7505a889721fD4D6947B02320E",
         governor: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
         submissionTimeout: 7 * 24 * 60 * 60,
-        curateContent: "0x0000000000000000000000000000000000000000",  // TODO: Update to curate list address
-        curateTechnical: "0x0000000000000000000000000000000000000000"
+        curateContent: "0x76D159faDCDE966d68885b7267Ce42F4F655238D",  // TODO: Update to curate list address
+        curateTechnical: "0x950B8Be040B686bCB6cF9ee24D4B2E65ae6fe5fC"
     },
     31337: {
         arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",

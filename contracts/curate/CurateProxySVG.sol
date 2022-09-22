@@ -40,8 +40,11 @@ contract CurateProxySVG {
         return rawAddress.toAddress();
     }
 
-    function registerAd(bytes32 _contentItemID, bytes32 _technicalItemID) external {
-        bytes32 itemID = keccak256(abi.encode(_contentItemID, _technicalItemID));
+    function registerAd(bytes32 _contentItemID, bytes32 _technicalItemID)
+        external
+        returns (bytes32 itemID)
+    {
+        itemID = keccak256(abi.encode(_contentItemID, _technicalItemID));
         Item storage item = hashToCurateIDs[itemID];
         item.contentItemID = _contentItemID;
         item.technicalItemID = _technicalItemID;

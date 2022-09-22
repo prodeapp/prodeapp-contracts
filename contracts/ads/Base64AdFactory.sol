@@ -34,13 +34,9 @@ contract Base64AdFactory {
         curateProxy = _curateProxy;
     }
 
-    function createAd(string memory _ipfsLink, string memory _svg)
-        external
-        payable
-        returns (address)
-    {
+    function createAd(string memory _svg) external payable returns (address) {
         Base64Ad instance = Base64Ad(payable(adContract.clone()));
-        instance.initialize{value: msg.value}(msg.sender, _ipfsLink, _svg);
+        instance.initialize{value: msg.value}(msg.sender, _svg);
 
         emit NewAd(address(instance));
         ads.push(instance);

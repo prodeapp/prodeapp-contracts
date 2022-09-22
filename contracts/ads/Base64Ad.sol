@@ -8,28 +8,26 @@ interface ICurate {
 }
 
 interface ICurateProxy {
-    function registerAd(bytes32 _contentItemID, bytes32 _technicalItemID) external;
+    function registerAd(bytes32 _contentItemID, bytes32 _technicalItemID)
+        external
+        returns (bytes32);
 }
 
 contract Base64Ad {
     string private svg;
     address public creator;
+    bytes32 public itemID;
     bytes32 public proxyItemID;
 
     constructor() {}
 
-    function initialize(
-        address _creator,
-        string memory _ipfsLink,
-        string memory _svg
-    ) external payable {
+    function initialize(address _creator, string memory _svg) external payable {
         require(bytes(svg).length == 0, "SVG already set");
         require(bytes(_svg).length > 0, "SVG must not be empty");
         svg = _svg;
         creator = _creator;
 
-        // TODO: calculate item calldata
-        bytes memory itemData = "";
+        bytes memory itemData = abi.encodePacked(bytes2(0xd694), address(this), bytes1(0x80));
 
         ICurate techincalCurate = ICurate(Base64AdFactory(msg.sender).technicalCurate());
         techincalCurate.addItem{value: msg.value}(itemData); // surplus is reimbursed
@@ -37,11 +35,9 @@ contract Base64Ad {
         ICurate contentCurate = ICurate(Base64AdFactory(msg.sender).contentCurate());
         contentCurate.addItem{value: msg.value}(itemData); // surplus is reimbursed
 
-        bytes32 itemID = keccak256(itemData);
+        itemID = keccak256(itemData);
         ICurateProxy curateProxy = ICurateProxy(Base64AdFactory(msg.sender).curateProxy());
-        curateProxy.registerAd(itemID, itemID);
-
-        proxyItemID = keccak256(abi.encode(itemID, itemID));
+        proxyItemID = curateProxy.registerAd(itemID, itemID);
     }
 
     function getSVG(address _market, uint256 _tokenID) external view returns (string memory) {
