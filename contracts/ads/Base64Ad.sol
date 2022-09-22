@@ -30,10 +30,10 @@ contract Base64Ad {
         bytes memory itemData = abi.encodePacked(bytes2(0xd694), address(this), bytes1(0x80));
 
         ICurate techincalCurate = ICurate(Base64AdFactory(msg.sender).technicalCurate());
-        techincalCurate.addItem{value: msg.value}(itemData); // surplus is reimbursed
+        techincalCurate.addItem{value: address(this).balance}(itemData); // surplus is reimbursed
 
         ICurate contentCurate = ICurate(Base64AdFactory(msg.sender).contentCurate());
-        contentCurate.addItem{value: msg.value}(itemData); // surplus is reimbursed
+        contentCurate.addItem{value: address(this).balance}(itemData); // surplus is reimbursed
 
         itemID = keccak256(itemData);
         ICurateProxy curateProxy = ICurateProxy(Base64AdFactory(msg.sender).curateProxy());

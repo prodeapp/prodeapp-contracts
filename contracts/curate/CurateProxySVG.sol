@@ -28,12 +28,12 @@ contract CurateProxySVG {
 
     /**
      *  @dev Constructor.
-     *  @param _gtcrContent Address of the Curate registry that holds ads compliant with the content moderation policy.
      *  @param _gtcrTechnical Address of the Curate registry that holds ads compliant with the technical policy.
+     *  @param _gtcrContent Address of the Curate registry that holds ads compliant with the content moderation policy.
      */
-    constructor(IGeneralizedTCR _gtcrContent, IGeneralizedTCR _gtcrTechnical) public {
-        gtcrContent = _gtcrContent;
+    constructor(IGeneralizedTCR _gtcrTechnical, IGeneralizedTCR _gtcrContent) public {
         gtcrTechnical = _gtcrTechnical;
+        gtcrContent = _gtcrContent;
     }
 
     function decodeAddress(RLPReader.RLPItem memory rawAddress) internal pure returns (address) {
