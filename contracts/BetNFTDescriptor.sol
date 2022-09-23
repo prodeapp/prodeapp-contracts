@@ -419,7 +419,7 @@ contract BetNFTDescriptor is Initializable {
     }
 
     function generateAd(uint256 tokenId) private view returns (string memory) {
-        string memory adSvg = IFirstPriceAuction(ads).getAd(address(this), tokenId);
+        string memory adSvg = IFirstPriceAuction(ads).getAd(msg.sender, tokenId);
         if (bytes(adSvg).length == 0) {
             return '';
         }
