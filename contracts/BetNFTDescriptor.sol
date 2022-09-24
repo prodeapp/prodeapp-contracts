@@ -429,9 +429,8 @@ contract BetNFTDescriptor is Initializable {
                 '<g clip-path="url(#corners)">',
                 '<rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0)" stroke="rgba(14,14,14)" />',
                 '<g clip-path="url(#ad-margin)" style="transform:translate(0px, 35px)" >',
-                '<image xlink:href="data:image/svg+xml;base64,',
                 adSvg,
-                '" /></g><text y="25px" x="50px" fill="#D0D0D0A8" font-family="\'Courier New\', monospace" font-size="15px">Ad curated by Kleros</text>',
+                '</g><text y="25px" x="50px" fill="#D0D0D0A8" font-family="\'Courier New\', monospace" font-size="15px">Ad curated by Kleros</text>',
                 '<animate dur="1s" attributeName="opacity" from="1" to="0" begin="2s" repeatCount="1" fill="freeze" /></g>'
             )
         );
