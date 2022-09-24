@@ -146,8 +146,8 @@ contract SVGFactory {
         require(msg.value == technicalCost + contentCost, "Not enough funds");
 
         bytes memory itemData = abi.encodePacked(bytes2(0xd694), newAd, bytes1(0x80));
-        technicalCurate.addItem{value: technicalCost}(itemData); // surplus is reimbursed
-        contentCurate.addItem{value: contentCost}(itemData); // surplus is reimbursed
+        technicalCurate.addItem{value: technicalCost}(itemData);
+        contentCurate.addItem{value: contentCost}(itemData);
 
         bytes32 itemID = keccak256(itemData);
         ItemInfo storage itemInfo = items[itemID];
@@ -207,9 +207,7 @@ contract SVGFactory {
     function getCost(ICurate _curate) internal view returns (uint256 totalCost) {
         IArbitrator arbitrator = _curate.arbitrator();
         uint256 arbitrationCost = arbitrator.arbitrationCost(_curate.arbitratorExtraData());
-
         uint256 baseDeposit = _curate.submissionBaseDeposit();
-
         totalCost = addCap(arbitrationCost, baseDeposit);
     }
 
