@@ -166,6 +166,7 @@ contract SVGFactory {
 
     function withdraw(bytes32 _itemID) external {
         ItemInfo storage itemInfo = items[_itemID];
+        require(itemInfo.creator != address(0x0), "Ad does not exsist");
         require(!itemInfo.rewardClaimed, "Already claimed");
 
         uint256 reward = _withdraw(technicalCurate, _itemID, itemInfo.technicalRequestIndex);
