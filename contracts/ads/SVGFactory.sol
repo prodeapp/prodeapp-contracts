@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import "./SVG.sol";
 
 interface IArbitrator {
-    function arbitrationCost(bytes memory _extraDAta) external view returns(uint256);
+    function arbitrationCost(bytes memory _extraDAta) external view returns (uint256);
 }
 
 interface ICurate {
@@ -22,13 +22,19 @@ interface ICurate {
         Challenger // Party that challenges the request to change a status.
     }
 
-    function submissionBaseDeposit() external view returns(uint256);
-    function arbitrator() external view returns(IArbitrator);
-    function arbitratorExtraData() external view returns(bytes memory);
+    function submissionBaseDeposit() external view returns (uint256);
+
+    function arbitrator() external view returns (IArbitrator);
+
+    function arbitratorExtraData() external view returns (bytes memory);
 
     function addItem(bytes calldata _item) external payable;
 
-    function getRoundInfo(bytes32 _itemID, uint256 _request, uint256 _round)
+    function getRoundInfo(
+        bytes32 _itemID,
+        uint256 _request,
+        uint256 _round
+    )
         external
         view
         returns (
@@ -60,7 +66,7 @@ interface ICurate {
         returns (
             bytes memory data,
             Status status,
-            uint numberOfRequests
+            uint256 numberOfRequests
         );
 }
 
@@ -134,7 +140,7 @@ contract SVGFactory {
 
         emit NewAd(address(instance));
         ads.push(instance);
-        
+
         uint256 technicalCost = getCost(technicalCurate);
         uint256 contentCost = getCost(contentCurate);
         require(msg.value == technicalCost + contentCost, "Not enough funds");
@@ -170,32 +176,35 @@ contract SVGFactory {
         require(success, "Send XDAI failed");
     }
 
-    function _withdraw(ICurate _curate, bytes32 _itemID, uint256 _requestIndex) internal view returns(uint256 reward) {
-        (
-            , , , bool resolved, , , ICurate.Party ruling, , ,
-        ) = _curate.getRequestInfo(_itemID, _requestIndex);
+    function _withdraw(
+        ICurate _curate,
+        bytes32 _itemID,
+        uint256 _requestIndex
+    ) internal view returns (uint256 reward) {
+        (, , , bool resolved, , , ICurate.Party ruling, , , ) = _curate.getRequestInfo(
+            _itemID,
+            _requestIndex
+        );
         require(resolved, "Request not resolved yet");
 
-        (
-            ,
-            uint256[3] memory amountPaid,
-            bool[3] memory hasPaid,
-            uint256 feeRewards
-        ) = _curate.getRoundInfo(_itemID, _requestIndex, 0);
-        
+        (, uint256[3] memory amountPaid, bool[3] memory hasPaid, uint256 feeRewards) = _curate
+            .getRoundInfo(_itemID, _requestIndex, 0);
+
         if (!hasPaid[REQUESTER] || !hasPaid[CHALLENGER]) {
             // Reimburse if the request wasn't challenged.
             reward = amountPaid[REQUESTER];
         } else if (ruling == ICurate.Party.None && amountPaid[REQUESTER] > 0) {
             // Reimburse unspent fees proportionally if there is no winner or loser.
-            reward = (amountPaid[REQUESTER] * feeRewards) / (amountPaid[CHALLENGER] + amountPaid[REQUESTER]);
+            reward =
+                (amountPaid[REQUESTER] * feeRewards) /
+                (amountPaid[CHALLENGER] + amountPaid[REQUESTER]);
         } else if (ruling == ICurate.Party.Requester && amountPaid[REQUESTER] > 0) {
             // Reward the winner.
             reward = (amountPaid[REQUESTER] * feeRewards) / amountPaid[REQUESTER];
         }
     }
 
-    function getCost(ICurate _curate) internal view returns(uint256 totalCost) {
+    function getCost(ICurate _curate) internal view returns (uint256 totalCost) {
         IArbitrator arbitrator = _curate.arbitrator();
         uint256 arbitrationCost = arbitrator.arbitrationCost(_curate.arbitratorExtraData());
 
