@@ -517,6 +517,178 @@ describe("Market", () => {
     });
   });
 
+  describe("Whitelisted Markets", () => {
+    
+    it("Should allow to whitelist", async () => {
+      const currentTS = await getCurrentTimestamp() + 10000;
+      for (let i = 0; i < marketData.questions.length; i++) {
+        marketData.questions[i].openingTS = currentTS + 1;
+      }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = marketData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
+      await factory.connect(creator).createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        currentTS,
+        marketData.price,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      const totalMarkets = await factory.marketCount();
+      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      market = await Market.attach(marketAddress);
+      await expect(
+        market.connect(creator).setWhitelist("0x0000000000000000000000000000000000000001")
+      ).to.emit(market, "Whitelist")
+      
+      
+    })
+
+    it("Should not allow to whitelist after bet", async () => {
+      const currentTS = await getCurrentTimestamp() + 10000;
+      for (let i = 0; i < marketData.questions.length; i++) {
+        marketData.questions[i].openingTS = currentTS + 1;
+      }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = marketData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
+      await factory.connect(creator).createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        currentTS,
+        marketData.price,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      const totalMarkets = await factory.marketCount();
+      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      market = await Market.attach(marketAddress);
+
+      const predictions = [numberToBytes32(1), numberToBytes32(40)];
+      const tx = await market.connect(other).placeBet(ZERO_ADDRESS, predictions, { value: 100 });
+      const receipt = await tx.wait();
+
+      await expect(
+        market.connect(creator).setWhitelist("0x0000000000000000000000000000000000000001")
+      ).to.be.revertedWith("There are bets already")
+    })
+
+    it("Should not allow to bet if not whitelist and allow if whitelisted", async () => {
+      const currentTS = await getCurrentTimestamp() + 10000;
+      for (let i = 0; i < marketData.questions.length; i++) {
+        marketData.questions[i].openingTS = currentTS + 1;
+      }
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = marketData.questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
+      await factory.connect(creator).createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        currentTS,
+        marketData.price,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      let totalMarkets = await factory.marketCount();
+      let market1Address = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      let market1 = await Market.attach(market1Address);
+      // player1 bets to be whitelisted in market2
+      const predictions = [numberToBytes32(1), numberToBytes32(40)];
+      await market1.connect(player1).placeBet(ZERO_ADDRESS, predictions, { value: 100 })
+
+      await factory.connect(creator).createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        currentTS,
+        marketData.price,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      totalMarkets = await factory.marketCount();
+      const market2Address = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      let market2 = await Market.attach(market2Address);
+      await market2.connect(creator).setWhitelist(market1Address);
+      
+      // Whitelisted should pass
+      await expect(
+        await market2.connect(player1).placeBet(ZERO_ADDRESS, predictions, { value: 100 })
+      ).to.emit(market2, "PlaceBet");
+
+      // Not whitelisted shuould revert
+      await expect(
+        market2.connect(player2).placeBet(ZERO_ADDRESS, predictions, { value: 100 })
+      ).to.be.reverted;
+    })
+
+  })
+
   describe("Register Points Period", () => {
     it("Should not register points if questions were not settled.", async () => {
       const currentTS = await getCurrentTimestamp();

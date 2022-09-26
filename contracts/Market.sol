@@ -10,6 +10,10 @@ interface IManager {
     function creator() external view returns (address payable);
 }
 
+interface IToken {
+    function balanceOf(address _owner) external view returns (uint256 balance);
+}
+
 contract Market is ERC721, IERC2981 {
     struct MarketInfo {
         uint16 fee;
@@ -44,6 +48,8 @@ contract Market is ERC721, IERC2981 {
     uint256 public totalPrize;
     uint256 public managementReward;
     uint256 public totalAttributions;
+    IToken public whitelist = IToken(address(0x0));
+    address public creator;
 
     bytes32 public questionsHash;
     bytes32[] public questionIDs;
@@ -83,6 +89,8 @@ contract Market is ERC721, IERC2981 {
 
     event Prizes(uint16[] _prizes);
 
+    event Whitelist(address _address);
+
     constructor() ERC721("", "") {}
 
     function initialize(
@@ -105,6 +113,7 @@ contract Market is ERC721, IERC2981 {
         closingTime = _closingTime;
         price = _price;
         submissionTimeout = _submissionTimeout;
+        creator = tx.origin;
 
         questionsHash = keccak256(abi.encodePacked(_questionIDs));
         questionIDs = _questionIDs;
@@ -134,6 +143,10 @@ contract Market is ERC721, IERC2981 {
         require(msg.value == price, "Wrong value sent");
         require(_results.length == questionIDs.length, "Results mismatch");
         require(block.timestamp < closingTime, "Bets not allowed");
+
+        if (address(whitelist) != address(0x0)) {
+            require(whitelist.balanceOf(msg.sender) > 0, "Only whitelisted allowed");
+        }
 
         if (_attribution != address(0x0)) {
             attributionBalance[_attribution] += 1;
@@ -341,6 +354,16 @@ contract Market is ERC721, IERC2981 {
             payable(ownerOf(ranking[rank].tokenID)).send(vacantPrize);
             emit BetReward(ranking[rank].tokenID, vacantPrize);
         }
+    }
+
+    /** @dev Set token as a whitelist. The bettor will need balance in this token to bet.
+     *  @param _address The address of the token needed as balance.
+     */
+    function setWhitelist(address _address) external {
+        require(msg.sender == creator, "Not Allowed");
+        require(nextTokenID == 0, "There are bets already");
+        whitelist = IToken(_address);
+        emit Whitelist(_address);
     }
 
     /** @dev Increases the balance of the market without participating. Only callable during the betting period.
