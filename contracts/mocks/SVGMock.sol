@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-contract Base64AdMock {
+contract SVGMock {
     string private svg;
 
     constructor() {}
