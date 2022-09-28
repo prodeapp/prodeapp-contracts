@@ -8,7 +8,7 @@ const marketData = {
   marketSymbol: "PRODE",
   closingTime: toTimestamp("2022-11-19 00:00:00 UTC"),
   price: ethers.utils.parseUnits("3.0", "ether"), // 3 xDAI
-  creator: "0xa3954B4aDB7caca9C188c325CF9F2991AbB3cF71", // Ownable creator contract CreatorRelayer.sol
+  creator: "0xa3954B4aDB7caca9C188c325CF9F2991AbB3cF71", // UBI Burner
   creatorFee: 1850, // 18.5%
   minBond: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
   questions: [
