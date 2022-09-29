@@ -2,12 +2,12 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import "./Base64AdMock.sol";
+import "./SVGMock.sol";
 
-contract Base64AdFactoryMock {
+contract SVGFactoryMock {
     using Clones for address;
 
-    Base64AdMock[] public ads;
+    SVGMock[] public ads;
     address public immutable adContract;
 
     event NewAd(address indexed ad);
@@ -21,7 +21,7 @@ contract Base64AdFactoryMock {
     }
 
     function createAd(string memory svg) external returns (address) {
-        Base64AdMock instance = Base64AdMock(adContract.clone());
+        SVGMock instance = SVGMock(adContract.clone());
         instance.setSVG(svg);
 
         emit NewAd(address(instance));
@@ -30,7 +30,7 @@ contract Base64AdFactoryMock {
         return address(instance);
     }
 
-    function allAds() external view returns (Base64AdMock[] memory) {
+    function allAds() external view returns (SVGMock[] memory) {
         return ads;
     }
 
