@@ -9,6 +9,8 @@ interface ICurate {
 
 interface ISVG {
     function getSVG(address _market, uint256 _tokenID) external view returns (string memory);
+
+    function getRef(address _market, uint256 _tokenID) external view returns (string memory);
 }
 
 interface IBilling {
@@ -243,6 +245,26 @@ contract FirstPriceAuction {
             }
             try ISVG(svgAddress).getSVG(_market, _tokenID) returns (string memory svg) {
                 return svg;
+            } catch {
+                return "";
+            }
+        }
+    }
+
+    function getRef(address _market, uint256 _tokenID) external view returns (string memory) {
+        bytes32 startID = keccak256(abi.encode(_market));
+        bytes32 highestBidID = bids[startID].nextBidPointer;
+        if (highestBidID == 0x0) {
+            return "";
+        } else {
+            Bid storage bid = bids[highestBidID];
+            address svgAddress = curatedAds.getAddress(bid.itemID);
+            if (svgAddress.code.length == 0) {
+                // Address is not a contract. See @openzeppelin/contracts/utils/Address.sol
+                return "";
+            }
+            try ISVG(svgAddress).getRef(_market, _tokenID) returns (string memory ref) {
+                return ref;
             } catch {
                 return "";
             }
