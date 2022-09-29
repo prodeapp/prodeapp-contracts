@@ -59,14 +59,14 @@ contract FirstPriceAuction {
         uint256 _bidPerSecond
     ) external payable {
         require(curatedAds.isRegistered(_itemID), "Item must be registered");
-        
+
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage bid = bids[bidID];
 
         bool increaseBalanceOnly = bid.bidPerSecond == _bidPerSecond;
         if (bid.bidder == msg.sender && !bid.removed && !increaseBalanceOnly) {
             _forceRemoveBid(_itemID, _market);
-        } 
+        }
 
         bid.bidPerSecond = _bidPerSecond;
         bid.balance += msg.value;
@@ -146,39 +146,33 @@ contract FirstPriceAuction {
         bytes32 highestBidID = bids[startID].nextBidPointer;
         require(highestBidID != 0x0, "No bid found");
 
-        Bid storage highestBid = bids[highestBidID];
+        Bid storage bid = bids[highestBidID];
 
-        uint256 price = (block.timestamp - highestBid.startTimestamp) * highestBid.bidPerSecond;
-        if (price >= highestBid.balance || !curatedAds.isRegistered(highestBid.itemID)) {
+        uint256 price = (block.timestamp - bid.startTimestamp) * bid.bidPerSecond;
+        if (price >= bid.balance || !curatedAds.isRegistered(bid.itemID)) {
             // Report bid
-            highestBid.removed = true;
-            bids[highestBid.nextBidPointer].previousBidPointer = highestBid.previousBidPointer;
-            bids[highestBid.previousBidPointer].nextBidPointer = highestBid.nextBidPointer;
+            bid.removed = true;
+            bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
+            bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
 
-            highestBid.startTimestamp = 0;
-            uint256 remainingBalance = highestBid.balance;
-            highestBid.balance = 0;
+            bid.startTimestamp = 0;
+            uint256 remainingBalance = bid.balance;
+            bid.balance = 0;
             billing.registerPayment{value: remainingBalance}(_market);
 
-            if (highestBid.nextBidPointer != 0x0) {
-                Bid storage newHighestBid = bids[highestBid.nextBidPointer];
+            if (bid.nextBidPointer != 0x0) {
+                Bid storage newHighestBid = bids[bid.nextBidPointer];
                 newHighestBid.startTimestamp = uint64(block.timestamp);
                 emit NewHighestBid(_market, newHighestBid.bidder, newHighestBid.itemID);
             }
         } else {
             // Collect payment from active bid
-            highestBid.startTimestamp = uint64(block.timestamp);
-            highestBid.balance -= price;
+            bid.startTimestamp = uint64(block.timestamp);
+            bid.balance -= price;
             billing.registerPayment{value: price}(_market);
         }
 
-        emit BidUpdate(
-            _market,
-            highestBid.bidder,
-            highestBid.itemID,
-            highestBid.bidPerSecond,
-            highestBid.balance
-        );
+        emit BidUpdate(_market, bid.bidder, bid.itemID, bid.bidPerSecond, bid.balance);
     }
 
     function _insertBid(address _market, bytes32 _bidID) internal {
