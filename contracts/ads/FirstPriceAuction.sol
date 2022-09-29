@@ -48,7 +48,7 @@ contract FirstPriceAuction {
         billing = _billing;
     }
 
-    /** @dev Creates and places a new bid or replaces one that has been removed.
+    /** @dev Creates and places a new bid or replaces an existing one.
      *  @param _itemID The id of curated ad.
      *  @param _market The address of the market the bid will be placed to.
      *  @param _bidPerSecond The amount of tokens (xDAI) per second that will be payed if the bid gets the highest position, now or at some point.
@@ -58,81 +58,51 @@ contract FirstPriceAuction {
         address _market,
         uint256 _bidPerSecond
     ) external payable {
-        require(msg.value / _bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
         require(curatedAds.isRegistered(_itemID), "Item must be registered");
-
-        bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
-        Bid storage newBid = bids[bidID];
-        require(newBid.bidder == address(0x0) || newBid.removed, "Bid is active");
-        newBid.bidder = msg.sender;
-        newBid.bidPerSecond = _bidPerSecond;
-        newBid.balance = msg.value;
-        newBid.itemID = _itemID;
-        newBid.removed = false;
-
-        _insertBid(_market, bidID);
-        emit BidUpdate(_market, msg.sender, _itemID, _bidPerSecond, msg.value);
-    }
-
-    /** @dev Increases the balance of an existing bid. If the bid was removed, it is inserted back.
-     *  @param _itemID The id of curated ad.
-     *  @param _market The address of the market the bid will be placed to.
-     */
-    function increaseBalance(bytes32 _itemID, address _market) external payable {
+        
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage bid = bids[bidID];
-        bid.balance += msg.value;
-        require(curatedAds.isRegistered(_itemID), "Item must be registered");
-        require(bid.bidder == msg.sender, "Bid does not exist");
-        require(bid.balance / bid.bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
 
-        if (bid.removed) {
-            bid.removed = false;
+        bool increaseBalanceOnly = bid.bidPerSecond == _bidPerSecond;
+        if (bid.bidder == msg.sender && !bid.removed && !increaseBalanceOnly) {
+            _forceRemoveBid(_itemID, _market);
+        } 
+
+        bid.bidPerSecond = _bidPerSecond;
+        bid.balance += msg.value;
+        bid.itemID = _itemID;
+        require(bid.balance / _bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
+
+        if (bid.bidder != msg.sender || bid.removed || !increaseBalanceOnly) {
             _insertBid(_market, bidID);
         }
-        emit BidUpdate(_market, msg.sender, _itemID, bid.bidPerSecond, bid.balance);
+        bid.removed = false;
+        bid.bidder = msg.sender;
+
+        emit BidUpdate(_market, msg.sender, _itemID, _bidPerSecond, bid.balance);
     }
 
-    /** @dev Places a new bid or replaces one that has been removed.
+    /** @dev Removes bid.
      *  @param _itemID The id of curated ad.
      *  @param _market The address of the market the bid will be placed to.
-     *  @param _bidPerSecond The amount of tokens (xDAI) per second that will be payed if the bid gets the highest position, now or at some point.
      */
-    function updateBid(
-        bytes32 _itemID,
-        address _market,
-        uint256 _bidPerSecond
-    ) external payable {
+    function _forceRemoveBid(bytes32 _itemID, address _market) internal {
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
         Bid storage bid = bids[bidID];
-        require(curatedAds.isRegistered(_itemID), "Item must be registered");
-        require(bid.bidder == msg.sender, "Bid does not exist");
 
-        if (!bid.removed) {
-            bytes32 startID = keccak256(abi.encode(_market));
-            if (bid.previousBidPointer == startID) {
-                _registerPayment(bid, _market);
+        bytes32 startID = keccak256(abi.encode(_market));
+        if (bid.previousBidPointer == startID) {
+            _registerPayment(bid, _market);
 
-                if (bid.nextBidPointer != 0x0) {
-                    Bid storage newHighestBid = bids[bid.nextBidPointer];
-                    newHighestBid.startTimestamp = uint64(block.timestamp);
-                    emit NewHighestBid(_market, newHighestBid.bidder, newHighestBid.itemID);
-                }
+            if (bid.nextBidPointer != 0x0) {
+                Bid storage newHighestBid = bids[bid.nextBidPointer];
+                newHighestBid.startTimestamp = uint64(block.timestamp);
+                emit NewHighestBid(_market, newHighestBid.bidder, newHighestBid.itemID);
             }
-
-            // force remove
-            bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
-            bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
         }
 
-        bid.balance += msg.value;
-        require(bid.balance / _bidPerSecond > MIN_OFFER_DURATION, "Not enough funds");
-        bid.bidPerSecond = _bidPerSecond;
-
-        // Insert back
-        bid.removed = false;
-        _insertBid(_market, bidID);
-        emit BidUpdate(_market, msg.sender, _itemID, _bidPerSecond, bid.balance);
+        bids[bid.nextBidPointer].previousBidPointer = bid.previousBidPointer;
+        bids[bid.previousBidPointer].nextBidPointer = bid.nextBidPointer;
     }
 
     /** @dev Removes an existing bid.

@@ -101,14 +101,14 @@ describe("Market", () => {
   describe("Placing Bids", () => {
     it("Should only accept valid bids.", async () => {
       await expect(
-        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 0, { value: 100 })
+        auctionContract.placeBid(ITEM_ID_1, market1.address, 0, { value: 100 })
       ).to.be.revertedWith("reverted with panic code 0x12 (Division or modulo division by zero)");
 
       await expect(
-        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 1, { value: 0 })
+        auctionContract.placeBid(ITEM_ID_1, market1.address, 1, { value: 0 })
       ).to.be.revertedWith("Not enough funds");
       await expect(
-        auctionContract.placeBid(ITEM_ID_EMPTY, market1.address, 1, { value: 600 })
+        auctionContract.placeBid(ITEM_ID_1, market1.address, 1, { value: 600 })
       ).to.be.revertedWith("Not enough funds");
 
       await expect(
@@ -116,9 +116,6 @@ describe("Market", () => {
       ).to.be.revertedWith("Item must be registered");
 
       await auctionContract.placeBid(ITEM_ID_1, market1.address, 1, { value: 601 });
-      await expect(
-        auctionContract.placeBid(ITEM_ID_1, market1.address, 1, { value: 601 })
-      ).to.be.revertedWith("Bid is active");
 
       await auctionContract.placeBid(ITEM_ID_PINK, market2.address, 2, { value: 1202 });
     });
@@ -217,13 +214,13 @@ describe("Market", () => {
       let bids;
 
       await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
-      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 32 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 32 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].balance).to.eq(BigNumber.from(1234));
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
 
       await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
-      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 1234 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].balance).to.eq(BigNumber.from(1234));
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
@@ -233,10 +230,10 @@ describe("Market", () => {
       await auctionContract.executeHighestBid(market1.address);
 
       await expect(
-        auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 32 })
+        auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 32 })
       ).to.be.revertedWith("Not enough funds");
 
-      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 2000 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 2000 });
       
       await ethers.provider.send('evm_increaseTime', [2000]);
       await ethers.provider.send('evm_mine');
@@ -245,7 +242,7 @@ describe("Market", () => {
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(ZERO_ADDRESS);
 
-      await auctionContract.connect(bidder1).increaseBalance(ITEM_ID_1, market1.address, { value: 1234 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].balance).to.eq(BigNumber.from(1234));
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
@@ -255,12 +252,12 @@ describe("Market", () => {
       let bids;
 
       await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1202 });
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 32 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 32 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
 
       await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
 
@@ -269,10 +266,10 @@ describe("Market", () => {
       await auctionContract.executeHighestBid(market1.address);
 
       await expect(
-        auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 32 })
+        auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 32 })
       ).to.be.revertedWith("Not enough funds");
 
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 2000 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 2000 });
       
       await ethers.provider.send('evm_increaseTime', [2000]);
       await ethers.provider.send('evm_mine');
@@ -281,7 +278,7 @@ describe("Market", () => {
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(ZERO_ADDRESS);
 
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 1234 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].balance).to.eq(BigNumber.from(1234));
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
@@ -319,25 +316,21 @@ describe("Market", () => {
       expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
 
       await auctionContract.executeHighestBid(market1.address);
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 1, { value: 601 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 1, { value: 601 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(bidder2.address);
       expect(bids[1].bidder).to.eq(bidder3.address);
       expect(bids[2].bidder).to.eq(bidder1.address);
       expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
 
-      await expect(
-        auctionContract.connect(bidder4).updateBid(ITEM_ID_1, market1.address, 2, { value: 32 })
-      ).to.be.revertedWith("Bid does not exist");
-
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 10, { value: 10000 });
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 10, { value: 10000 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(bidder1.address);
       expect(bids[1].bidder).to.eq(bidder2.address);
       expect(bids[2].bidder).to.eq(bidder3.address);
       expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
 
-      await auctionContract.connect(bidder1).updateBid(ITEM_ID_1, market1.address, 2);
+      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2);
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(bidder2.address);
       expect(bids[1].bidder).to.eq(bidder1.address);
