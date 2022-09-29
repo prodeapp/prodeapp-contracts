@@ -59,11 +59,6 @@ const marketData = {
     },
     {
       templateID: 2, 
-      question: "Will Messi surpass Batistuta and become Argentina's top scorer in World Cups after FWC Qatar 2022?␟\"Yes\",\"No\",\"Tie\"␟football␟en_US", 
-      openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
-    },
-    {
-      templateID: 2, 
       question: "Will Messi win an award as goalscorer at the FIFA World Cup Qatar 2022?␟\"Golden Boot\",\"Silver Boot\",\"Bronze Boot\",\"No Award\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
     },
