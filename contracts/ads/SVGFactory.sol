@@ -134,7 +134,7 @@ contract SVGFactory {
         curateProxy = _newCurateProxy;
     }
 
-    function createAd(string memory _svg) external payable returns (address) {
+    function createAd(string memory _svg, string memory _ref) external payable returns (address) {
         address newAd = adContract.clone();
         SVG instance = SVG(newAd);
 
@@ -159,7 +159,7 @@ contract SVGFactory {
         itemInfo.contentRequestIndex = uint32(numberOfRequests - 1);
 
         bytes32 proxyItemID = ICurateProxy(curateProxy).registerAd(itemID, itemID);
-        instance.initialize(itemID, proxyItemID, _svg);
+        instance.initialize(itemID, proxyItemID, _svg, _ref);
 
         return newAd;
     }
