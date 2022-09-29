@@ -14,6 +14,7 @@ interface ICurate {
 
 interface IFirstPriceAuction {
     function getAd(address _market, uint256 _tokenID) external view returns (string memory);
+    function getRef(address _market, uint256 _tokenID) external view returns (string memory);
 }
 
 library HexStrings {
@@ -422,6 +423,27 @@ contract BetNFTDescriptor is Initializable {
         string memory adSvg = IFirstPriceAuction(ads).getAd(msg.sender, tokenId);
         if (bytes(adSvg).length == 0) {
             return '';
+        } else {
+            adSvg = string(
+                abi.encodePacked(
+                    '<image xlink:href="data:image/svg+xml;base64,',
+                    adSvg,
+                    '" />'
+                )
+            );
+        }
+
+        string memory adLink = IFirstPriceAuction(ads).getRef(msg.sender, tokenId);
+        if (bytes(adLink).length > 0) {
+            adSvg = string(
+            abi.encodePacked(
+                '<a href="',
+                adLink,
+                '"  target="_blank">',
+                adSvg,
+                '</a>'
+            )
+        );
         }
 
         return string(
