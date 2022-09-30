@@ -29,7 +29,7 @@ contract FirstPriceAuction {
         bytes32 itemID; // on curate
     }
 
-    uint256 public constant MIN_OFFER_DURATION = 600; // 10 min. Can be avoided if manually removed.
+    uint256 public constant MIN_OFFER_DURATION = 1800; // 30 min. Can be avoided if manually removed.
 
     ICurate public curatedAds;
     IBilling public billing;
@@ -234,40 +234,34 @@ contract FirstPriceAuction {
     function getAd(address _market, uint256 _tokenID) external view returns (string memory) {
         bytes32 startID = keccak256(abi.encode(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
-        if (highestBidID == 0x0) {
+        if (highestBidID == 0x0) return "";
+
+        Bid storage bid = bids[highestBidID];
+        address svgAddress = curatedAds.getAddress(bid.itemID);
+        // Check if address is a contract. See @openzeppelin/contracts/utils/Address.sol
+        if (svgAddress.code.length == 0) return "";
+
+        try ISVG(svgAddress).getSVG(_market, _tokenID) returns (string memory svg) {
+            return svg;
+        } catch {
             return "";
-        } else {
-            Bid storage bid = bids[highestBidID];
-            address svgAddress = curatedAds.getAddress(bid.itemID);
-            if (svgAddress.code.length == 0) {
-                // Address is not a contract. See @openzeppelin/contracts/utils/Address.sol
-                return "";
-            }
-            try ISVG(svgAddress).getSVG(_market, _tokenID) returns (string memory svg) {
-                return svg;
-            } catch {
-                return "";
-            }
         }
     }
 
     function getRef(address _market, uint256 _tokenID) external view returns (string memory) {
         bytes32 startID = keccak256(abi.encode(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
-        if (highestBidID == 0x0) {
+        if (highestBidID == 0x0) return "";
+
+        Bid storage bid = bids[highestBidID];
+        address svgAddress = curatedAds.getAddress(bid.itemID);
+        // Check if address is a contract. See @openzeppelin/contracts/utils/Address.sol
+        if (svgAddress.code.length == 0) return "";
+
+        try ISVG(svgAddress).getRef(_market, _tokenID) returns (string memory ref) {
+            return ref;
+        } catch {
             return "";
-        } else {
-            Bid storage bid = bids[highestBidID];
-            address svgAddress = curatedAds.getAddress(bid.itemID);
-            if (svgAddress.code.length == 0) {
-                // Address is not a contract. See @openzeppelin/contracts/utils/Address.sol
-                return "";
-            }
-            try ISVG(svgAddress).getRef(_market, _tokenID) returns (string memory ref) {
-                return ref;
-            } catch {
-                return "";
-            }
         }
     }
 
