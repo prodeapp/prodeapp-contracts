@@ -8,8 +8,8 @@ import "./IMarket.sol";
 
 interface ICurate {
     function isRegistered(bytes32 questionsHash) external view returns(bool);
-	function getTitle(bytes32 _questionsHash) external view returns(string memory);
-	function getTimestamp(bytes32 _questionsHash) external view returns(uint256);
+    function getTitle(bytes32 _questionsHash) external view returns(string memory);
+    function getTimestamp(bytes32 _questionsHash) external view returns(uint256);
 }
 
 interface IFirstPriceAuction {
@@ -33,9 +33,9 @@ library HexStrings {
 }
 
 contract BetNFTDescriptor is Initializable { 
-
-	using Strings for uint256;
-	using HexStrings for uint256;
+    
+    using Strings for uint256;
+    using HexStrings for uint256;
 
     address public curatedMarkets;
     address public ads;
@@ -281,16 +281,16 @@ contract BetNFTDescriptor is Initializable {
                         )
                     )
                 ),
-				'"/><feGaussianBlur ',
+                '"/><feGaussianBlur ',
                 'in="p1" stdDeviation="',
                 std.toString(),
                 '" /></filter> ',
-				'<filter id="f2"> ',
-				'<feTurbulence type="turbulence" baseFrequency="0.6" numOctaves="2" result="turbulence"/>'
-          		'<feDisplacementMap in2="turbulence" in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/>'
-        		'</filter>'
-				'<clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>',
-				'<clipPath id="ad-margin"><rect width="290" height="430" /></clipPath>',
+                '<filter id="f2"> ',
+                '<feTurbulence type="turbulence" baseFrequency="0.6" numOctaves="2" result="turbulence"/>'
+                '<feDisplacementMap in2="turbulence" in="SourceGraphic" scale="5" xChannelSelector="R" yChannelSelector="G"/>'
+                '</filter>'
+                '<clipPath id="corners"><rect width="290" height="500" rx="42" ry="42" /></clipPath>',
+                '<clipPath id="ad-margin"><rect width="290" height="430" /></clipPath>',
                 '<filter id="top-region-blur"><feGaussianBlur in="SourceGraphic" stdDeviation="24" /></filter>',
                 '</defs>',
                 '<g clip-path="url(#corners)">',
@@ -337,23 +337,23 @@ contract BetNFTDescriptor is Initializable {
     ) private pure returns (string memory svg) {
         svg = string(
             abi.encodePacked(
-				'<rect fill="none" x="0px" y="0px" width="290px" height="200px" /> ',
-				'<text y="65px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="14px">',
+                '<rect fill="none" x="0px" y="0px" width="290px" height="200px" /> ',
+                '<text y="65px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="14px">',
                 'Jackpot: ',
                 jackpot,
-				' xDAI</text>',
-				'<text y="83px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="10px">',
+                ' xDAI</text>',
+                '<text y="83px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="10px">',
                 'Management fee: ',
                 fee,
-				'</text>',
-				'<text y="98px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="10px">',
+                '</text>',
+                '<text y="98px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="10px">',
                 'Status: ',
                 status,
-				'</text>',
-				'<text y="113px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="10px">',
+                '</text>',
+                '<text y="113px" x="32px" fill="white" font-family="\'Courier New\', monospace" font-size="10px">',
                 'Copies: ',
                 copies,
-				'</text>'
+                '</text>'
             )
         );
     }
@@ -363,16 +363,16 @@ contract BetNFTDescriptor is Initializable {
         bytes32 questionsHash = market.questionsHash();
         bool isRegistered = ICurate(curatedMarkets).isRegistered(questionsHash);
         uint256 startTime = ICurate(curatedMarkets).getTimestamp(questionsHash);
-
-		if (!isRegistered || market.closingTime() > startTime) return '';
+        
+        if (!isRegistered || market.closingTime() > startTime) return '';
 
         svg = string(
             abi.encodePacked(
                 '<g style="transform:translate(243px, 11px)">',
                 '<rect width="36px" height="36px" rx="8px" ry="8px" fill="none" stroke="rgba(255,255,255,0.2)" />',
                 '<svg x="5px" y="6px" fill="#4CAF50"><path d="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/></svg>',
-				'<svg x="8px" y="6px" fill="#4CAF50"><path d="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/></svg>',
-				'</g>'
+                '<svg x="8px" y="6px" fill="#4CAF50"><path d="M9,16.2L4.8,12l-1.4,1.4L9,19L21,7l-1.4-1.4L9,16.2z"/></svg>',
+                '</g>'
             )
         );
     }
@@ -414,7 +414,7 @@ contract BetNFTDescriptor is Initializable {
             abi.encodePacked(
                 '<g style="transform:translate(220px, 142px)">',
                 svg,
-				'</g>'
+                '</g>'
             )
         );
     }
