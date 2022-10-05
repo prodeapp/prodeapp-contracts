@@ -18,6 +18,7 @@
         <clipPath id="corners">
             <rect width="290" height="500" rx="42" ry="42" />
         </clipPath>
+        <clipPath id="ad-margin"><rect width="290" height="430" /></clipPath>
         <filter id="top-region-blur">
             <feGaussianBlur in="SourceGraphic" stdDeviation="24" />
         </filter>
@@ -66,10 +67,12 @@
     <g clip-path="url(#corners)">
         <rect x="0" y="0" width="290" height="500" rx="42" ry="42" fill="rgba(0,0,0)" stroke="rgba(14,14,14)" />
         <g clip-path="url(#ad-margin)" style="transform:translate(0px, 35px)" >
-            <svg width="290" height="430" viewBox="0 0 290 430"><rect width="290" height="430" fill="rgba(152,207,239)" stroke="rgba(14,14,14)"/><a href="https://www.nike.com/"><path transform="translate(50, 65)" d="M42.741 71.477c-9.881 11.604-19.355 25.994-19.45 36.75-.037 4.047 1.255 7.58 4.354 10.256 4.46 3.854 9.374 5.213 14.264 5.221 7.146.01 14.242-2.873 19.798-5.096 9.357-3.742 112.79-48.659 112.79-48.659.998-.5.811-1.123-.438-.812-.504.126-112.603 30.505-112.603 30.505a24.771 24.771 0 0 1-6.524.934c-8.615.051-16.281-4.731-16.219-14.808.024-3.943 1.231-8.698 4.028-14.291z"/><text y="240px" x="90px" fill="#222222" font-family="'Futura', monospace" font-weight="bolder" font-size="20px">JUST DO IT.</text></a></svg>
+            <a href="https://www.nike.com/">
+                <image xlink:href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjkwIiBoZWlnaHQ9IjQzMCIgdmlld0JveD0iMCAwIDI5MCA0MzAiCiAgICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgICB4bWxuczp4bGluaz0naHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayc+CgogICAgPHJlY3Qgd2lkdGg9IjI5MCIgaGVpZ2h0PSI0MzAiIGZpbGw9InJnYmEoMTUyLDIwNywyMzkpIiBzdHJva2U9InJnYmEoMTQsMTQsMTQpIi8+CiAgICA8YSBocmVmPSJodHRwczovL3d3dy5uaWtlLmNvbS8iPgogICAgICAgIDxwYXRoIHRyYW5zZm9ybT0idHJhbnNsYXRlKDUwLCA2NSkiIGQ9Ik00Mi43NDEgNzEuNDc3Yy05Ljg4MSAxMS42MDQtMTkuMzU1IDI1Ljk5NC0xOS40NSAzNi43NS0uMDM3IDQuMDQ3IDEuMjU1IDcuNTggNC4zNTQgMTAuMjU2IDQuNDYgMy44NTQgOS4zNzQgNS4yMTMgMTQuMjY0IDUuMjIxIDcuMTQ2LjAxIDE0LjI0Mi0yLjg3MyAxOS43OTgtNS4wOTYgOS4zNTctMy43NDIgMTEyLjc5LTQ4LjY1OSAxMTIuNzktNDguNjU5Ljk5OC0uNS44MTEtMS4xMjMtLjQzOC0uODEyLS41MDQuMTI2LTExMi42MDMgMzAuNTA1LTExMi42MDMgMzAuNTA1YTI0Ljc3MSAyNC43NzEgMCAwIDEtNi41MjQuOTM0Yy04LjYxNS4wNTEtMTYuMjgxLTQuNzMxLTE2LjIxOS0xNC44MDguMDI0LTMuOTQzIDEuMjMxLTguNjk4IDQuMDI4LTE0LjI5MXoiLz4KICAgICAgICA8dGV4dCB5PSIyNDBweCIgeD0iOTBweCIgZmlsbD0iIzIyMjIyMiIgZm9udC1mYW1pbHk9IidGdXR1cmEnLCBtb25vc3BhY2UiIGZvbnQtd2VpZ2h0PSJib2xkZXIiIGZvbnQtc2l6ZT0iMjBweCI+SlVTVCBETyBJVC48L3RleHQ+CiAgICA8L2E+Cjwvc3ZnPg==" />
+            </a>
         </g>
         <text y="25px" x="50px" fill="#D0D0D0A8" font-family="'Courier New', monospace" font-size="15px">Ad curated by Kleros</text>
-        <animate dur="1s" attributeName="opacity" from="1" to="0" begin="2s" repeatCount="1" fill="freeze" />
-        <animate dur="1s" attributeName="visibility" from="visible" to="collapse" begin="2s" repeatCount="1" fill="freeze" />
+        <animate dur="1s" attributeName="opacity" from="1" to="0" begin="2.5s" repeatCount="1" fill="freeze" />
+        <animate dur="1s" attributeName="visibility" from="visible" to="collapse" begin="2.5s" repeatCount="1" fill="freeze" />
     </g>
 </svg>
