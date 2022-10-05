@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 
 import "solidity-rlp/contracts/RLPReader.sol";
-import "./IGeneralizedTCR.sol";
+import "./IGTCR.sol";
 
 contract CurateProxy {
     using RLPReader for RLPReader.RLPItem;
@@ -36,19 +36,13 @@ contract CurateProxy {
     }
 
     function registerMarket(bytes32 _itemID) external {
-        (
-            bytes memory itemData,
-            IGeneralizedTCR.Status status,
-            uint256 numberOfRequests
-        ) = IGeneralizedTCR(gtcrClassic).getItemInfo(_itemID);
+        (bytes memory itemData, IGTCR.Status status, uint256 numberOfRequests) = IGTCR(gtcrClassic)
+            .getItemInfo(_itemID);
 
         RLPReader.RLPItem[] memory rlpData = itemData.toRlpItem().toList();
         bytes32 questionsHash = decodeHash(rlpData[1]);
 
-        if (
-            status == IGeneralizedTCR.Status.Registered ||
-            status == IGeneralizedTCR.Status.ClearingRequested
-        ) {
+        if (status == IGTCR.Status.Registered || status == IGTCR.Status.ClearingRequested) {
             HashData storage data = hashData[questionsHash];
             data.title = decodeTitle(rlpData[0]);
             data.startTimestamp = uint248(decodeTimestamp(rlpData[2]));
@@ -61,11 +55,7 @@ contract CurateProxy {
         } else {
             // Check if last successful request was for clearing
             // Request 0 is always the first registration attempt. We can skip it.
-            for (
-                uint256 requestID = numberOfRequests - 1;
-                requestID > 0;
-                requestID--
-            ) {
+            for (uint256 requestID = numberOfRequests - 1; requestID > 0; requestID--) {
                 (
                     bool disputed,
                     ,
@@ -73,30 +63,21 @@ contract CurateProxy {
                     bool resolved,
                     ,
                     ,
-                    IGeneralizedTCR.Party ruling,
+                    IGTCR.Party ruling,
                     ,
                     ,
                     uint256 metaEvidenceID
-                ) = IGeneralizedTCR(gtcrClassic).getRequestInfo(
-                        _itemID,
-                        requestID
-                    );
+                ) = IGTCR(gtcrClassic).getRequestInfo(_itemID, requestID);
 
                 if (metaEvidenceID % 2 == 1) {
                     // Clearing request
                     if (
                         (!disputed && resolved) ||
-                        (disputed &&
-                            resolved &&
-                            ruling == IGeneralizedTCR.Party.Requester)
+                        (disputed && resolved && ruling == IGTCR.Party.Requester)
                     ) {
                         // Clearing request was successful
                         items[_itemID].isRegistered = false;
-                        for (
-                            uint256 j = 0;
-                            j < itemsWithHash[questionsHash].length;
-                            j++
-                        ) {
+                        for (uint256 j = 0; j < itemsWithHash[questionsHash].length; j++) {
                             bytes32 id_j = itemsWithHash[questionsHash][j];
                             if (items[id_j].isRegistered) return;
                         }
@@ -108,11 +89,7 @@ contract CurateProxy {
         }
     }
 
-    function decodeTitle(RLPReader.RLPItem memory rawTitle)
-        internal
-        pure
-        returns (string memory)
-    {
+    function decodeTitle(RLPReader.RLPItem memory rawTitle) internal pure returns (string memory) {
         return string(rawTitle.toBytes());
     }
 
@@ -124,11 +101,7 @@ contract CurateProxy {
         return rawTimestamp.toUint();
     }
 
-    function decodeHash(RLPReader.RLPItem memory rawHash)
-        internal
-        pure
-        returns (bytes32 hash)
-    {
+    function decodeHash(RLPReader.RLPItem memory rawHash) internal pure returns (bytes32 hash) {
         bytes memory bytesHash = rawHash.toBytes();
         require(bytesHash.length == 66, "Not bytes32");
         for (uint256 i = HEX_OFFSET; i < bytesHash.length; i++) {
@@ -150,19 +123,11 @@ contract CurateProxy {
         return hashData[_questionsHash].isRegistered;
     }
 
-    function getTitle(bytes32 _questionsHash)
-        external
-        view
-        returns (string memory)
-    {
+    function getTitle(bytes32 _questionsHash) external view returns (string memory) {
         return hashData[_questionsHash].title;
     }
 
-    function getTimestamp(bytes32 _questionsHash)
-        external
-        view
-        returns (uint256)
-    {
+    function getTimestamp(bytes32 _questionsHash) external view returns (uint256) {
         return uint256(hashData[_questionsHash].startTimestamp);
     }
 }

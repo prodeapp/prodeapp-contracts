@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.6.12;
 
-interface IGeneralizedTCR {
+interface IGTCR {
     /// @dev see https://github.com/kleros/tcr/blob/059372068ae3ed380e74d653b713f2a33a3e9551/contracts/GeneralizedTCR.sol
     enum Status {
         Absent, // The item is not in the registry.

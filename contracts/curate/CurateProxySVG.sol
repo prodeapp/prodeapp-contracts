@@ -2,7 +2,7 @@
 pragma solidity 0.6.12;
 
 import "solidity-rlp/contracts/RLPReader.sol";
-import "./IGeneralizedTCR.sol";
+import "./IGTCR.sol";
 
 contract CurateProxySVG {
     using RLPReader for RLPReader.RLPItem;
@@ -14,8 +14,8 @@ contract CurateProxySVG {
         address svgAddress;
     }
 
-    IGeneralizedTCR public immutable gtcrContent;
-    IGeneralizedTCR public immutable gtcrTechnical;
+    IGTCR public immutable gtcrContent;
+    IGTCR public immutable gtcrTechnical;
 
     mapping(bytes32 => Item) public hashToCurateIDs; // hashToCurateIDs[ID]
 
@@ -31,7 +31,7 @@ contract CurateProxySVG {
      *  @param _gtcrTechnical Address of the Curate registry that holds ads compliant with the technical policy.
      *  @param _gtcrContent Address of the Curate registry that holds ads compliant with the content moderation policy.
      */
-    constructor(IGeneralizedTCR _gtcrTechnical, IGeneralizedTCR _gtcrContent) public {
+    constructor(IGTCR _gtcrTechnical, IGTCR _gtcrContent) public {
         gtcrTechnical = _gtcrTechnical;
         gtcrContent = _gtcrContent;
     }
@@ -63,40 +63,26 @@ contract CurateProxySVG {
         emit newItemMapped(contentAdr, itemID, _contentItemID, _technicalItemID);
     }
 
-    function isRegistered(bytes32 _itemID) public view returns (bool) {
+    function isRegistered(bytes32 _itemID) public view returns (bool isRegistered) {
         Item storage item = hashToCurateIDs[_itemID];
-        (, IGeneralizedTCR.Status contentStatus, ) = gtcrContent.getItemInfo(item.contentItemID);
-        (, IGeneralizedTCR.Status technicalStatus, ) = gtcrTechnical.getItemInfo(
-            item.technicalItemID
-        );
+        (, IGTCR.Status contentStatus, ) = gtcrContent.getItemInfo(item.contentItemID);
+        (, IGTCR.Status technicalStatus, ) = gtcrTechnical.getItemInfo(item.technicalItemID);
 
-        if (
-            (contentStatus == IGeneralizedTCR.Status.Registered ||
-                contentStatus == IGeneralizedTCR.Status.ClearingRequested) &&
-            (technicalStatus == IGeneralizedTCR.Status.Registered ||
-                technicalStatus == IGeneralizedTCR.Status.ClearingRequested)
-        ) {
-            return true;
-        } else {
-            return false;
-        }
+        isRegistered =
+            (contentStatus == IGTCR.Status.Registered ||
+                contentStatus == IGTCR.Status.ClearingRequested) &&
+            (technicalStatus == IGTCR.Status.Registered ||
+                technicalStatus == IGTCR.Status.ClearingRequested);
     }
 
-    function isReported(bytes32 _itemID) public view returns (bool) {
+    function isReported(bytes32 _itemID) public view returns (bool isReported) {
         Item storage item = hashToCurateIDs[_itemID];
-        (, IGeneralizedTCR.Status contentStatus, ) = gtcrContent.getItemInfo(item.contentItemID);
-        (, IGeneralizedTCR.Status technicalStatus, ) = gtcrTechnical.getItemInfo(
-            item.technicalItemID
-        );
+        (, IGTCR.Status contentStatus, ) = gtcrContent.getItemInfo(item.contentItemID);
+        (, IGTCR.Status technicalStatus, ) = gtcrTechnical.getItemInfo(item.technicalItemID);
 
-        if (
-            contentStatus == IGeneralizedTCR.Status.ClearingRequested ||
-            technicalStatus == IGeneralizedTCR.Status.ClearingRequested
-        ) {
-            return true;
-        } else {
-            return false;
-        }
+        isReported =
+            contentStatus == IGTCR.Status.ClearingRequested ||
+            technicalStatus == IGTCR.Status.ClearingRequested;
     }
 
     function getAddress(bytes32 _itemID) external view returns (address) {

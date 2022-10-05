@@ -191,7 +191,7 @@ contract SVGFactory {
         (, uint256[3] memory amountPaid, bool[3] memory hasPaid, uint256 feeRewards) = _curate
             .getRoundInfo(_itemID, _requestIndex, 0);
 
-        if (!hasPaid[REQUESTER] || !hasPaid[CHALLENGER]) {
+        if (!hasPaid[CHALLENGER]) {
             // Reimburse if the request wasn't challenged.
             reward = amountPaid[REQUESTER];
         } else if (ruling == ICurate.Party.None && amountPaid[REQUESTER] > 0) {
