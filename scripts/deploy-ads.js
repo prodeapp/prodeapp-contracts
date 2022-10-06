@@ -8,9 +8,9 @@ const params = {
         curateTechnical: "0x0000000000000000000000000000000000000000"
     },
     100: {
-        governor: "",
-        curateContent: "0x76D159faDCDE966d68885b7267Ce42F4F655238D",  // TODO: Update to curate list address
-        curateTechnical: "0x6E6Bc2032d5A19728Aeb30f06507e7Cb43e4bBFD"
+        governor: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
+        curateContent: "0xc5e81645a95b0c1369Fe7610687878Ac4E1267Fa",  // TODO: Update to curate list address
+        curateTechnical: "0x077d51a02248220b8d04561AD52CC36A3f3cb0c5"
     },
     31337: {
         governor: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
@@ -74,7 +74,11 @@ async function main() {
     console.log("");
     console.log("Run the following to verify the contracts");
     console.log();
-    console.log(`${verifyCurate} && ${verifyAd} && ${verifyFactory} && ${verifyBilling} && ${verifyAuction}`);
+    console.log(`${verifyCurate}`);
+    console.log(`${verifyAd}`);
+    console.log(`${verifyFactory}`);
+    console.log(`${verifyBilling}`);
+    console.log(`${verifyAuction}`);
     console.log();
 }
 
