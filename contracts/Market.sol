@@ -31,6 +31,7 @@ contract Market is ERC721, IERC2981 {
     }
 
     uint256 public constant DIVISOR = 10000;
+    uint256 public constant CLEAN_TOKEN_ID = uint256(type(uint128).max);
 
     MarketInfo public marketInfo;
     address public betNFTDescriptor;
@@ -243,6 +244,84 @@ contract Market is ERC721, IERC2981 {
             isRanked[_tokenID] = true;
             emit RankingUpdated(_tokenID, totalPoints, realRankIndex);
         }
+    }
+
+    /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
+     *  in descending order. Bets which points were not registered cannot claimed rewards even if they
+     *  got more points than the ones registered.
+     */
+    function registerAll() external {
+        require(resultSubmissionPeriodStart != 0, "Not in submission period");
+        require(
+            block.timestamp < resultSubmissionPeriodStart + submissionTimeout,
+            "Submission period over"
+        );
+
+        bytes32[] memory results = new bytes32[](questionIDs.length);
+        for (uint256 i = 0; i < questionIDs.length; i++) {
+            results[i] = realitio.resultForOnceSettled(questionIDs[i]);
+        }
+
+        uint256[] memory auxRanking = new uint256[](nextTokenID);
+        uint256 currentMin;
+        uint256 freePos;
+
+        for (uint256 tokenID = 0; tokenID < nextTokenID; tokenID++) {
+            BetData storage betData = bets[tokenIDtoTokenHash[tokenID]];
+            uint256 totalPoints;
+            for (uint256 i = 0; i < questionIDs.length; i++) {
+                if (betData.predictions[i] == results[i]) totalPoints += 1;
+            }
+
+            if (totalPoints == 0 || (totalPoints < currentMin && freePos >= prizeWeights.length)) continue;
+
+            auxRanking[freePos] = totalPoints | tokenID << 128;
+
+            if (totalPoints == currentMin) {
+                freePos++;
+            } else if (totalPoints > currentMin) {
+                sort(auxRanking, 0, int(freePos));
+
+                currentMin = auxRanking[prizeWeights.length - 1] & CLEAN_TOKEN_ID;
+                freePos++;
+                if (freePos > prizeWeights.length) {
+                    while (currentMin > auxRanking[freePos] & CLEAN_TOKEN_ID) freePos--;
+                    freePos++;
+                }
+            } else if (totalPoints < currentMin && freePos < prizeWeights.length) {
+                currentMin = totalPoints;
+                freePos++;
+            }
+        }
+
+        for (uint256 rankIndex = 0; rankIndex < freePos; rankIndex++) {
+            uint256 tokenID = auxRanking[rankIndex] >> 128;
+            uint256 totalPoints = auxRanking[rankIndex] & CLEAN_TOKEN_ID;
+            ranking[rankIndex].tokenID = tokenID;
+            ranking[rankIndex].points = uint248(totalPoints);
+            emit RankingUpdated(tokenID, totalPoints, rankIndex);
+        }
+
+        resultSubmissionPeriodStart = 1;
+    }
+
+    function sort(uint256[] memory arr, int left, int right) internal pure {
+        int i = left;
+        int j = right;
+        uint256 pivot = arr[uint256(left + (right - left) / 2)] & CLEAN_TOKEN_ID;
+        while (i <= j) {
+            while (arr[uint256(i)] & CLEAN_TOKEN_ID > pivot) i++;
+            while (pivot > arr[uint256(j)] & CLEAN_TOKEN_ID) j--;
+            if (i <= j) {
+                (arr[uint256(i)], arr[uint256(j)]) = (arr[uint256(j)], arr[uint256(i)]);
+                i++;
+                j--;
+            }
+        }
+        if (left < j)
+            sort(arr, left, j);
+        if (i < right)
+            sort(arr, i, right);
     }
 
     /** @dev Sends a prize to the token holder if applicable.

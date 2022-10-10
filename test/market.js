@@ -977,6 +977,65 @@ describe("Market", () => {
         if (ranking[bet_i] == 0) break;
         await expect(market.claimRewards(i, 0, 0)).to.be.revertedWith("Already claimed");
       }
+    });
+    
+    it("Should claim all prizes only once after automatic ranking registration.", async () => {
+      // Register all points in the correct order
+      const sortedRanking = Array.from(Array(ranking.length).keys()).sort((a, b) => ranking[a] < ranking[b] ? -1 : (ranking[b] < ranking[a]) | 0);
+      let currentDuplicateIndex = 0;
+      let prizeShare = [];
+      let realPrizeWeights = [];
+      for (let i = 0; i < sortedRanking.length; i++) {
+        const bet_i = sortedRanking[sortedRanking.length - i - 1];
+        if (ranking[bet_i] == 0) {
+          prizeShare.push(i - currentDuplicateIndex);
+          realPrizeWeights.push(marketData.prizeWeights.slice(currentDuplicateIndex, i).reduce((a, b) => a + b, 0));
+          break;
+        }
+        if (i > 0 && ranking[bet_i] != ranking[sortedRanking[sortedRanking.length - i]]) {
+          prizeShare.push(i - currentDuplicateIndex);
+          realPrizeWeights.push(marketData.prizeWeights.slice(currentDuplicateIndex, i).reduce((a, b) => a + b, 0));
+          currentDuplicateIndex = i;
+        }
+        if (i == sortedRanking.length - 1) {
+          prizeShare.push(i + 1 - currentDuplicateIndex);
+          realPrizeWeights.push(marketData.prizeWeights.slice(currentDuplicateIndex, i + 1).reduce((a, b) => a + b, 0));
+        }
+      }
+
+      await market.registerAll();
+
+      await expect(market.reimbursePlayer(0)).to.be.revertedWith("Can't reimburse if there are winners");
+      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No vacant prizes");
+
+      const totalPrize = await market.totalPrize();
+      let rankIndex = 0;
+      let bet_i;
+      let prizesGiven;
+      for (let i = 0; i < realPrizeWeights.length; i++) {
+        bet_i = sortedRanking[sortedRanking.length - rankIndex - 1];
+        if (ranking[bet_i] == 0) break;
+
+        const firstBatchRankedIndex = rankIndex;
+        const lastBatchRankedIndex = firstBatchRankedIndex + prizeShare[i] - 1;
+        for (let j = 0; j < prizeShare[i]; j++) {
+          if (firstBatchRankedIndex >= marketData.prizeWeights.length) break;
+          prizesGiven = rankIndex;
+          tx = await market.claimRewards(rankIndex, firstBatchRankedIndex, lastBatchRankedIndex);
+          receipt = await tx.wait();
+          [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
+          bet_i = sortedRanking[sortedRanking.length - rankIndex - 1];
+          const expectedReward = totalPrize.mul(realPrizeWeights[i]).div(10000 * prizeShare[i]);
+          expect(_reward).to.eq(BigNumber.from(expectedReward));
+          rankIndex += 1;
+        }
+      }
+
+      for (let i = 0; i < prizesGiven; i++) {
+        const bet_i = sortedRanking[sortedRanking.length - i - 1];
+        if (ranking[bet_i] == 0) break;
+        await expect(market.claimRewards(i, 0, 0)).to.be.revertedWith("Already claimed");
+      }
 
     });
 
