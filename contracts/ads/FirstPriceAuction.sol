@@ -60,6 +60,8 @@ contract FirstPriceAuction {
         address _market,
         uint256 _bidPerSecond
     ) external payable {
+        executeHighestBid(_market);
+
         require(curatedAds.isRegistered(_itemID), "Item must be registered");
 
         bytes32 bidID = keccak256(abi.encode(_market, _itemID, msg.sender));
@@ -94,8 +96,6 @@ contract FirstPriceAuction {
 
         bytes32 startID = keccak256(abi.encode(_market));
         if (bid.previousBidPointer == startID) {
-            _registerPayment(bid, _market);
-
             if (bid.nextBidPointer != 0x0) {
                 Bid storage newHighestBid = bids[bid.nextBidPointer];
                 newHighestBid.startTimestamp = uint64(block.timestamp);
@@ -143,10 +143,10 @@ contract FirstPriceAuction {
      *    - collects the current highest bid billing.
      *  @param _market The address of the market.
      */
-    function executeHighestBid(address _market) external {
+    function executeHighestBid(address _market) public {
         bytes32 startID = keccak256(abi.encode(_market));
         bytes32 highestBidID = bids[startID].nextBidPointer;
-        require(highestBidID != 0x0, "No bid found");
+        if (highestBidID == 0x0) return;
 
         Bid storage bid = bids[highestBidID];
 

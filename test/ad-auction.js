@@ -139,20 +139,11 @@ describe("Market", () => {
 
       await auctionContract.connect(bidder3).placeBid(ITEM_ID_PINK, market1.address, 1, { value: 1801 });
       bids = await auctionContract.getBids(market1.address, 0, 5);
-      expect(bids[0].bidder).to.eq(bidder1.address);
-      expect(bids[1].bidder).to.eq(bidder2.address);
-      expect(bids[2].bidder).to.eq(bidder3.address);
-      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
-
-      await auctionContract.executeHighestBid(market1.address);
-
-      bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(bidder2.address);
       expect(bids[1].bidder).to.eq(bidder3.address);
       expect(bids[2].bidder).to.eq(ZERO_ADDRESS);
 
       await auctionContract.executeHighestBid(market1.address);
-
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(bidder2.address);
       expect(bids[1].bidder).to.eq(bidder3.address);
@@ -212,11 +203,23 @@ describe("Market", () => {
 
     it("Should increase bid's balance correctly.", async () => {
       let bids;
+      let tx;
+      let receipt;
+      let timestamp1;
+      let timestamp2;
+      let price;
 
-      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 3602 });
-      await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 32 });
+      tx = await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 3602 });
+      receipt = await tx.wait();
+      timestamp1 = BigNumber.from(await getCurrentTimestamp(receipt.blockNumber));
+
+      tx = await auctionContract.connect(bidder1).placeBid(ITEM_ID_1, market1.address, 2, { value: 32 });
+      receipt = await tx.wait();
+      timestamp2 = BigNumber.from(await getCurrentTimestamp(receipt.blockNumber));
+
       bids = await auctionContract.getBids(market1.address, 0, 5);
-      expect(bids[0].balance).to.eq(BigNumber.from(3634));
+      price = timestamp2.sub(timestamp1).mul(BigNumber.from(2));
+      expect(bids[0].balance).to.eq(BigNumber.from(3634).sub(price));
       expect(bids[1].bidder).to.eq(ZERO_ADDRESS);
 
       await auctionContract.connect(bidder1).removeBid(ITEM_ID_1, market1.address);
@@ -302,14 +305,6 @@ describe("Market", () => {
       await ethers.provider.send('evm_mine');
 
       await auctionContract.connect(bidder3).placeBid(ITEM_ID_PINK, market1.address, 1, { value: 1801 });
-      bids = await auctionContract.getBids(market1.address, 0, 5);
-      expect(bids[0].bidder).to.eq(bidder1.address);
-      expect(bids[1].bidder).to.eq(bidder2.address);
-      expect(bids[2].bidder).to.eq(bidder3.address);
-      expect(bids[3].bidder).to.eq(ZERO_ADDRESS);
-
-      await auctionContract.executeHighestBid(market1.address);
-
       bids = await auctionContract.getBids(market1.address, 0, 5);
       expect(bids[0].bidder).to.eq(bidder2.address);
       expect(bids[1].bidder).to.eq(bidder3.address);
