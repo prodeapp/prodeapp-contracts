@@ -246,9 +246,9 @@ contract Market is ERC721, IERC2981 {
         }
     }
 
-    /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
-     *  in descending order. Bets which points were not registered cannot claimed rewards even if they
-     *  got more points than the ones registered.
+    /** @dev Register all winning bets and move the contract state to the claiming phase.
+     *  This function is gas intensive and might not be available for markets in which lots of
+     *  bets have been placed.
      */
     function registerAll() external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
