@@ -257,19 +257,19 @@ contract Market is ERC721, IERC2981 {
             "Submission period over"
         );
 
-        bytes32[] memory results = new bytes32[](questionIDs.length);
-        for (uint256 i = 0; i < questionIDs.length; i++) {
+        uint256 totalQuestions = questionIDs.length;
+        bytes32[] memory results = new bytes32[](totalQuestions);
+        for (uint256 i = 0; i < totalQuestions; i++) {
             results[i] = realitio.resultForOnceSettled(questionIDs[i]);
         }
 
         uint256[] memory auxRanking = new uint256[](nextTokenID);
         uint256 currentMin;
         uint256 freePos;
-
         for (uint256 tokenID = 0; tokenID < nextTokenID; tokenID++) {
             BetData storage betData = bets[tokenIDtoTokenHash[tokenID]];
             uint256 totalPoints;
-            for (uint256 i = 0; i < questionIDs.length; i++) {
+            for (uint256 i = 0; i < totalQuestions; i++) {
                 if (betData.predictions[i] == results[i]) totalPoints += 1;
             }
 
@@ -308,6 +308,7 @@ contract Market is ERC721, IERC2981 {
     function sort(uint256[] memory arr, int left, int right) internal pure {
         int i = left;
         int j = right;
+        if (i == j) return;
         uint256 pivot = arr[uint256(left + (right - left) / 2)] & CLEAN_TOKEN_ID;
         while (i <= j) {
             while (arr[uint256(i)] & CLEAN_TOKEN_ID > pivot) i++;
