@@ -275,22 +275,18 @@ contract Market is ERC721, IERC2981 {
 
             if (totalPoints == 0 || (totalPoints < currentMin && freePos >= prizeWeights.length)) continue;
 
-            auxRanking[freePos] = totalPoints | tokenID << 128;
+            auxRanking[freePos++] = totalPoints | tokenID << 128;
 
-            if (totalPoints == currentMin) {
-                freePos++;
-            } else if (totalPoints > currentMin) {
-                sort(auxRanking, 0, int(freePos));
+            if (totalPoints > currentMin) {
+                sort(auxRanking, 0, int(freePos - 1));
 
                 currentMin = auxRanking[prizeWeights.length - 1] & CLEAN_TOKEN_ID;
-                freePos++;
                 if (freePos > prizeWeights.length) {
                     while (currentMin > auxRanking[freePos] & CLEAN_TOKEN_ID) freePos--;
                     freePos++;
                 }
-            } else if (totalPoints < currentMin && freePos < prizeWeights.length) {
+            } else if (totalPoints < currentMin) {
                 currentMin = totalPoints;
-                freePos++;
             }
         }
 
@@ -306,9 +302,9 @@ contract Market is ERC721, IERC2981 {
     }
 
     function sort(uint256[] memory arr, int left, int right) internal pure {
+        if (left == right) return;
         int i = left;
         int j = right;
-        if (i == j) return;
         uint256 pivot = arr[uint256(left + (right - left) / 2)] & CLEAN_TOKEN_ID;
         while (i <= j) {
             while (arr[uint256(i)] & CLEAN_TOKEN_ID > pivot) i++;
