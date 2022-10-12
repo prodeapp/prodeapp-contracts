@@ -51,4 +51,6 @@ interface IMarket is IERC721 {
         returns (uint256);
 
     function bets(bytes32 _tokenHash) external view returns (uint256);
+
+    function fundMarket(string calldata _message) external payable;
 }

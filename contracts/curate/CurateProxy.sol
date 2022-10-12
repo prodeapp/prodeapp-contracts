@@ -2,53 +2,7 @@
 pragma solidity 0.6.12;
 
 import "solidity-rlp/contracts/RLPReader.sol";
-
-interface IGeneralizedTCR {
-    /// @dev see https://github.com/kleros/tcr/blob/059372068ae3ed380e74d653b713f2a33a3e9551/contracts/GeneralizedTCR.sol
-    enum Status {
-        Absent, // The item is not in the registry.
-        Registered, // The item is in the registry.
-        RegistrationRequested, // The item has a request to be added to the registry.
-        ClearingRequested // The item has a request to be removed from the registry.
-    }
-
-    enum Party {
-        None, // Party per default when there is no challenger or requester. Also used for unconclusive ruling.
-        Requester, // Party that made the request to change a status.
-        Challenger // Party that challenges the request to change a status.
-    }
-
-    /** @dev Returns item's information. Includes length of requests array.
-     *  @param _itemID The ID of the queried item.
-     *  @return data The data describing the item.
-     *  @return status The current status of the item.
-     *  @return numberOfRequests Length of list of status change requests made for the item.
-     */
-    function getItemInfo(bytes32 _itemID)
-        external
-        view
-        returns (
-            bytes memory data,
-            Status status,
-            uint256 numberOfRequests
-        );
-
-    function getRequestInfo(bytes32 _itemID, uint256 _request)
-        external
-        view
-        returns (
-            bool disputed,
-            uint256 disputeID,
-            uint256 submissionTime,
-            bool resolved,
-            address payable[3] memory parties,
-            uint256 numberOfRounds,
-            Party ruling,
-            address arbitrator,
-            bytes memory arbitratorExtraData,
-            uint256 metaEvidenceID
-        );
-}
+import "./IGTCR.sol";
 
 contract CurateProxy {
     using RLPReader for RLPReader.RLPItem;
@@ -82,19 +36,13 @@ contract CurateProxy {
     }
 
     function registerMarket(bytes32 _itemID) external {
-        (
-            bytes memory itemData,
-            IGeneralizedTCR.Status status,
-            uint256 numberOfRequests
-        ) = IGeneralizedTCR(gtcrClassic).getItemInfo(_itemID);
+        (bytes memory itemData, IGTCR.Status status, uint256 numberOfRequests) = IGTCR(gtcrClassic)
+            .getItemInfo(_itemID);
 
         RLPReader.RLPItem[] memory rlpData = itemData.toRlpItem().toList();
         bytes32 questionsHash = decodeHash(rlpData[1]);
 
-        if (
-            status == IGeneralizedTCR.Status.Registered ||
-            status == IGeneralizedTCR.Status.ClearingRequested
-        ) {
+        if (status == IGTCR.Status.Registered || status == IGTCR.Status.ClearingRequested) {
             HashData storage data = hashData[questionsHash];
             data.title = decodeTitle(rlpData[0]);
             data.startTimestamp = uint248(decodeTimestamp(rlpData[2]));
@@ -107,11 +55,7 @@ contract CurateProxy {
         } else {
             // Check if last successful request was for clearing
             // Request 0 is always the first registration attempt. We can skip it.
-            for (
-                uint256 requestID = numberOfRequests - 1;
-                requestID > 0;
-                requestID--
-            ) {
+            for (uint256 requestID = numberOfRequests - 1; requestID > 0; requestID--) {
                 (
                     bool disputed,
                     ,
@@ -119,30 +63,21 @@ contract CurateProxy {
                     bool resolved,
                     ,
                     ,
-                    IGeneralizedTCR.Party ruling,
+                    IGTCR.Party ruling,
                     ,
                     ,
                     uint256 metaEvidenceID
-                ) = IGeneralizedTCR(gtcrClassic).getRequestInfo(
-                        _itemID,
-                        requestID
-                    );
+                ) = IGTCR(gtcrClassic).getRequestInfo(_itemID, requestID);
 
                 if (metaEvidenceID % 2 == 1) {
                     // Clearing request
                     if (
                         (!disputed && resolved) ||
-                        (disputed &&
-                            resolved &&
-                            ruling == IGeneralizedTCR.Party.Requester)
+                        (disputed && resolved && ruling == IGTCR.Party.Requester)
                     ) {
                         // Clearing request was successful
                         items[_itemID].isRegistered = false;
-                        for (
-                            uint256 j = 0;
-                            j < itemsWithHash[questionsHash].length;
-                            j++
-                        ) {
+                        for (uint256 j = 0; j < itemsWithHash[questionsHash].length; j++) {
                             bytes32 id_j = itemsWithHash[questionsHash][j];
                             if (items[id_j].isRegistered) return;
                         }
@@ -154,11 +89,7 @@ contract CurateProxy {
         }
     }
 
-    function decodeTitle(RLPReader.RLPItem memory rawTitle)
-        internal
-        pure
-        returns (string memory)
-    {
+    function decodeTitle(RLPReader.RLPItem memory rawTitle) internal pure returns (string memory) {
         return string(rawTitle.toBytes());
     }
 
@@ -170,11 +101,7 @@ contract CurateProxy {
         return rawTimestamp.toUint();
     }
 
-    function decodeHash(RLPReader.RLPItem memory rawHash)
-        internal
-        pure
-        returns (bytes32 hash)
-    {
+    function decodeHash(RLPReader.RLPItem memory rawHash) internal pure returns (bytes32 hash) {
         bytes memory bytesHash = rawHash.toBytes();
         require(bytesHash.length == 66, "Not bytes32");
         for (uint256 i = HEX_OFFSET; i < bytesHash.length; i++) {
@@ -196,19 +123,11 @@ contract CurateProxy {
         return hashData[_questionsHash].isRegistered;
     }
 
-    function getTitle(bytes32 _questionsHash)
-        external
-        view
-        returns (string memory)
-    {
+    function getTitle(bytes32 _questionsHash) external view returns (string memory) {
         return hashData[_questionsHash].title;
     }
 
-    function getTimestamp(bytes32 _questionsHash)
-        external
-        view
-        returns (uint256)
-    {
+    function getTimestamp(bytes32 _questionsHash) external view returns (uint256) {
         return uint256(hashData[_questionsHash].startTimestamp);
     }
 }
