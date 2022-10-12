@@ -58,10 +58,7 @@ contract Arbitrator is Owned {
     /// @notice Set a custom fee for this particular question
     /// @param question_id The question in question
     /// @param fee The fee amount
-    function setCustomDisputeFee(bytes32 question_id, uint256 fee)
-        public
-        onlyOwner
-    {
+    function setCustomDisputeFee(bytes32 question_id, uint256 fee) public onlyOwner {
         custom_dispute_fees[question_id] = fee;
         emit LogSetCustomDisputeFee(question_id, fee);
     }
@@ -71,9 +68,7 @@ contract Arbitrator is Owned {
     /// @dev Uses a general default, but can be over-ridden on a question-by-question basis.
     function getDisputeFee(bytes32 question_id) public view returns (uint256) {
         return
-            (custom_dispute_fees[question_id] > 0)
-                ? custom_dispute_fees[question_id]
-                : dispute_fee;
+            (custom_dispute_fees[question_id] > 0) ? custom_dispute_fees[question_id] : dispute_fee;
     }
 
     /// @notice Set a fee for asking a question with us as the arbitrator
@@ -153,11 +148,7 @@ contract Arbitrator is Owned {
         uint256 paid = arbitration_bounties[question_id];
 
         if (paid >= arbitration_fee) {
-            realitio.notifyOfArbitrationRequest(
-                question_id,
-                msg.sender,
-                max_previous
-            );
+            realitio.notifyOfArbitrationRequest(question_id, msg.sender, max_previous);
             emit LogRequestArbitration(question_id, msg.value, msg.sender, 0);
             return true;
         } else {
@@ -165,12 +156,7 @@ contract Arbitrator is Owned {
                 !realitio.isFinalized(question_id),
                 "The question must not have been finalized"
             );
-            emit LogRequestArbitration(
-                question_id,
-                msg.value,
-                msg.sender,
-                arbitration_fee - paid
-            );
+            emit LogRequestArbitration(question_id, msg.value, msg.sender, arbitration_fee - paid);
             return false;
         }
     }

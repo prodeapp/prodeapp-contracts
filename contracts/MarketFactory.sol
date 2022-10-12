@@ -29,11 +29,7 @@ contract MarketFactory {
     address public manager;
     uint256 public protocolFee;
 
-    event NewMarket(
-        address indexed market,
-        bytes32 indexed hash,
-        address manager
-    );
+    event NewMarket(address indexed market, bytes32 indexed hash, address manager);
 
     /**
      *  @dev Constructor.
@@ -117,10 +113,7 @@ contract MarketFactory {
                     "Cannot open question in the betting period"
                 );
                 bytes32 questionID = askRealitio(questionsData[i], minBond);
-                require(
-                    questionID >= previousQuestionID,
-                    "Questions are in incorrect order"
-                );
+                require(questionID >= previousQuestionID, "Questions are in incorrect order");
                 previousQuestionID = questionID;
                 questionIDs[i] = questionID;
             }
@@ -152,11 +145,7 @@ contract MarketFactory {
             prizeWeights
         );
 
-        emit NewMarket(
-            address(instance),
-            keccak256(abi.encodePacked(questionIDs)),
-            newManager
-        );
+        emit NewMarket(address(instance), keccak256(abi.encodePacked(questionIDs)), newManager);
         markets.push(instance);
 
         return address(instance);
@@ -167,11 +156,7 @@ contract MarketFactory {
         returns (bytes32 questionID)
     {
         bytes32 content_hash = keccak256(
-            abi.encodePacked(
-                questionData.templateID,
-                questionData.openingTS,
-                questionData.question
-            )
+            abi.encodePacked(questionData.templateID, questionData.openingTS, questionData.question)
         );
         bytes32 question_id = keccak256(
             abi.encodePacked(

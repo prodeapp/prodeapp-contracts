@@ -33,17 +33,11 @@ interface IMarket is IERC721 {
 
     function totalAttributions() external view returns (uint256);
 
-    function attributionBalance(address _attribution)
-        external
-        view
-        returns (uint256);
+    function attributionBalance(address _attribution) external view returns (uint256);
 
     function managementReward() external view returns (uint256);
 
-    function tokenIDtoTokenHash(uint256 _tokenID)
-        external
-        view
-        returns (bytes32);
+    function tokenIDtoTokenHash(uint256 _tokenID) external view returns (bytes32);
 
     function placeBet(address _attribution, bytes32[] calldata _results)
         external

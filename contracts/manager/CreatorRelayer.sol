@@ -24,9 +24,7 @@ contract CreatorRelayer {
     }
 
     function relay() external {
-        (bool success, ) = recipient.call{value: address(this).balance}(
-            new bytes(0)
-        );
+        (bool success, ) = recipient.call{value: address(this).balance}(new bytes(0));
         require(success, "Send XDAI failed");
     }
 

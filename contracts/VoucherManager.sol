@@ -4,33 +4,18 @@ pragma solidity 0.8.9;
 import "./IMarket.sol";
 
 contract VoucherManager {
-
     address public owner = msg.sender;
 
     mapping(address => uint256) public balance;
     mapping(address => bool) public marketsWhitelist;
 
-    event VoucherUsed(
-        address indexed _player,
-        address indexed _market,
-        uint256 indexed _tokenId
-    );
+    event VoucherUsed(address indexed _player, address indexed _market, uint256 indexed _tokenId);
 
-    event FundingReceived(
-        address indexed _from,
-        address indexed _to,
-        uint256 _amount
-    );
+    event FundingReceived(address indexed _from, address indexed _to, uint256 _amount);
 
-    event VoucherTransfered(
-        address indexed _from,
-        address indexed _to,
-        uint256 _amount
-    );
+    event VoucherTransfered(address indexed _from, address indexed _to, uint256 _amount);
 
-    event MarketWhitelisted(
-        address indexed _market
-    );
+    event MarketWhitelisted(address indexed _market);
 
     constructor() {}
 
@@ -45,11 +30,11 @@ contract VoucherManager {
      *  @param _results Answer predictions to the questions asked in Realitio.
      *  @return the minted token id.
      */
-    function placeBet(address _market, address _attribution, bytes32[] calldata _results)
-        external
-        payable
-        returns (uint256)
-    {
+    function placeBet(
+        address _market,
+        address _attribution,
+        bytes32[] calldata _results
+    ) external payable returns (uint256) {
         require(marketsWhitelist[_market] == true, "Market not whitelisted");
 
         uint256 price = IMarket(_market).price();
@@ -81,7 +66,11 @@ contract VoucherManager {
      *  @param _to Address of the new voucher owner.
      *  @param _amount amount to transfer.
      */
-    function transferVoucher(address _from, address _to, uint256 _amount) external {
+    function transferVoucher(
+        address _from,
+        address _to,
+        uint256 _amount
+    ) external {
         require(msg.sender == owner, "Not authorized");
         require(balance[_from] >= _amount, "Insufficient voucher balance");
 
