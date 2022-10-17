@@ -254,12 +254,13 @@ contract Market is ERC721, IERC2981 {
                 if (betData.predictions[i] == results[i]) totalPoints += 1;
             }
 
-            if (totalPoints == 0 || (totalPoints < currentMin && freePos >= prizeWeights.length)) continue;
+            if (totalPoints == 0 || (totalPoints < currentMin && freePos >= prizeWeights.length))
+                continue;
 
-            auxRanking[freePos++] = totalPoints | tokenID << 128;
+            auxRanking[freePos++] = totalPoints | (tokenID << 128);
 
             if (totalPoints > currentMin) {
-                sort(auxRanking, 0, int(freePos - 1));
+                sort(auxRanking, 0, int256(freePos - 1));
 
                 currentMin = auxRanking[prizeWeights.length - 1] & CLEAN_TOKEN_ID;
                 if (freePos > prizeWeights.length) {
@@ -282,10 +283,14 @@ contract Market is ERC721, IERC2981 {
         resultSubmissionPeriodStart = 1;
     }
 
-    function sort(uint256[] memory arr, int left, int right) internal pure {
+    function sort(
+        uint256[] memory arr,
+        int256 left,
+        int256 right
+    ) internal pure {
         if (left == right) return;
-        int i = left;
-        int j = right;
+        int256 i = left;
+        int256 j = right;
         uint256 pivot = arr[uint256(left + (right - left) / 2)] & CLEAN_TOKEN_ID;
         while (i <= j) {
             while (arr[uint256(i)] & CLEAN_TOKEN_ID > pivot) i++;
@@ -296,10 +301,8 @@ contract Market is ERC721, IERC2981 {
                 j--;
             }
         }
-        if (left < j)
-            sort(arr, left, j);
-        if (i < right)
-            sort(arr, i, right);
+        if (left < j) sort(arr, left, j);
+        if (i < right) sort(arr, i, right);
     }
 
     /** @dev Sends a prize to the token holder if applicable.
