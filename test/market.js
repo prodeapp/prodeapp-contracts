@@ -54,6 +54,7 @@ describe("Market", () => {
   let Market;
   let market;
   let Manager;
+  let betNFTDescriptor;
   
   const timeout = 129600; // 1.5 days
   const protocolFee = 150; // 1.5 %
@@ -111,7 +112,7 @@ describe("Market", () => {
 
     // Deploy NFT Descriptor contract
     const BetNFTDescriptor = await ethers.getContractFactory("BetNFTDescriptor");
-    const betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
+    betNFTDescriptor = await upgrades.deployProxy(BetNFTDescriptor, [curateProxy.address]);
 
     // Deploy a Market contract and Factory
     Market = await ethers.getContractFactory("Market");
@@ -296,6 +297,23 @@ describe("Market", () => {
     });
 
     it("Should retrieve token URI correctly.", async () => {
+      // Deploy Billing contract
+      const Billing = await ethers.getContractFactory("Billing");
+      const billing = await Billing.deploy(governor.address, governor.address);
+      await billing.deployed();
+
+      // Deploy SVG curate proxy
+      const CurateProxy = await ethers.getContractFactory("CurateProxySVGMock");
+      const curateProxy = await CurateProxy.deploy();
+      await curateProxy.deployed();
+
+      // Deploy NFT Descriptor contract
+      const FirstPriceAuction = await ethers.getContractFactory("FirstPriceAuction");
+      const auctionContract = await FirstPriceAuction.deploy(curateProxy.address, billing.address);
+      await auctionContract.deployed();
+
+      await betNFTDescriptor.setAdsAddress(auctionContract.address);
+      
       const currentTS = await getCurrentTimestamp() + 1000;
       for (let i = 0; i < marketData.questions.length; i++) {
         marketData.questions[i].openingTS = currentTS + 1;

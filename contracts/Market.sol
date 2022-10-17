@@ -55,11 +55,7 @@ contract Market is ERC721, IERC2981 {
     mapping(uint256 => bool) public isRanked; // isRanked[tokenID]
     mapping(address => uint256) public attributionBalance; // attributionBalance[attribution]
 
-    event FundingReceived(
-        address indexed _funder,
-        uint256 _amount,
-        string _message
-    );
+    event FundingReceived(address indexed _funder, uint256 _amount, string _message);
 
     event PlaceBet(
         address indexed _player,
@@ -70,11 +66,7 @@ contract Market is ERC721, IERC2981 {
 
     event BetReward(uint256 indexed _tokenID, uint256 _reward);
 
-    event RankingUpdated(
-        uint256 indexed _tokenID,
-        uint256 _points,
-        uint256 _index
-    );
+    event RankingUpdated(uint256 indexed _tokenID, uint256 _points, uint256 _index);
 
     event Attribution(address indexed _provider);
 
@@ -171,9 +163,7 @@ contract Market is ERC721, IERC2981 {
         totalPrize = marketBalance - managementReward;
 
         // Once the Market is created, the manager contract is immutable, created by the MarketFactory and will never block a transfer of funds.
-        (bool success, ) = marketInfo.manager.call{value: managementReward}(
-            new bytes(0)
-        );
+        (bool success, ) = marketInfo.manager.call{value: managementReward}(new bytes(0));
         require(success, "Send XDAI failed");
 
         emit ManagementReward(marketInfo.manager, managementReward);
@@ -199,13 +189,10 @@ contract Market is ERC721, IERC2981 {
         require(_exists(_tokenID), "Token does not exist");
         require(!isRanked[_tokenID], "Token already registered");
 
-        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
-            .predictions;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         uint248 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            if (
-                predictions[i] == realitio.resultForOnceSettled(questionIDs[i])
-            ) {
+            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
                 totalPoints += 1;
             }
         }
@@ -227,14 +214,8 @@ contract Market is ERC721, IERC2981 {
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
             uint256 realRankIndex = _rankIndex + _duplicates;
-            require(
-                totalPoints > ranking[realRankIndex].points,
-                "Wrong _duplicates amount"
-            );
-            require(
-                totalPoints == ranking[realRankIndex - 1].points,
-                "Wrong _duplicates amount"
-            );
+            require(totalPoints > ranking[realRankIndex].points, "Wrong _duplicates amount");
+            require(totalPoints == ranking[realRankIndex - 1].points, "Wrong _duplicates amount");
             if (ranking[realRankIndex].points > 0) {
                 // Rank position is being overwritten
                 isRanked[ranking[realRankIndex].tokenID] = false;
@@ -340,28 +321,17 @@ contract Market is ERC721, IERC2981 {
 
         uint248 points = ranking[_rankIndex].points;
         // Check that shared indexes are valid.
-        require(
-            points == ranking[_firstSharedIndex].points,
-            "Wrong start index"
-        );
+        require(points == ranking[_firstSharedIndex].points, "Wrong start index");
         require(points == ranking[_lastSharedIndex].points, "Wrong end index");
+        require(points > ranking[_lastSharedIndex + 1].points, "Wrong end index");
         require(
-            points > ranking[_lastSharedIndex + 1].points,
-            "Wrong end index"
-        );
-        require(
-            _firstSharedIndex == 0 ||
-                points < ranking[_firstSharedIndex - 1].points,
+            _firstSharedIndex == 0 || points < ranking[_firstSharedIndex - 1].points,
             "Wrong start index"
         );
         uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
         uint256 cumWeigths = 0;
-        for (
-            uint256 i = _firstSharedIndex;
-            i < prizeWeights.length && i <= _lastSharedIndex;
-            i++
-        ) {
+        for (uint256 i = _firstSharedIndex; i < prizeWeights.length && i <= _lastSharedIndex; i++) {
             cumWeigths += prizeWeights[i];
         }
 
@@ -444,17 +414,8 @@ contract Market is ERC721, IERC2981 {
     /**
      * @dev See {IERC721Metadata-tokenURI}.
      */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        virtual
-        override
-        returns (string memory)
-    {
-        require(
-            _exists(tokenId),
-            "ERC721Metadata: URI query for nonexistent token"
-        );
+    function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
+        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
         return BetNFTDescriptor(betNFTDescriptor).tokenURI(tokenId);
     }
 
@@ -471,29 +432,18 @@ contract Market is ERC721, IERC2981 {
         return prizeMultipliers;
     }
 
-    function getPredictions(uint256 _tokenID)
-        external
-        view
-        returns (bytes32[] memory)
-    {
+    function getPredictions(uint256 _tokenID) external view returns (bytes32[] memory) {
         require(_exists(_tokenID), "Token does not exist");
         return bets[tokenIDtoTokenHash[_tokenID]].predictions;
     }
 
-    function getScore(uint256 _tokenID)
-        external
-        view
-        returns (uint256 totalPoints)
-    {
+    function getScore(uint256 _tokenID) external view returns (uint256 totalPoints) {
         require(resultSubmissionPeriodStart != 0, "Results not available");
         require(_exists(_tokenID), "Token does not exist");
 
-        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]]
-            .predictions;
+        bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            if (
-                predictions[i] == realitio.resultForOnceSettled(questionIDs[i])
-            ) {
+            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
                 totalPoints += 1;
             }
         }
@@ -509,9 +459,7 @@ contract Market is ERC721, IERC2981 {
         override(ERC721)
         returns (bool)
     {
-        return
-            interfaceId == type(IERC2981).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId == type(IERC2981).interfaceId || super.supportsInterface(interfaceId);
     }
 
     function royaltyInfo(uint256, uint256 _salePrice)

@@ -33,8 +33,7 @@ contract CreatorN {
         require(market.resultSubmissionPeriodStart() != 0, "Fees not received");
         uint256 totalBets = market.nextTokenID();
         uint256 numberOfBeneficiaries = N <= totalBets ? N : totalBets;
-        uint256 amount = _token.balanceOf(address(this)) /
-            numberOfBeneficiaries;
+        uint256 amount = _token.balanceOf(address(this)) / numberOfBeneficiaries;
 
         for (uint256 tokenID = 0; tokenID < numberOfBeneficiaries; tokenID++) {
             _token.transfer(market.ownerOf(tokenID), amount);

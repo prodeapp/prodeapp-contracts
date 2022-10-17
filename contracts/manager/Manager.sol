@@ -54,18 +54,14 @@ contract Manager {
         uint256 totalBets = market.nextTokenID();
         uint256 nonReferralShare = totalBets - market.totalAttributions();
 
-        uint256 creatorMarketReward = (totalReward *
-            creatorFee *
-            nonReferralShare) / (totalBets * totalFee * 2);
+        uint256 creatorMarketReward = (totalReward * creatorFee * nonReferralShare) /
+            (totalBets * totalFee * 2);
         creatorMarketReward += (totalReward * creatorFee) / (totalFee * 2);
         creatorReward += creatorMarketReward;
 
-        uint256 protocolMarketReward = (totalReward *
-            protocolFee *
-            nonReferralShare) / (totalBets * totalFee * 3);
-        protocolMarketReward +=
-            (totalReward * protocolFee * 2) /
-            (totalFee * 3);
+        uint256 protocolMarketReward = (totalReward * protocolFee * nonReferralShare) /
+            (totalBets * totalFee * 3);
+        protocolMarketReward += (totalReward * protocolFee * 2) / (totalFee * 3);
         protocolReward += protocolMarketReward;
 
         amountClaimed += creatorMarketReward + protocolMarketReward;
@@ -94,25 +90,17 @@ contract Manager {
 
         uint256 rewardFromCreator = (totalReward * creatorFee * referralShare) /
             (totalBets * totalFee * 2);
-        uint256 rewardFromProtocol = (totalReward *
-            protocolFee *
-            referralShare) / (totalBets * totalFee * 3);
+        uint256 rewardFromProtocol = (totalReward * protocolFee * referralShare) /
+            (totalBets * totalFee * 3);
 
         claimed[_referral] = true;
         amountClaimed += rewardFromCreator + rewardFromProtocol;
-        requireSendXDAI(
-            payable(_referral),
-            rewardFromCreator + rewardFromProtocol
-        );
+        requireSendXDAI(payable(_referral), rewardFromCreator + rewardFromProtocol);
     }
 
     function distributeSurplus() external {
-        require(
-            market.resultSubmissionPeriodStart() != 0,
-            "Can't distribute surplus yet"
-        );
-        uint256 remainingManagementReward = market.managementReward() -
-            amountClaimed;
+        require(market.resultSubmissionPeriodStart() != 0, "Can't distribute surplus yet");
+        uint256 remainingManagementReward = market.managementReward() - amountClaimed;
         uint256 surplus = address(this).balance -
             remainingManagementReward -
             creatorReward -

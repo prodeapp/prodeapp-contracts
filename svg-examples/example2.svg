@@ -15,7 +15,6 @@
         <clipPath id="corners">
             <rect width="290" height="500" rx="42" ry="42" />
         </clipPath>
-        <path id="minimap" d="M234 444C234 457.949 242.21 463 253 463" />
         <filter id="top-region-blur">
             <feGaussianBlur in="SourceGraphic" stdDeviation="24" />
         </filter>
