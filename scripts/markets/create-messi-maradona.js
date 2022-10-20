@@ -7,9 +7,9 @@ const marketData = {
   marketName: "Messi vs Maradona in World Cups", 
   marketSymbol: "PRODE",
   closingTime: toTimestamp("2022-11-19 00:00:00 UTC"),
-  price: ethers.utils.parseUnits("3.0", "ether"), // 3 xDAI
-  creator: "0xa3954B4aDB7caca9C188c325CF9F2991AbB3cF71", // UBI Burner
-  creatorFee: 1850, // 18.5%
+  price: ethers.utils.parseUnits("1.0", "ether"), // 1 xDAI
+  creator: "", // Fork DAO address
+  creatorFee: 400, // 4%
   minBond: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
   questions: [
     {
@@ -65,6 +65,21 @@ const marketData = {
     {
       templateID: 2, 
       question: "Will Messi provoke more cards in FWC Qatar 2022 than Maradona (12) in FWC Mexico 1986?␟\"Yes\",\"No\",\"Tie\"␟football␟en_US", 
+      openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
+    },
+    {
+      templateID: 2, 
+      question: "Will Messi score at least 1 free kick goal at the FIFA World Cup Qatar 2022?␟\"Yes\",\"No\"␟football␟en_US", 
+      openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
+    },
+    {
+      templateID: 2, 
+      question: "Will Messi score at least 1 goal in the knockout phase matches at the FIFA World Cup Qatar 2022?␟\"Yes\",\"No\"␟football␟en_US", 
+      openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
+    },
+    {
+      templateID: 2, 
+      question: "Will Messi score more goals in knockout phase matches in FWC Qatar 2022 than Maradona (4 goals) in FWC Mexico 1986?␟\"Yes\",\"No\",\"Tie\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
     }
   ],
