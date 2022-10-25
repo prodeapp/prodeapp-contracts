@@ -1,0 +1,41 @@
+{
+  "title": "Remove an ad from On-chain Ads (content moderation)",
+  "description": "Someone requested to remove an ad from On-chain Ads (content moderation)",
+  "rulingOptions": {
+    "titles": [
+      "Yes, Remove It",
+      "No, Don't Remove It"
+    ],
+    "descriptions": [
+      "Select this if you think the ad does not comply with the required criteria and should be removed.",
+      "Select this if you think the ad complies with the required criteria and should not be removed."
+    ]
+  },
+  "category": "Curated Lists",
+  "question": "Does the ad comply with the required criteria?",
+  "fileURI": "/ipfs/QmZZn7mF2wDCa57zZ8UWARAyEL2ZkewAMHAVSJ2pdp46fw/ad-content-curation-policy-v1.1.pdf",
+  "metadata": {
+    "tcrTitle": "On-chain Ads (content moderation)",
+    "tcrDescription": "A list of smart contract addresses that hold ads in the form of SVG data returned as base64",
+    "columns": [
+      {
+        "label": "Address",
+        "description": "Smart contract containing the ad",
+        "type": "address",
+        "isIdentifier": true
+      },
+      {
+        "label": "Documentation",
+        "description": "Ad mutability docs",
+        "type": "file",
+        "allowedFileTypes": "pdf"
+      }
+    ],
+    "itemName": "ad",
+    "itemNamePlural": "ads",
+    "logoURI": "/ipfs/QmdQ3mEvVkhMnaML3541QtPFEJxbix3pmp9ATiNkhmwwp3/ads-moderation-v2.png",
+    "requireRemovalEvidence": true,
+    "isTCRofTCRs": false,
+    "relTcrDisabled": true
+  }
+}
