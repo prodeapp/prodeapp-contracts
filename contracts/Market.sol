@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./interfaces/IERC2981.sol";
 import "./BetNFTDescriptor.sol";
+import "./LiquidityPool.sol";
 
 interface IManager {
     function creator() external view returns (address payable);
@@ -36,8 +37,10 @@ contract Market is ERC721, IERC2981 {
     MarketInfo public marketInfo;
     address public betNFTDescriptor;
     RealityETH_v3_0 public realitio;
+    LiquidityPool public liquidityPool;
     uint256 public nextTokenID;
     bool public initialized;
+    bool public liquidityPoolRewardsPending;
     uint256 public resultSubmissionPeriodStart;
     uint256 public price;
     uint256 public closingTime;
@@ -56,6 +59,7 @@ contract Market is ERC721, IERC2981 {
     mapping(address => uint256) public attributionBalance; // attributionBalance[attribution]
 
     event FundingReceived(address indexed _funder, uint256 _amount, string _message);
+    event LiquidityPoolPaymentReceived(uint256 _amount);
 
     event PlaceBet(
         address indexed _player,
@@ -110,6 +114,7 @@ contract Market is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         initialized = true;
+        liquidityPoolRewardsPending = true;
         emit QuestionsRegistered(questionIDs);
         emit Prizes(_prizeWeights);
     }
@@ -203,6 +208,15 @@ contract Market is ERC721, IERC2981 {
             _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points,
             "Invalid ranking index"
         );
+
+        if (address(liquidityPool) != address(0) && liquidityPool.hasWinners()) {
+            // if the LP has winners, only they are allowed to registerPoints()
+            require(
+                totalPoints >= liquidityPool.pointsToWin(),
+                "Invalid ranking total points"
+            );
+        }
+
         if (totalPoints > ranking[_rankIndex].points) {
             if (ranking[_rankIndex].points > 0) {
                 // Rank position is being overwritten
@@ -275,6 +289,14 @@ contract Market is ERC721, IERC2981 {
         for (uint256 rankIndex = 0; rankIndex < freePos; rankIndex++) {
             uint256 tokenID = auxRanking[rankIndex] >> 128;
             uint256 totalPoints = auxRanking[rankIndex] & CLEAN_TOKEN_ID;
+
+            if (address(liquidityPool) != address(0) && liquidityPool.hasWinners()) {
+                // if the LP has winners, only they are allowed to registerPoints()
+                if (totalPoints < liquidityPool.pointsToWin()) {
+                    continue;
+                }
+            }
+
             ranking[rankIndex].tokenID = tokenID;
             ranking[rankIndex].points = uint248(totalPoints);
             emit RankingUpdated(tokenID, totalPoints, rankIndex);
@@ -338,6 +360,8 @@ contract Market is ERC721, IERC2981 {
             cumWeigths += prizeWeights[i];
         }
 
+        processLiquidityPoolRewards();
+
         uint256 reward = (totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
         ranking[_rankIndex].claimed = true;
         payable(ownerOf(ranking[_rankIndex].tokenID)).transfer(reward);
@@ -398,6 +422,35 @@ contract Market is ERC721, IERC2981 {
     function fundMarket(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
         emit FundingReceived(msg.sender, msg.value, _message);
+    }
+
+    // TODO: move to constructor
+    function initializeLiquidityPool(uint256 depositLimit, uint256 pointsToWin, uint256 marketPrizeShare, uint256 betMultiplier) external {
+        liquidityPool = new LiquidityPool(address(this), depositLimit, pointsToWin, marketPrizeShare, betMultiplier);
+    }
+
+    function receiveLiquidityPoolPayment() external payable {
+        require(msg.sender == address(liquidityPool), "Only liquidity pool");
+        totalPrize += msg.value;
+        emit LiquidityPoolPaymentReceived(msg.value);
+    }
+
+    function processLiquidityPoolRewards() internal {
+        if (address(liquidityPool) == address(0) || !liquidityPoolRewardsPending) {
+            return;
+        }
+
+        liquidityPoolRewardsPending = false;
+
+        if (liquidityPool.hasWinners()) {
+            // transfer LP => market
+            liquidityPool.payToMarket();
+        } else {
+            // transfer market => LP
+            uint256 liquidityPoolPrize = (address(this).balance * liquidityPool.marketPrizeShare()) / DIVISOR;
+            totalPrize -= liquidityPoolPrize;
+            liquidityPool.receiveMarketPayment{value: liquidityPoolPrize}();
+        }
     }
 
     /**
