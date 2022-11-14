@@ -364,4 +364,42 @@ describe("LiquidityPool", () => {
 
   })
 
+  describe.only("Initialization", () => {
+    it("Should be initialized only by the creator", async () => {
+      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
+
+      await expect(
+        market.connect(player2).initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+      ).to.be.revertedWith("Only creator");
+    });
+
+    it("Can't be initialized twice", async () => {
+      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
+
+      market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+
+      await expect(
+        market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+      ).to.be.revertedWith("LiquidityPool already initialized");
+    });
+
+    it("Can't be initialized if already has bets", async () => {
+      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
+
+      await market.connect(player1).placeBet(ZERO_ADDRESS, [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], { value: 100 });
+
+      await expect(
+        market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+      ).to.be.revertedWith("LiquidityPool has bets");
+    });
+
+    it("Can be initialized if only has been funded", async () => {
+      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
+
+      await market.connect(player1).fundMarket("test fund", { value: 100 });
+
+      market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10);
+    });
+  });
+
 });
