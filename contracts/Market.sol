@@ -47,6 +47,7 @@ contract Market is ERC721, IERC2981 {
     uint256 public closingTime;
     uint256 public submissionTimeout;
     uint256 public totalPrize;
+    uint256 public totalFunded;
     uint256 public managementReward;
     uint256 public totalAttributions;
 
@@ -423,6 +424,7 @@ contract Market is ERC721, IERC2981 {
      */
     function fundMarket(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
+        totalFunded += msg.value;
         emit FundingReceived(msg.sender, msg.value, _message);
     }
 
@@ -452,7 +454,7 @@ contract Market is ERC721, IERC2981 {
             liquidityPool.payToMarket();
         } else {
             // transfer market => LP
-            uint256 liquidityPoolPrize = (address(this).balance * liquidityPool.marketPrizeShare()) / DIVISOR;
+            uint256 liquidityPoolPrize = ((totalPrize - totalFunded) * liquidityPool.marketPrizeShare()) / DIVISOR;
             totalPrize -= liquidityPoolPrize;
             liquidityPool.receiveMarketPayment{value: liquidityPoolPrize}();
         }
