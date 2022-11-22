@@ -26,7 +26,7 @@ const marketData = {
     buildQuestionSingleSelect(`What will be the result of ${marketName}?`, teamsDraw, openingTs, 'soccer'),
     buildQuestionSingleSelect(`Will ${teams[0]} or ${teams[1]} win the match after trailing by at least one gol at ${marketName}?`, yesNo, openingTs + 1, 'soccer'),
     buildQuestionSingleSelect(`Will ${player} score a goal at ${marketName}?`, yesNo, openingTs + 2, 'soccer'),
-    buildQuestionSingleSelect(`Will a goal at ${marketName} be annulled due to a VAR decision?`, yesNo, openingTs + 3, 'soccer'),
+    buildQuestionSingleSelect(`Will a goal at ${marketName} be ruled out due to a VAR decision?`, yesNo, openingTs + 3, 'soccer'),
     buildQuestionSingleSelect(`Will ${teams[0]} or ${teams[1]} score a goal in the extra time at ${marketName}?`, yesNo, openingTs + 4, 'soccer'),
     buildQuestionSingleSelect(`Will ${teams[0]} or ${teams[1]} score a goal from a free kick at ${marketName}?`, yesNo, openingTs + 5, 'soccer'),
     buildQuestionSingleSelect(`Will ${teams[0]} or ${teams[1]} score a header goal at ${marketName}?`, yesNo, openingTs + 6, 'soccer'),
