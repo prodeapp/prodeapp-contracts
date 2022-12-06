@@ -60,40 +60,40 @@ const marketData = {
       question: "How many goals will score France at the quarter-finals match (before penalty shootout) between England and France at the FIFA World Cup Qatar 2022?␟\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\">7\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-10 22:00:00 UTC")
     },
-    // Spain vs. Portugal
+    // Morocco vs. Portugal
     {
       templateID: 2, 
-      question: "Who will win the quarter-finals match (before penalty shootout) between Spain and Portugal at the FIFA World Cup Qatar 2022?␟\"Spain\",\"Portugal\",\"Draw\"␟football␟en_US", 
+      question: "Who will win the quarter-finals match (before penalty shootout) between Morocco and Portugal at the FIFA World Cup Qatar 2022?␟\"Morocco\",\"Portugal\",\"Draw\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-10 18:00:00 UTC")
     },
     {
       templateID: 2, 
-      question: "How many goals will score Spain at the quarter-finals match (before penalty shootout) between Spain and Portugal at the FIFA World Cup Qatar 2022?␟\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\">7\"␟football␟en_US", 
+      question: "How many goals will score Morocco at the quarter-finals match (before penalty shootout) between Morocco and Portugal at the FIFA World Cup Qatar 2022?␟\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\">7\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-10 18:00:00 UTC")
     },
     {
       templateID: 2, 
-      question: "How many goals will score Portugal at the quarter-finals match (before penalty shootout) between Spain and Portugal at the FIFA World Cup Qatar 2022?␟\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\">7\"␟football␟en_US", 
+      question: "How many goals will score Portugal at the quarter-finals match (before penalty shootout) between Morocco and Portugal at the FIFA World Cup Qatar 2022?␟\"0\",\"1\",\"2\",\"3\",\"4\",\"5\",\"6\",\"7\",\">7\"␟football␟en_US", 
       openingTS: toTimestamp("2022-12-10 18:00:00 UTC")
     },
     // Finals
     {
       templateID: 2, 
-      question: "Who will win the FIFA World Cup Qatar 2022?␟\"Netherlands\",\"England\",\"Argentina\",\"France\",\"Spain\",\"Croatia\",\"Brazil\",\"Portugal\",␟football␟en_US", 
+      question: "Who will win the FIFA World Cup Qatar 2022?␟\"Netherlands\",\"England\",\"Argentina\",\"France\",\"Morocco\",\"Croatia\",\"Brazil\",\"Portugal\",␟football␟en_US", 
       openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
     },
     {
       templateID: 2, 
-      question: "Who will get the second place at the FIFA World Cup Qatar 2022?␟\"Netherlands\",\"England\",\"Argentina\",\"France\",\"Spain\",\"Croatia\",\"Brazil\",\"Portugal\",␟football␟en_US", 
+      question: "Who will get the second place at the FIFA World Cup Qatar 2022?␟\"Netherlands\",\"England\",\"Argentina\",\"France\",\"Morocco\",\"Croatia\",\"Brazil\",\"Portugal\",␟football␟en_US", 
       openingTS: toTimestamp("2022-12-18 18:00:00 UTC")
     },
     {
       templateID: 2, 
-      question: "Who will win the third place match at the FIFA World Cup Qatar 2022?␟\"Netherlands\",\"England\",\"Argentina\",\"France\",\"Spain\",\"Croatia\",\"Brazil\",\"Portugal\",␟football␟en_US", 
+      question: "Who will win the third place match at the FIFA World Cup Qatar 2022?␟\"Netherlands\",\"England\",\"Argentina\",\"France\",\"Morocco\",\"Croatia\",\"Brazil\",\"Portugal\",␟football␟en_US", 
       openingTS: toTimestamp("2022-12-17 18:00:00 UTC")
     }
   ],
-  prizeWeights: [6000, 3000, 1000]
+  prizeWeights: [8000, 2000]
 };
 
 async function main() {
