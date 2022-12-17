@@ -211,7 +211,7 @@ describe("LiquidityPool", () => {
     it("Should accept deposits", async () => {
       const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
 
-      await market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10);
+      await market.initializeLiquidityPool(3, 5000, 10);
 
       const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
 
@@ -225,25 +225,13 @@ describe("LiquidityPool", () => {
     it("Should not accept deposits after closingTime has passed.", async () => {
       const market = await createMarket(marketData, true, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
 
-      await market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10);
+      await market.initializeLiquidityPool(3, 5000, 10);
 
       const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
 
       await expect(
         liquidityPool.deposit({ value: BigNumber.from(100) })
       ).to.be.revertedWith("Deposits not allowed");
-    });
-
-    it("Deposits should not exceed the limit.", async () => {
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
-
-      await market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10);
-
-      const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
-
-      await expect(
-        liquidityPool.deposit({ value: BigNumber.from(200) })
-      ).to.be.revertedWith("Deposit limit reached");
     });
   });
 
@@ -277,7 +265,7 @@ describe("LiquidityPool", () => {
         await market.fundMarket("test fund", { value: fundAmount });
       }
 
-      await market.initializeLiquidityPool(BigNumber.from(10000), 3, 5000, 10);
+      await market.initializeLiquidityPool(3, 5000, 10);
 
       const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
 
@@ -383,17 +371,17 @@ describe("LiquidityPool", () => {
       const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
 
       await expect(
-        market.connect(player2).initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+        market.connect(player2).initializeLiquidityPool(3, 5000, 10)
       ).to.be.revertedWith("Only creator");
     });
 
     it("Can't be initialized twice", async () => {
       const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
 
-      market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+      market.initializeLiquidityPool(3, 5000, 10)
 
       await expect(
-        market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+        market.initializeLiquidityPool(3, 5000, 10)
       ).to.be.revertedWith("LiquidityPool already initialized");
     });
 
@@ -403,7 +391,7 @@ describe("LiquidityPool", () => {
       await market.connect(player1).placeBet(ZERO_ADDRESS, [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], { value: 100 });
 
       await expect(
-        market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10)
+        market.initializeLiquidityPool(3, 5000, 10)
       ).to.be.revertedWith("LiquidityPool has bets");
     });
 
@@ -412,7 +400,7 @@ describe("LiquidityPool", () => {
 
       await market.connect(player1).fundMarket("test fund", { value: 100 });
 
-      market.initializeLiquidityPool(BigNumber.from(100), 3, 5000, 10);
+      market.initializeLiquidityPool(3, 5000, 10);
     });
   });
 

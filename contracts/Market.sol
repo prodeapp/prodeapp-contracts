@@ -428,12 +428,12 @@ contract Market is ERC721, IERC2981 {
         emit FundingReceived(msg.sender, msg.value, _message);
     }
 
-    function initializeLiquidityPool(uint256 depositLimit, uint256 pointsToWin, uint256 marketPrizeShare, uint256 betMultiplier) external {
+    function initializeLiquidityPool(uint256 pointsToWin, uint256 marketPrizeShare, uint256 betMultiplier) external {
         require(creator == msg.sender, "Only creator");
         require(address(liquidityPool) == address(0), "LiquidityPool already initialized");
         require(nextTokenID == 0, "LiquidityPool has bets");
 
-        liquidityPool = new LiquidityPool(address(this), depositLimit, pointsToWin, marketPrizeShare, betMultiplier);
+        liquidityPool = new LiquidityPool(address(this), pointsToWin, marketPrizeShare, betMultiplier);
     }
 
     function receiveLiquidityPoolPayment() external payable {

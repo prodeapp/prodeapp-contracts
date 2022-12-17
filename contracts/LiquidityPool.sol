@@ -8,7 +8,6 @@ contract LiquidityPool {
     uint256 public constant DIVISOR = 10000;
 
     IMarket public market;
-    uint256 public depositLimit;
     uint256 public pointsToWin; // points that a user needs to win the liquidity pool prize
     uint256 public marketPrizeShare; // share of the market prize that the LP wins if there is no winner
     uint256 public betMultiplier; // how much the LP adds to the market pool for each $ added to the market
@@ -21,19 +20,17 @@ contract LiquidityPool {
     event MarketPaymentSent(address indexed market, uint256 amount);
     event MarketPaymentReceived(address indexed market, uint256 _amount);
 
-    constructor(address _market, uint256 _depositLimit, uint256 _pointsToWin, uint256 _marketPrizeShare, uint256 _betMultiplier) {
+    constructor(address _market, uint256 _pointsToWin, uint256 _marketPrizeShare, uint256 _betMultiplier) {
         require(_pointsToWin > 0 && _pointsToWin <= IMarket(_market).numberOfQuestions(), "Invalid pointsToWin value");
         require(_marketPrizeShare < DIVISOR, "Market prize share too big");
 
         market = IMarket(_market);
-        depositLimit = _depositLimit;
         pointsToWin = _pointsToWin;
         marketPrizeShare = _marketPrizeShare;
         betMultiplier = _betMultiplier;
     }
 
     function deposit() external payable {
-        require(address(this).balance <= depositLimit, "Deposit limit reached");
         require(block.timestamp <= market.closingTime(), "Deposits not allowed");
 
         _balances[msg.sender] += msg.value;
