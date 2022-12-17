@@ -29,7 +29,8 @@ async function main() {
   console.log("Chain Id:", chainId);
 
   // fetch candidate markets
-  let {markets} = await graph.request(
+  // markets that used registerPoints()
+  let {markets: markets1} = await graph.request(
     gql`
       query marketsQuery($resultSubmissionPeriodStart: Int!) {
         markets(where: {resultSubmissionPeriodStart_gt: $resultSubmissionPeriodStart}) {
@@ -47,9 +48,27 @@ async function main() {
     }
   );
 
+  // markets that used registerAll()
+  let {markets: markets2} = await graph.request(
+    gql`
+      query marketsQuery {
+        markets(where: {resultSubmissionPeriodStart: 1}) {
+          id
+          name
+          resultSubmissionPeriodStart
+          submissionTimeout
+          bets {
+            claim
+          }
+        }
+      }
+    `
+  );
+  const allMarkets = markets1.concat(markets2);
+
   const now = Math.floor(Date.now() / 1000);
 
-  markets = markets.filter(market => now > (Number(market.resultSubmissionPeriodStart) + Number(market.submissionTimeout)))
+  const markets = allMarkets.filter(market => now > (Number(market.resultSubmissionPeriodStart) + Number(market.submissionTimeout)))
 
   if (markets.length === 0) {
     console.log('No markets found');

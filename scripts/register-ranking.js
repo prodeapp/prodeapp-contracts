@@ -88,7 +88,10 @@ async function processMarket(marketAddress, signer) {
   let datas = [passPeriod];
 
   if (bets.length > 0) {
-    let rankIndex = 0;
+    const registerAll = (await market.populateTransaction.registerAll()).data;
+    datas.push(registerAll);
+
+    /*let rankIndex = 0;
     let previousPoints = bets[0].points;
     console.log("TokenID - Ranking - DuplicateRanking")
     for (let i = 0; i < bets.length; i++) {
@@ -100,7 +103,7 @@ async function processMarket(marketAddress, signer) {
 
       previousPoints = bets[i].points;
       console.log(bets[i].tokenID, ' - ', rankIndex, ' - ', i - rankIndex)
-    }
+    }*/
   }
 
   // Distribute management fees
