@@ -9,7 +9,7 @@ contract LiquidityPool {
 
     IMarket public market;
     uint256 public pointsToWin; // points that a user needs to win the liquidity pool prize
-    uint256 public marketPrizeShare; // share of the market prize that the LP wins if there is no winner
+    uint256 public marketPrizeShare; // share of the market prize that the LP wins
     uint256 public betMultiplier; // how much the LP adds to the market pool for each $ added to the market
     uint256 public totalDeposits;
 

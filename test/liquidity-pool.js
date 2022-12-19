@@ -158,6 +158,16 @@ describe("LiquidityPool", () => {
     await market.registerAll();
   }
 
+  function getMarketPrize(poolDeposits, fundAmount) {
+    const managementReward = BigNumber.from(poolDeposits + fundAmount)
+                                        .mul(marketData.managementFee + protocolFee)
+                                        .div(10000); // - fees
+
+    return BigNumber
+            .from(poolDeposits + fundAmount)
+            .sub(managementReward);
+  }
+
   before("Get accounts", async () => {
     const accounts = await ethers.getSigners();
     governor = accounts[0];
@@ -291,9 +301,7 @@ describe("LiquidityPool", () => {
 
       let expectedReward, totalReward;
 
-      const totalPrize = BigNumber
-                            .from(100 * 3 + fundAmount) // market pool
-                            .mul(10000 - (marketData.managementFee + protocolFee)).div(10000); // - fees
+      const totalPrize = getMarketPrize(100 * 3, fundAmount);
 
       if (hasPerfectWinner) {
         // remaining prizes, also for 1st place
@@ -302,8 +310,10 @@ describe("LiquidityPool", () => {
         [_tokenID, _remainingReward] = getEmittedEvent('BetReward', receipt).args;
         expect(_tokenID).to.eq(BigNumber.from(tokenID));
 
-        expectedReward = totalPrize
-                          .add(lpToMarket); // + liquidity pool
+        let totalPoolPrize = BigNumber.from(lpToMarket).add(totalPrize.div(2));
+        const expectedPrizeReward = totalPoolPrize.mul(60).div(100);
+        const expectedRemainingReward = totalPoolPrize.mul(40).div(100);
+        expectedReward = expectedPrizeReward.add(expectedRemainingReward); // + liquidity pool
 
         totalReward = BigNumber.from(_prizeReward).add(_remainingReward);
       } else {
@@ -330,15 +340,15 @@ describe("LiquidityPool", () => {
     }
 
     it("Test full winner with excess LP rewards", async () => {
-      await testWinnerAndWithdraw(3100, 3000, 100, true);
+      await testWinnerAndWithdraw(3100, 3000, getMarketPrize(100 * 3, 0).div(2).add(100), true);
     });
 
     it("Test full winner with partial LP rewards", async () => {
-      await testWinnerAndWithdraw(3000, 3000, 0, true);
+      await testWinnerAndWithdraw(3000, 3000, getMarketPrize(100 * 3, 0).div(2), true);
     });
 
     it("Test full winner with exact LP rewards", async () => {
-      await testWinnerAndWithdraw(100, 100, 0, true);
+      await testWinnerAndWithdraw(100, 100, getMarketPrize(100 * 3, 0).div(2), true);
     });
 
     const getPartialWinnerPoolShare = (fundMarket) => {

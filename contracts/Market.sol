@@ -448,16 +448,19 @@ contract Market is ERC721, IERC2981 {
         }
 
         liquidityPoolRewardsPending = false;
+        // store the initial value before it's changed in liquidityPool.payToMarket()
+        uint256 initialTotalPrize = totalPrize;
 
         if (liquidityPool.hasWinners()) {
             // transfer LP => market
             liquidityPool.payToMarket();
-        } else {
-            // transfer market => LP
-            uint256 liquidityPoolPrize = ((totalPrize - totalFunded) * liquidityPool.marketPrizeShare()) / DIVISOR;
-            totalPrize -= liquidityPoolPrize;
-            liquidityPool.receiveMarketPayment{value: liquidityPoolPrize}();
         }
+
+        // transfer market => LP
+        uint256 liquidityPoolPrize = ((initialTotalPrize - totalFunded) * liquidityPool.marketPrizeShare()) / DIVISOR;
+
+        totalPrize -= liquidityPoolPrize;
+        liquidityPool.receiveMarketPayment{value: liquidityPoolPrize}();
     }
 
     /**
