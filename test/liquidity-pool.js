@@ -87,6 +87,14 @@ async function createMarket(marketData, isClosed, Market, factory, creator, arbi
   return market;
 }
 
+async function createLiquidityPool(LiquidityPool, manager, managerFee, betMultiplier) {
+  return await LiquidityPool.deploy(
+    manager,
+    managerFee,
+    betMultiplier
+  );
+}
+
 describe("LiquidityPool", () => {
   let governor;
   let creator;
@@ -105,14 +113,17 @@ describe("LiquidityPool", () => {
   const bettingTime = 200;
   const timeout = 129600; // 1.5 days
   const protocolFee = 150; // 1.5 %
+  const marketCreatorFee = 5000; // 50%
+  const lpCreatorFee = 500; // 5%
+  const lpBetMultiplier = 10;
   const marketData = {
     info: {
       marketName: "FIFA World Cup 2022",
       marketSymbol: "FWC22"
     },
     closingTime: 0,
-    price: 100,
-    managementFee: 1000,
+    price: ethers.utils.parseUnits('100'),
+    managementFee: marketCreatorFee,
     manager: "",
     minBond: 10,
     questions: [
@@ -138,7 +149,7 @@ describe("LiquidityPool", () => {
   async function processBets(players, bets, results, bettingTime, market, realitio) {
     // place bet
     for (let i = 0; i < players.length; i++) {
-      await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
+      await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: marketData.price });
     }
 
     await ethers.provider.send('evm_increaseTime', [bettingTime]);
@@ -153,19 +164,19 @@ describe("LiquidityPool", () => {
     await ethers.provider.send('evm_mine');
     await market.registerAvailabilityOfResults();
 
-    // register points
-    // TODO: test also with registerPoints()
     await market.registerAll();
+
+    const marketInfo = await market.marketInfo();
+    const managerContract = await Manager.attach(marketInfo.manager);
+    await managerContract.distributeRewards();
+    await managerContract.executeCreatorRewards();
   }
 
-  function getMarketPrize(poolDeposits, fundAmount) {
-    const managementReward = BigNumber.from(poolDeposits + fundAmount)
-                                        .mul(marketData.managementFee + protocolFee)
-                                        .div(10000); // - fees
+  function getLiquidityPoolReward(poolDeposits) {
+    const marketCreatorRewards = poolDeposits.mul(marketCreatorFee).div(10000);
+    const lpCreatorRewards = marketCreatorRewards.mul(lpCreatorFee).div(10000);
 
-    return BigNumber
-            .from(poolDeposits + fundAmount)
-            .sub(managementReward);
+    return marketCreatorRewards.sub(lpCreatorRewards);
   }
 
   before("Get accounts", async () => {
@@ -219,11 +230,9 @@ describe("LiquidityPool", () => {
 
   describe("Deposits", () => {
     it("Should accept deposits", async () => {
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
-
-      await market.initializeLiquidityPool(3, 5000, 10);
-
-      const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
+      const liquidityPool = await createLiquidityPool(LiquidityPool, creator.address, lpCreatorFee, lpBetMultiplier);
+      const market = await createMarket(marketData, false, Market, factory, liquidityPool, arbitrator, realitio, timeout, bettingTime);
+      await liquidityPool.setMarket(market.address, 3);
 
       await liquidityPool.deposit({ value: BigNumber.from(100) });
 
@@ -233,11 +242,10 @@ describe("LiquidityPool", () => {
     });
 
     it("Should not accept deposits after closingTime has passed.", async () => {
-      const market = await createMarket(marketData, true, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
+      const liquidityPool = await createLiquidityPool(LiquidityPool, creator.address, lpCreatorFee, lpBetMultiplier);
 
-      await market.initializeLiquidityPool(3, 5000, 10);
-
-      const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
+      const market = await createMarket(marketData, true, Market, factory, liquidityPool, arbitrator, realitio, timeout, bettingTime);
+      await liquidityPool.setMarket(market.address, 3);
 
       await expect(
         liquidityPool.deposit({ value: BigNumber.from(100) })
@@ -251,7 +259,7 @@ describe("LiquidityPool", () => {
     // partial LP: the LP is not enough to cover all the market prizes
     // exact LP: the LP has the right amount to cover all the market prizes
 
-    async function testWinnerAndWithdraw(lpDeposit, lpToMarket, lpWithdraw, hasPerfectWinner, fundMarket) {
+    async function testWinnerAndWithdraw(lpDeposit, lpToMarket, lpWithdraw, hasPerfectWinner) {
       const betsWithPerfectWinner = [
         [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], // 3 points
         [numberToBytes32(1), numberToBytes32(1), numberToBytes32(1)], // 2 points
@@ -266,18 +274,10 @@ describe("LiquidityPool", () => {
 
       const bets = hasPerfectWinner ? betsWithPerfectWinner : betsWithoutPerfectWinner;
 
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
+      const liquidityPool = await createLiquidityPool(LiquidityPool, creator.address, lpCreatorFee, lpBetMultiplier);
 
-      let fundAmount = 0;
-
-      if (fundMarket === true) {
-        fundAmount = 1000;
-        await market.fundMarket("test fund", { value: fundAmount });
-      }
-
-      await market.initializeLiquidityPool(3, 5000, 10);
-
-      const liquidityPool = await LiquidityPool.attach(await market.liquidityPool());
+      const market = await createMarket(marketData, false, Market, factory, liquidityPool, arbitrator, realitio, timeout, bettingTime);
+      await liquidityPool.setMarket(market.address, 3);
 
       await liquidityPool.connect(creator).deposit({ value: BigNumber.from(lpDeposit) });
 
@@ -290,128 +290,84 @@ describe("LiquidityPool", () => {
         realitio
       );
 
-      // claim rewards
       const tokenID = 0;
 
-      // 1st place prize
-      tx = await market.claimRewards(0, 0, 0);
-      receipt = await tx.wait();
-      [_tokenID, _prizeReward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(tokenID));
-
-      let expectedReward, totalReward;
-
-      const totalPrize = getMarketPrize(100 * 3, fundAmount);
-
       if (hasPerfectWinner) {
-        // remaining prizes, also for 1st place
-        tx = await market.distributeRemainingPrizes();
+        // 1st place prize
+        tx = await liquidityPool.claimRewards(0, 0, 0);
         receipt = await tx.wait();
-        [_tokenID, _remainingReward] = getEmittedEvent('BetReward', receipt).args;
+        const [_tokenID, _prizeReward] = getEmittedEvent('BetReward', receipt).args;
         expect(_tokenID).to.eq(BigNumber.from(tokenID));
 
-        let totalPoolPrize = BigNumber.from(lpToMarket).add(totalPrize.div(2));
-        const expectedPrizeReward = totalPoolPrize.mul(60).div(100);
-        const expectedRemainingReward = totalPoolPrize.mul(40).div(100);
-        expectedReward = expectedPrizeReward.add(expectedRemainingReward); // + liquidity pool
+        const expectedReward = lpToMarket.mul(60).div(100); // 60% 1st place
 
-        totalReward = BigNumber.from(_prizeReward).add(_remainingReward);
+        expect(_prizeReward).to.eq(expectedReward);
       } else {
-        const lpReward = totalPrize.sub(fundAmount).div(2);
-
-        expectedReward = totalPrize
-                          .sub(lpReward)
-                          .mul(60).div(100); // 60% 1st place
-
-        totalReward = BigNumber.from(_prizeReward);
-
-        await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No vacant prizes");
+        await expect(liquidityPool.claimRewards(0, 0, 0)).to.be.revertedWith("Invalid rankIndex");
       }
-
-      expect(totalReward).to.eq(expectedReward);
-
+      
       tx = await liquidityPool.connect(creator).withdraw();
+      
       receipt = await tx.wait();
       [_, _amount] = getEmittedEvent('Withdrawn', receipt).args;
-
-      expect(_amount).to.eq(BigNumber.from(lpWithdraw));
+      expect(_amount).to.eq(lpWithdraw);
 
       await expect(liquidityPool.connect(creator).withdraw()).to.be.revertedWith("Not enough balance");
     }
 
     it("Test full winner with excess LP rewards", async () => {
-      await testWinnerAndWithdraw(3100, 3000, getMarketPrize(100 * 3, 0).div(2).add(100), true);
+      await testWinnerAndWithdraw(
+        ethers.utils.parseUnits('3100'), 
+        ethers.utils.parseUnits('3000'), 
+        getLiquidityPoolReward(marketData.price.mul(3)).add(ethers.utils.parseUnits('100')), 
+        true
+      );
     });
 
     it("Test full winner with partial LP rewards", async () => {
-      await testWinnerAndWithdraw(3000, 3000, getMarketPrize(100 * 3, 0).div(2), true);
+      await testWinnerAndWithdraw(
+        ethers.utils.parseUnits('3000'), 
+        ethers.utils.parseUnits('3000'), 
+        getLiquidityPoolReward(marketData.price.mul(3)), 
+        true
+      );
     });
 
     it("Test full winner with exact LP rewards", async () => {
-      await testWinnerAndWithdraw(100, 100, getMarketPrize(100 * 3, 0).div(2), true);
+      await testWinnerAndWithdraw(
+        ethers.utils.parseUnits('100'), 
+        ethers.utils.parseUnits('100'), 
+        getLiquidityPoolReward(marketData.price.mul(3)), 
+        true
+      );
     });
 
-    const getPartialWinnerPoolShare = (fundMarket) => {
-      const managementReward = BigNumber
-        .from(300 + (fundMarket === true ? 1000 : 0)) // market pool
-        .mul(marketData.managementFee + protocolFee).div(10000); // - fees
-
-      return BigNumber.from(300).sub(managementReward).div(2);
-    }
-
     it("Test partial winner with excess LP rewards", async () => {
-      await testWinnerAndWithdraw(3100, 0, BigNumber.from(3100).add(getPartialWinnerPoolShare()), false);
+      await testWinnerAndWithdraw(
+        ethers.utils.parseUnits('3100'), 
+        ethers.utils.parseUnits('0'), 
+        ethers.utils.parseUnits('3100').add(getLiquidityPoolReward(marketData.price.mul(3))), 
+        false
+      );
     });
 
     it("Test partial winner with partial LP rewards", async () => {
-      await testWinnerAndWithdraw(3000, 0, BigNumber.from(3000).add(getPartialWinnerPoolShare()), false);
+      await testWinnerAndWithdraw(
+        ethers.utils.parseUnits('3000'), 
+        ethers.utils.parseUnits('0'), 
+        ethers.utils.parseUnits('3000').add(getLiquidityPoolReward(marketData.price.mul(3))), 
+        false
+      );
     });
 
     it("Test partial winner with exact LP rewards", async () => {
-      await testWinnerAndWithdraw(3100, 0, BigNumber.from(3100).add(getPartialWinnerPoolShare()), false);
-    });
-
-    it("Test market funding is excluded from LP rewards", async () => {
-      await testWinnerAndWithdraw(3100, 0, BigNumber.from(3100).add(getPartialWinnerPoolShare(true)), false, true);
+      await testWinnerAndWithdraw(
+        ethers.utils.parseUnits('3100'), 
+        ethers.utils.parseUnits('0'), 
+        ethers.utils.parseUnits('3100').add(getLiquidityPoolReward(marketData.price.mul(3))), 
+        false
+      );
     });
   })
-
-  describe("Initialization", () => {
-    it("Should be initialized only by the creator", async () => {
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
-
-      await expect(
-        market.connect(player2).initializeLiquidityPool(3, 5000, 10)
-      ).to.be.revertedWith("Only creator");
-    });
-
-    it("Can't be initialized twice", async () => {
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
-
-      market.initializeLiquidityPool(3, 5000, 10)
-
-      await expect(
-        market.initializeLiquidityPool(3, 5000, 10)
-      ).to.be.revertedWith("LiquidityPool already initialized");
-    });
-
-    it("Can't be initialized if already has bets", async () => {
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
-
-      await market.connect(player1).placeBet(ZERO_ADDRESS, [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], { value: 100 });
-
-      await expect(
-        market.initializeLiquidityPool(3, 5000, 10)
-      ).to.be.revertedWith("LiquidityPool has bets");
-    });
-
-    it("Can be initialized if only has been funded", async () => {
-      const market = await createMarket(marketData, false, Market, factory, creator, arbitrator, realitio, timeout, bettingTime);
-
-      await market.connect(player1).fundMarket("test fund", { value: 100 });
-
-      market.initializeLiquidityPool(3, 5000, 10);
-    });
-  });
 
 });

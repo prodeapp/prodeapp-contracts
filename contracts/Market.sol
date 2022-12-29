@@ -5,7 +5,6 @@ import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./interfaces/IERC2981.sol";
 import "./BetNFTDescriptor.sol";
-import "./LiquidityPool.sol";
 
 interface IManager {
     function creator() external view returns (address payable);
@@ -34,20 +33,16 @@ contract Market is ERC721, IERC2981 {
     uint256 public constant DIVISOR = 10000;
     uint256 public constant CLEAN_TOKEN_ID = uint256(type(uint128).max);
 
-    address public creator;
     MarketInfo public marketInfo;
     address public betNFTDescriptor;
     RealityETH_v3_0 public realitio;
-    LiquidityPool public liquidityPool;
     uint256 public nextTokenID;
     bool public initialized;
-    bool public liquidityPoolRewardsPending;
     uint256 public resultSubmissionPeriodStart;
     uint256 public price;
     uint256 public closingTime;
     uint256 public submissionTimeout;
     uint256 public totalPrize;
-    uint256 public totalFunded;
     uint256 public managementReward;
     uint256 public totalAttributions;
 
@@ -61,7 +56,6 @@ contract Market is ERC721, IERC2981 {
     mapping(address => uint256) public attributionBalance; // attributionBalance[attribution]
 
     event FundingReceived(address indexed _funder, uint256 _amount, string _message);
-    event LiquidityPoolPaymentReceived(uint256 _amount);
 
     event PlaceBet(
         address indexed _player,
@@ -98,7 +92,6 @@ contract Market is ERC721, IERC2981 {
         require(_marketInfo.fee < DIVISOR, "Management fee too big");
         require(_marketInfo.royaltyFee < DIVISOR, "Royalty fee too big");
 
-        creator = tx.origin;
         marketInfo = _marketInfo;
         betNFTDescriptor = _nftDescriptor;
         realitio = RealityETH_v3_0(_realityETH);
@@ -117,7 +110,6 @@ contract Market is ERC721, IERC2981 {
         prizeWeights = _prizeWeights;
 
         initialized = true;
-        liquidityPoolRewardsPending = true;
         emit QuestionsRegistered(questionIDs);
         emit Prizes(_prizeWeights);
     }
@@ -211,15 +203,6 @@ contract Market is ERC721, IERC2981 {
             _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points,
             "Invalid ranking index"
         );
-
-        if (address(liquidityPool) != address(0) && liquidityPool.hasWinners()) {
-            // if the LP has winners, only they are allowed to registerPoints()
-            require(
-                totalPoints >= liquidityPool.pointsToWin(),
-                "Invalid ranking total points"
-            );
-        }
-
         if (totalPoints > ranking[_rankIndex].points) {
             if (ranking[_rankIndex].points > 0) {
                 // Rank position is being overwritten
@@ -292,14 +275,6 @@ contract Market is ERC721, IERC2981 {
         for (uint256 rankIndex = 0; rankIndex < freePos; rankIndex++) {
             uint256 tokenID = auxRanking[rankIndex] >> 128;
             uint256 totalPoints = auxRanking[rankIndex] & CLEAN_TOKEN_ID;
-
-            if (address(liquidityPool) != address(0) && liquidityPool.hasWinners()) {
-                // if the LP has winners, only they are allowed to registerPoints()
-                if (totalPoints < liquidityPool.pointsToWin()) {
-                    continue;
-                }
-            }
-
             ranking[rankIndex].tokenID = tokenID;
             ranking[rankIndex].points = uint248(totalPoints);
             emit RankingUpdated(tokenID, totalPoints, rankIndex);
@@ -363,8 +338,6 @@ contract Market is ERC721, IERC2981 {
             cumWeigths += prizeWeights[i];
         }
 
-        processLiquidityPoolRewards();
-
         uint256 reward = (totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
         ranking[_rankIndex].claimed = true;
         payable(ownerOf(ranking[_rankIndex].tokenID)).transfer(reward);
@@ -424,43 +397,7 @@ contract Market is ERC721, IERC2981 {
      */
     function fundMarket(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
-        totalFunded += msg.value;
         emit FundingReceived(msg.sender, msg.value, _message);
-    }
-
-    function initializeLiquidityPool(uint256 pointsToWin, uint256 marketPrizeShare, uint256 betMultiplier) external {
-        require(creator == msg.sender, "Only creator");
-        require(address(liquidityPool) == address(0), "LiquidityPool already initialized");
-        require(nextTokenID == 0, "LiquidityPool has bets");
-
-        liquidityPool = new LiquidityPool(address(this), pointsToWin, marketPrizeShare, betMultiplier);
-    }
-
-    function receiveLiquidityPoolPayment() external payable {
-        require(msg.sender == address(liquidityPool), "Only liquidity pool");
-        totalPrize += msg.value;
-        emit LiquidityPoolPaymentReceived(msg.value);
-    }
-
-    function processLiquidityPoolRewards() internal {
-        if (address(liquidityPool) == address(0) || !liquidityPoolRewardsPending) {
-            return;
-        }
-
-        liquidityPoolRewardsPending = false;
-        // store the initial value before it's changed in liquidityPool.payToMarket()
-        uint256 initialTotalPrize = totalPrize;
-
-        if (liquidityPool.hasWinners()) {
-            // transfer LP => market
-            liquidityPool.payToMarket();
-        }
-
-        // transfer market => LP
-        uint256 liquidityPoolPrize = ((initialTotalPrize - totalFunded) * liquidityPool.marketPrizeShare()) / DIVISOR;
-
-        totalPrize -= liquidityPoolPrize;
-        liquidityPool.receiveMarketPayment{value: liquidityPoolPrize}();
     }
 
     /**
