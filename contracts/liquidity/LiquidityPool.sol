@@ -130,12 +130,9 @@ contract LiquidityPool {
         uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
         uint256 cumWeigths = 0;
-        for (
-            uint256 i = _firstSharedIndex;
-            i < market.getPrizes().length && i <= _lastSharedIndex;
-            i++
-        ) {
-            cumWeigths += market.prizeWeights(i);
+        uint256[] memory prizes = market.getPrizes();
+        for (uint256 i = _firstSharedIndex; i < prizes.length && i <= _lastSharedIndex; i++) {
+            cumWeigths += prizes[i];
         }
 
         uint256 maxPayment = mulCap(market.price(), market.nextTokenID());

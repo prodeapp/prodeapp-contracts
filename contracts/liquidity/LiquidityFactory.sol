@@ -93,7 +93,7 @@ contract LiquidityFactory {
             _liquidityParameters.pointsToWin
         );
 
-		emit NewLiquidityPool(newPool, newMarket);
+        emit NewLiquidityPool(newPool, newMarket);
         return (newMarket, newPool);
     }
 
