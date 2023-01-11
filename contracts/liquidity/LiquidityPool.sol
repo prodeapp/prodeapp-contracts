@@ -68,6 +68,7 @@ contract LiquidityPool {
         balances[msg.sender] = 0;
         totalDeposits -= amount;
 
+        requireSendXDAI(payable(msg.sender), amount);
         emit Withdrawn(msg.sender, amount);
     }
 
@@ -79,20 +80,16 @@ contract LiquidityPool {
         );
         require(balances[_account] > 0, "Not enough balance");
 
-        uint256 amount;
-
+        uint256 marketPayment;
         if (market.ranking(0).points >= pointsToWin) {
-            // there's at least one winner, withdraw fees + excess deposit
-            uint256 maxPayment = mulCap(market.price(), market.nextTokenID());
+            // there's at least one winner
+            uint256 maxPayment = market.price() * market.nextTokenID();
             maxPayment = mulCap(maxPayment, betMultiplier);
-            uint256 excessDeposit = totalDeposits < maxPayment ? 0 : (totalDeposits - maxPayment);
-
-            amount = ((poolReward + excessDeposit) * balances[_account]) / totalDeposits;
-        } else {
-            // withdraw fees + deposits
-            amount = ((poolReward + totalDeposits) * balances[_account]) / totalDeposits;
+            marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
         }
 
+        uint256 amount = poolReward + totalDeposits - marketPayment;
+        amount = mulCap(amount, balances[_account]) / totalDeposits;
         balances[_account] = 0;
 
         requireSendXDAI(payable(_account), amount);
@@ -135,7 +132,7 @@ contract LiquidityPool {
             cumWeigths += prizes[i];
         }
 
-        uint256 maxPayment = mulCap(market.price(), market.nextTokenID());
+        uint256 maxPayment = market.price() * market.nextTokenID();
         maxPayment = mulCap(maxPayment, betMultiplier);
         uint256 marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
 
