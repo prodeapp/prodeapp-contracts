@@ -31,6 +31,8 @@ interface IMarket is IERC721 {
 
     function totalPrize() external view returns (uint256);
 
+    function getPrizes() external view returns (uint256[] memory);
+
     function totalAttributions() external view returns (uint256);
 
     function attributionBalance(address _attribution) external view returns (uint256);
@@ -47,4 +49,10 @@ interface IMarket is IERC721 {
     function bets(bytes32 _tokenHash) external view returns (uint256);
 
     function fundMarket(string calldata _message) external payable;
+
+    function numberOfQuestions() external view returns (uint256);
+
+    function questionIDs(uint256 index) external view returns (bytes32);
+
+    function realitio() external view returns (address);
 }
