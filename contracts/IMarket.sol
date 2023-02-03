@@ -17,6 +17,8 @@ interface IMarket is IERC721 {
 
     function name() external view returns (string memory);
 
+    function betNFTDescriptor() external view returns (address);
+
     function questionsHash() external view returns (bytes32);
 
     function resultSubmissionPeriodStart() external view returns (uint256);
