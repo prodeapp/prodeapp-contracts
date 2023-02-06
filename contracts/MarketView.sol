@@ -60,6 +60,19 @@ contract MarketView {
         bytes32[] predictions;
     }
 
+    struct EventInfo {
+        bytes32 id;
+        address arbitrator;
+        bytes32 answer;
+        uint256 openingTs;
+        uint256 answerFinalizedTimestamp;
+        bool isPendingArbitration;
+        uint256 timeout;
+        uint256 minBond;
+        uint256 lastBond;
+        uint256 bounty;
+    }
+
     function getMarket(address marketId)
         external
         view
@@ -134,6 +147,30 @@ contract MarketView {
         betInfo = getBetByToken(market, tokenId, market.name());
     }
 
+    function getEvents(address marketId) external view returns (EventInfo[] memory) {
+        IMarket market = IMarket(marketId);
+        RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
+        uint256 _numberOfQuestions = numberOfQuestions(market);
+
+        EventInfo[] memory eventInfo = new EventInfo[](_numberOfQuestions);
+
+        for (uint256 i = 0; i < _numberOfQuestions; i++) {
+            // missing title, category, outcomes, templateID
+            eventInfo[i].id = market.questionIDs(i);
+            eventInfo[i].arbitrator = realitio.getArbitrator(eventInfo[i].id);
+            eventInfo[i].answer = realitio.getBestAnswer(eventInfo[i].id);
+            eventInfo[i].openingTs = realitio.getOpeningTS(eventInfo[i].id);
+            eventInfo[i].answerFinalizedTimestamp = realitio.getFinalizeTS(eventInfo[i].id);
+            eventInfo[i].isPendingArbitration = realitio.isPendingArbitration(eventInfo[i].id);
+            eventInfo[i].timeout = realitio.getTimeout(eventInfo[i].id);
+            eventInfo[i].minBond = realitio.getMinBond(eventInfo[i].id);
+            eventInfo[i].lastBond = realitio.getBond(eventInfo[i].id);
+            eventInfo[i].bounty = realitio.getBounty(eventInfo[i].id);
+        }
+
+        return eventInfo;
+    }
+
     function getBetByToken(IMarket market, uint256 tokenId, string memory marketName)
         internal
         view
@@ -146,12 +183,7 @@ contract MarketView {
         betInfo.tokenId = tokenId;
         betInfo.owner = market.ownerOf(tokenId);
         betInfo.predictions = getPredictions(market, tokenId);
-
-        if (market.resultSubmissionPeriodStart() == 0) {
-            betInfo.points = 0;
-        } else {
-            betInfo.points = getScore(market, tokenId);
-        }
+        betInfo.points = getScore(market, tokenId);
     }
 
     function getPool(IMarket market, uint256 managementReward, uint256 fee) internal view returns (uint256 pool) {
@@ -183,10 +215,15 @@ contract MarketView {
 
     //backwards compatibility with older Markets
     function getScore(IMarket market, uint256 _tokenID) internal view returns (uint256 totalPoints) {
-        try market.getScore(_tokenID) returns (uint256 _totalPoints) {
-            totalPoints = _totalPoints;
-        } catch {
-            totalPoints = 0;
+        RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
+        bytes32[] memory predictions = getPredictions(market, _tokenID);
+        uint256 _numberOfQuestions = numberOfQuestions(market);
+        for (uint256 i = 0; i < _numberOfQuestions; i++) {
+            bytes32 questionId = market.questionIDs(i);
+            uint32 finalizeTs = realitio.getFinalizeTS(questionId);
+            if (finalizeTs > 0 && predictions[i] == realitio.getBestAnswer(questionId)) {
+                totalPoints += 1;
+            }
         }
     }
 
