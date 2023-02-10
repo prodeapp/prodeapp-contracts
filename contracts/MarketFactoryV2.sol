@@ -34,6 +34,14 @@ interface IRealityRegistry {
         string calldata category,
         string calldata language
     ) external;
+
+    function getQuestion(
+        uint256 templateId,
+        string calldata title,
+        string calldata outcomes,
+        string calldata category,
+        string calldata language
+    ) external view returns (string memory question);
 }
 
 contract MarketFactoryV2 {
@@ -100,21 +108,17 @@ contract MarketFactoryV2 {
     }
 
     function getQuestionsData(QuestionMetadata[] memory questionsMetadata)
-        internal pure
+        internal view
         returns (IMarketFactory.RealitioQuestion[] memory questionsData)
     {
         for (uint256 i = 0; i < questionsMetadata.length; i++) {
-            string memory question = string(
-                    abi.encodePacked(
-                        questionsMetadata[i].title,
-                        '\u241f',
-                        questionsMetadata[i].outcomes,
-                        '\u241f',
-                        questionsMetadata[i].category,
-                        '\u241f',
-                        questionsMetadata[i].language
-                    )
-                );
+            string memory question = realityRegistry.getQuestion(
+                questionsMetadata[i].templateID,
+                questionsMetadata[i].title,
+                questionsMetadata[i].outcomes,
+                questionsMetadata[i].category,
+                questionsMetadata[i].language
+            );
 
             questionsData[i] = IMarketFactory.RealitioQuestion({templateID: questionsMetadata[i].templateID, question: question, openingTS: questionsMetadata[i].openingTS});
         }

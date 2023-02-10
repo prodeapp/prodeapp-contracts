@@ -18,6 +18,16 @@ interface ICurate {
     function isRegistered(bytes32 questionsHash) external view returns(bool);
 }
 
+interface IRealityRegistry {
+    function metadata(bytes32 questionId) external view returns (
+        string memory title,
+        string memory outcomes,
+        string memory category,
+        string memory language,
+        uint256 templateId
+    );
+}
+
 contract MarketView {
 
     uint256 public constant DIVISOR = 10000;
@@ -71,6 +81,19 @@ contract MarketView {
         uint256 minBond;
         uint256 lastBond;
         uint256 bounty;
+        string title;
+        string outcomes;
+        string category;
+        string language;
+        uint256 templateId;
+    }
+
+    IRealityRegistry public realityRegistry;
+
+    constructor(
+        IRealityRegistry _realityRegistry
+    ) {
+        realityRegistry = _realityRegistry;
     }
 
     function getMarket(address marketId)
@@ -155,7 +178,6 @@ contract MarketView {
         EventInfo[] memory eventInfo = new EventInfo[](_numberOfQuestions);
 
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            // missing title, category, outcomes, templateID
             eventInfo[i].id = market.questionIDs(i);
             eventInfo[i].arbitrator = realitio.getArbitrator(eventInfo[i].id);
             eventInfo[i].answer = realitio.getBestAnswer(eventInfo[i].id);
@@ -166,6 +188,8 @@ contract MarketView {
             eventInfo[i].minBond = realitio.getMinBond(eventInfo[i].id);
             eventInfo[i].lastBond = realitio.getBond(eventInfo[i].id);
             eventInfo[i].bounty = realitio.getBounty(eventInfo[i].id);
+
+            (eventInfo[i].title, eventInfo[i].outcomes, eventInfo[i].category, , eventInfo[i].templateId) = realityRegistry.metadata(eventInfo[i].id);
         }
 
         return eventInfo;
@@ -213,10 +237,15 @@ contract MarketView {
         }
     }
 
-    //backwards compatibility with older Markets
     function getScore(IMarket market, uint256 _tokenID) internal view returns (uint256 totalPoints) {
         RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
         bytes32[] memory predictions = getPredictions(market, _tokenID);
+
+        if (predictions.length == 0) {
+            //backwards compatibility with older Markets
+            return 0;
+        }
+
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
             bytes32 questionId = market.questionIDs(i);
