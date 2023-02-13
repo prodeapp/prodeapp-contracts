@@ -41,7 +41,7 @@ function getQuestionID(
   return questionID;
 }
 
-async function createMarket(marketData, isClosed, Market, factory, creator, arbitrator, realitio, timeout, bettingTime) {
+async function getMarketParams(marketData, isClosed, factory, arbitrator, realitio, timeout, bettingTime) {
   let currentTS = await getCurrentTimestamp();
   const closingTime = isClosed ? currentTS - 1 : currentTS + bettingTime;
   for (let i = 0; i < marketData.questions.length; i++) {
@@ -69,30 +69,18 @@ async function createMarket(marketData, isClosed, Market, factory, creator, arbi
         factory.address,
       ) ? 1 : -1);
 
-  await factory.createMarket(
-    marketData.info.marketName,
-    marketData.info.marketSymbol,
-    creator.address,
-    marketData.managementFee,
-    closingTime,
-    marketData.price,
-    marketData.minBond,
-    orderedQuestions,
-    marketData.prizeWeights
-  );
-  const totalMarkets = await factory.marketCount();
-  const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
-  market = await Market.attach(marketAddress);
+  const MarketParams = {
+    marketName: marketData.info.marketName,
+    marketSymbol: marketData.info.marketSymbol,
+    creatorFee: marketData.managementFee,
+    closingTime: closingTime,
+    price: marketData.price,
+    minBond: marketData.minBond,
+    questionsData: orderedQuestions,
+    prizeWeights: marketData.prizeWeights
+  }
 
-  return market;
-}
-
-async function createLiquidityPool(LiquidityPool, manager, managerFee, betMultiplier) {
-  return await LiquidityPool.deploy(
-    manager,
-    managerFee,
-    betMultiplier
-  );
+  return MarketParams;
 }
 
 describe("LiquidityPool", () => {
@@ -105,6 +93,7 @@ describe("LiquidityPool", () => {
   let arbitrator;
   let realitio;
   let factory;
+  let lpFactory;
   let Market;
   let Manager;
   let LiquidityPool;
@@ -225,7 +214,39 @@ describe("LiquidityPool", () => {
       protocolFee,
       7*24*60*60
     );
+    // Deploy Liquidity Pool contract and Factory
     LiquidityPool = await ethers.getContractFactory("LiquidityPool");
+    const lpImplementation = await LiquidityPool.deploy();
+    const LPFactory = await ethers.getContractFactory("LiquidityFactory");
+    lpFactory = await LPFactory.deploy(
+      factory.address,
+      lpImplementation.address,
+      governor.address
+    );
+  });
+
+  describe("Initialization", () => {
+    it("Should initialize liquidity pool correctly.", async () => {
+      const marketParams = await getMarketParams(marketData, false, factory, arbitrator, realitio, timeout, bettingTime);
+      const liquidityParams = {
+        creator: creator.address,
+        creatorFee: lpCreatorFee,
+        betMultiplier: lpBetMultiplier,
+        pointsToWin: marketData.questions.length,
+      }
+      const tx = await lpFactory.createMarketWithLiquidityPool(marketParams, liquidityParams);
+      console.log(await tx.wait());
+      const totalMarkets = await factory.marketCount();
+      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      const market = await Market.attach(marketAddress);
+
+      //await liquidityPool.deposit({ value: BigNumber.from(100) });
+
+    });
+
+    it("Should not accept deposits after closingTime has passed.", async () => {
+      
+    });
   });
 
   describe("Deposits", () => {
