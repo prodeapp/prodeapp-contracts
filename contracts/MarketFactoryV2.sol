@@ -44,6 +44,10 @@ interface IRealityRegistry {
     ) external view returns (string memory question);
 }
 
+interface IKeyValue {
+    function setMarketCreator(address marketId, address creator) external;
+}
+
 contract MarketFactoryV2 {
 
     struct QuestionMetadata {
@@ -57,12 +61,32 @@ contract MarketFactoryV2 {
 
     IMarketFactory public marketFactory;
     IRealityRegistry public realityRegistry;
+    IKeyValue public keyValue;
+
+    address public owner = msg.sender;
 
     constructor(
         IMarketFactory _marketFactory,
-        IRealityRegistry _realityRegistry
+        IRealityRegistry _realityRegistry,
+        IKeyValue _keyValue
     ) {
         marketFactory = _marketFactory;
+        realityRegistry = _realityRegistry;
+        keyValue = _keyValue;
+    }
+
+    function changeOwner(address _owner) external {
+        require(msg.sender == owner, "Not authorized");
+        owner = _owner;
+    }
+
+    function changeKeyValue(IKeyValue _keyValue) external {
+        require(msg.sender == owner, "Not authorized");
+        keyValue = _keyValue;
+    }
+
+    function changeRealityRegistry(IRealityRegistry _realityRegistry) external {
+        require(msg.sender == owner, "Not authorized");
         realityRegistry = _realityRegistry;
     }
 
@@ -92,7 +116,8 @@ contract MarketFactoryV2 {
             prizeWeights
         );
 
-        for (uint256 i = 0; i < questionsData.length; i++) {
+        uint256 length = questionsData.length;
+        for (uint256 i = 0; i < length; i++) {
             realityRegistry.registerQuestion(
                 IMarket(market).questionIDs(i),
                 questionsMetadata[i].templateID,
@@ -104,6 +129,8 @@ contract MarketFactoryV2 {
             );
         }
 
+        keyValue.setMarketCreator(address(market), msg.sender);
+
         return address(market);
     }
 
@@ -111,7 +138,10 @@ contract MarketFactoryV2 {
         internal view
         returns (IMarketFactory.RealitioQuestion[] memory questionsData)
     {
-        for (uint256 i = 0; i < questionsMetadata.length; i++) {
+        questionsData = new IMarketFactory.RealitioQuestion[](questionsMetadata.length);
+
+        uint256 length = questionsData.length;
+        for (uint256 i = 0; i < length; i++) {
             string memory question = realityRegistry.getQuestion(
                 questionsMetadata[i].templateID,
                 questionsMetadata[i].title,
@@ -120,7 +150,11 @@ contract MarketFactoryV2 {
                 questionsMetadata[i].language
             );
 
-            questionsData[i] = IMarketFactory.RealitioQuestion({templateID: questionsMetadata[i].templateID, question: question, openingTS: questionsMetadata[i].openingTS});
+            questionsData[i] = IMarketFactory.RealitioQuestion({
+                templateID: questionsMetadata[i].templateID,
+                question: question,
+                openingTS: questionsMetadata[i].openingTS
+            });
         }
 
         return questionsData;

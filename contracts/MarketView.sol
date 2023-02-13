@@ -28,6 +28,12 @@ interface IRealityRegistry {
     );
 }
 
+interface IKeyValue {
+    function marketCreator(address) external view returns (address);
+    function username(address) external view returns (string memory);
+    function marketDeleted(address) external view returns (bool);
+}
+
 contract MarketView {
 
     uint256 public constant DIVISOR = 10000;
@@ -36,6 +42,7 @@ contract MarketView {
         string name;
         bytes32 hash;
         uint256 price;
+        address creator;
         uint256[] prizes;
         uint256 numOfBets;
         uint256 pool;
@@ -66,6 +73,7 @@ contract MarketView {
         string marketName;
         uint256 tokenId;
         address owner;
+        string ownerName;
         uint256 points;
         bytes32[] predictions;
     }
@@ -89,10 +97,30 @@ contract MarketView {
     }
 
     IRealityRegistry public realityRegistry;
+    IKeyValue public keyValue;
+
+    address public owner = msg.sender;
 
     constructor(
-        IRealityRegistry _realityRegistry
+        IRealityRegistry _realityRegistry,
+        IKeyValue _keyValue
     ) {
+        realityRegistry = _realityRegistry;
+        keyValue = _keyValue;
+    }
+
+    function changeOwner(address _owner) external {
+        require(msg.sender == owner, "Not authorized");
+        owner = _owner;
+    }
+
+    function changeKeyValue(IKeyValue _keyValue) external {
+        require(msg.sender == owner, "Not authorized");
+        keyValue = _keyValue;
+    }
+
+    function changeRealityRegistry(IRealityRegistry _realityRegistry) external {
+        require(msg.sender == owner, "Not authorized");
         realityRegistry = _realityRegistry;
     }
 
@@ -107,12 +135,23 @@ contract MarketView {
             EventsInfo memory eventsInfo
         )
     {
+        if (keyValue.marketDeleted(marketId)) {
+            return (
+                address(0),
+                baseInfo,
+                managerInfo,
+                periodsInfo,
+                eventsInfo
+            );
+        }
+
         IMarket market = IMarket(marketId);
 
         id = marketId;
         baseInfo.name = market.name();
         baseInfo.hash = market.questionsHash();
         baseInfo.price = market.price();
+        baseInfo.creator = keyValue.marketCreator(marketId);
         baseInfo.prizes = getPrizes(market);
         baseInfo.numOfBets = market.nextTokenID();
 
@@ -206,6 +245,7 @@ contract MarketView {
         betInfo.marketName = marketName;
         betInfo.tokenId = tokenId;
         betInfo.owner = market.ownerOf(tokenId);
+        betInfo.ownerName = keyValue.username(betInfo.owner);
         betInfo.predictions = getPredictions(market, tokenId);
         betInfo.points = getScore(market, tokenId);
     }
