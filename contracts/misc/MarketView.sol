@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
-import "./IMarket.sol";
+import "../interfaces/IMarket.sol";
 
 interface IManager {
     function creator() external view returns (address);
@@ -262,8 +262,16 @@ contract MarketView {
         RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            if (realitio.getFinalizeTS(market.questionIDs(i)) > 0) {
-                count += 1;
+            bytes32 question_id = market.questionIDs(i);
+            if (realitio.isFinalized(question_id)) {
+                if (realitio.isSettledTooSoon(question_id)) {
+                    bytes32 replacement_id = realitio.reopened_questions(question_id);
+                    if (replacement_id != bytes32(0x0) && realitio.isFinalized(replacement_id) && !realitio.isSettledTooSoon(replacement_id)) {
+                        count += 1;
+                    }
+                } else {
+                    count += 1;
+                }
             }
         }
     }
@@ -289,9 +297,13 @@ contract MarketView {
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
             bytes32 questionId = market.questionIDs(i);
-            uint32 finalizeTs = realitio.getFinalizeTS(questionId);
-            if (finalizeTs > 0 && predictions[i] == realitio.getBestAnswer(questionId)) {
-                totalPoints += 1;
+
+            try realitio.resultForOnceSettled(questionId) returns (bytes32 result) {
+                if (result == predictions[i]) {
+                    totalPoints += 1;
+                }
+            } catch {
+                continue;
             }
         }
     }

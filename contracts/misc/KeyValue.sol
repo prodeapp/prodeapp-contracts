@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "../interfaces/IMarket.sol";
+
 contract KeyValue {
 
     address public owner = msg.sender;
@@ -53,7 +55,7 @@ contract KeyValue {
 
     function deleteMarket(address marketId) public {
         require(msg.sender == marketCreator[marketId] || msg.sender == owner, "Not creator");
-        require(marketId.balance == 0, "Market has bets");
+        require(marketId.balance == 0 && IMarket(marketId).nextTokenID() == 0, "Market has bets");
 
         marketDeleted[marketId] = true;
 

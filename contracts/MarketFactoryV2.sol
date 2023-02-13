@@ -2,7 +2,7 @@
 pragma solidity 0.8.9;
 
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
-import "./IMarket.sol";
+import "./interfaces/IMarket.sol";
 
 interface IMarketFactory {
     struct RealitioQuestion {

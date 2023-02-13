@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./../IMarket.sol";
+import "./../interfaces/IMarket.sol";
 
 interface IERC20 {
     function balanceOf(address _owner) external view returns (uint256);

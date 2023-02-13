@@ -3,7 +3,7 @@ pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
-import "./IERC2981.sol";
+import "./interfaces/IERC2981.sol";
 import "./BetNFTDescriptor.sol";
 
 interface IManager {
