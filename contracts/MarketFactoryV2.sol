@@ -49,7 +49,6 @@ interface IKeyValue {
 }
 
 contract MarketFactoryV2 {
-
     struct QuestionMetadata {
         uint256 templateID;
         uint32 openingTS;
@@ -101,8 +100,9 @@ contract MarketFactoryV2 {
         QuestionMetadata[] memory questionsMetadata,
         uint16[] memory prizeWeights
     ) external returns (address) {
-
-        IMarketFactory.RealitioQuestion[] memory questionsData = getQuestionsData(questionsMetadata);
+        IMarketFactory.RealitioQuestion[] memory questionsData = getQuestionsData(
+            questionsMetadata
+        );
 
         address market = marketFactory.createMarket(
             marketName,
@@ -135,7 +135,8 @@ contract MarketFactoryV2 {
     }
 
     function getQuestionsData(QuestionMetadata[] memory questionsMetadata)
-        internal view
+        internal
+        view
         returns (IMarketFactory.RealitioQuestion[] memory questionsData)
     {
         questionsData = new IMarketFactory.RealitioQuestion[](questionsMetadata.length);

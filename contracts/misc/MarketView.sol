@@ -6,7 +6,9 @@ import "../interfaces/IMarket.sol";
 
 interface IManager {
     function creator() external view returns (address);
+
     function creatorFee() external view returns (uint256);
+
     function protocolFee() external view returns (uint256);
 }
 
@@ -15,27 +17,31 @@ interface IBetNFTDescriptor {
 }
 
 interface ICurate {
-    function isRegistered(bytes32 questionsHash) external view returns(bool);
+    function isRegistered(bytes32 questionsHash) external view returns (bool);
 }
 
 interface IRealityRegistry {
-    function metadata(bytes32 questionId) external view returns (
-        string memory title,
-        string memory outcomes,
-        string memory category,
-        string memory language,
-        uint256 templateId
-    );
+    function metadata(bytes32 questionId)
+        external
+        view
+        returns (
+            string memory title,
+            string memory outcomes,
+            string memory category,
+            string memory language,
+            uint256 templateId
+        );
 }
 
 interface IKeyValue {
     function marketCreator(address) external view returns (address);
+
     function username(address) external view returns (string memory);
+
     function marketDeleted(address) external view returns (bool);
 }
 
 contract MarketView {
-
     uint256 public constant DIVISOR = 10000;
 
     struct BaseInfo {
@@ -101,10 +107,7 @@ contract MarketView {
 
     address public owner = msg.sender;
 
-    constructor(
-        IRealityRegistry _realityRegistry,
-        IKeyValue _keyValue
-    ) {
+    constructor(IRealityRegistry _realityRegistry, IKeyValue _keyValue) {
         realityRegistry = _realityRegistry;
         keyValue = _keyValue;
     }
@@ -136,13 +139,7 @@ contract MarketView {
         )
     {
         if (keyValue.marketDeleted(marketId)) {
-            return (
-                address(0),
-                baseInfo,
-                managerInfo,
-                periodsInfo,
-                eventsInfo
-            );
+            return (address(0), baseInfo, managerInfo, periodsInfo, eventsInfo);
         }
 
         IMarket market = IMarket(marketId);
@@ -163,7 +160,7 @@ contract MarketView {
         periodsInfo.resultSubmissionPeriodStart = market.resultSubmissionPeriodStart();
         periodsInfo.submissionTimeout = market.submissionTimeout();
 
-        (uint256 _fee , , address _manager, , ) = market.marketInfo();
+        (uint256 _fee, , address _manager, , ) = market.marketInfo();
         IManager manager = IManager(_manager);
         managerInfo.managerId = manager.creator();
         managerInfo.managementRewards = market.managementReward();
@@ -177,13 +174,7 @@ contract MarketView {
         eventsInfo.hasPendingAnswers = eventsInfo.numOfEvents > eventsInfo.numOfEventsWithAnswer;
     }
 
-    function getMarketBets(address marketId)
-        external
-        view
-        returns (
-            BetInfo[] memory
-        )
-    {
+    function getMarketBets(address marketId) external view returns (BetInfo[] memory) {
         IMarket market = IMarket(marketId);
 
         uint256 numOfBets = market.nextTokenID();
@@ -200,9 +191,7 @@ contract MarketView {
     function getTokenBet(address marketId, uint256 tokenId)
         external
         view
-        returns (
-            BetInfo memory betInfo
-        )
+        returns (BetInfo memory betInfo)
     {
         IMarket market = IMarket(marketId);
 
@@ -228,19 +217,23 @@ contract MarketView {
             eventInfo[i].lastBond = realitio.getBond(eventInfo[i].id);
             eventInfo[i].bounty = realitio.getBounty(eventInfo[i].id);
 
-            (eventInfo[i].title, eventInfo[i].outcomes, eventInfo[i].category, , eventInfo[i].templateId) = realityRegistry.metadata(eventInfo[i].id);
+            (
+                eventInfo[i].title,
+                eventInfo[i].outcomes,
+                eventInfo[i].category,
+                ,
+                eventInfo[i].templateId
+            ) = realityRegistry.metadata(eventInfo[i].id);
         }
 
         return eventInfo;
     }
 
-    function getBetByToken(IMarket market, uint256 tokenId, string memory marketName)
-        public
-        view
-        returns (
-            BetInfo memory betInfo
-        )
-    {
+    function getBetByToken(
+        IMarket market,
+        uint256 tokenId,
+        string memory marketName
+    ) public view returns (BetInfo memory betInfo) {
         betInfo.marketId = address(market);
         betInfo.marketName = marketName;
         betInfo.tokenId = tokenId;
@@ -250,12 +243,16 @@ contract MarketView {
         betInfo.points = getScore(market, tokenId);
     }
 
-    function getPool(IMarket market, uint256 managementReward, uint256 fee) public view returns (uint256 pool) {
+    function getPool(
+        IMarket market,
+        uint256 managementReward,
+        uint256 fee
+    ) public view returns (uint256 pool) {
         if (market.resultSubmissionPeriodStart() == 0) {
             return address(market).balance;
         }
 
-        return managementReward * DIVISOR / fee;
+        return (managementReward * DIVISOR) / fee;
     }
 
     function getNumOfEventsWithAnswer(IMarket market) public view returns (uint256 count) {
@@ -277,7 +274,11 @@ contract MarketView {
     }
 
     //backwards compatibility with older Markets
-    function getPredictions(IMarket market, uint256 _tokenID) public view returns (bytes32[] memory predictions) {
+    function getPredictions(IMarket market, uint256 _tokenID)
+        public
+        view
+        returns (bytes32[] memory predictions)
+    {
         try market.getPredictions(_tokenID) returns (bytes32[] memory _predictions) {
             predictions = _predictions;
         } catch {
@@ -299,10 +300,16 @@ contract MarketView {
             bytes32 questionId = market.questionIDs(i);
             if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
                 bytes32 replacementId = realitio.reopened_questions(questionId);
-                if (realitio.getFinalizeTS(replacementId) > 0 && predictions[i] == realitio.getBestAnswer(replacementId)) {
+                if (
+                    realitio.getFinalizeTS(replacementId) > 0 &&
+                    predictions[i] == realitio.getBestAnswer(replacementId)
+                ) {
                     totalPoints += 1;
                 }
-            } else if (realitio.getFinalizeTS(questionId) > 0 && predictions[i] == realitio.getBestAnswer(questionId)) {
+            } else if (
+                realitio.getFinalizeTS(questionId) > 0 &&
+                predictions[i] == realitio.getBestAnswer(questionId)
+            ) {
                 totalPoints += 1;
             }
         }

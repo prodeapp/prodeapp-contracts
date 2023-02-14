@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "../interfaces/IMarket.sol";
 
 contract KeyValue {
-
     address public owner = msg.sender;
     address public marketFactoryV2;
     mapping(address => string) public username;

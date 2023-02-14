@@ -4,7 +4,6 @@ pragma solidity 0.8.9;
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 
 contract RealityRegistry {
-
     struct QuestionMetadata {
         string title;
         string outcomes;
@@ -14,11 +13,9 @@ contract RealityRegistry {
     }
 
     address public realitio;
-    mapping (bytes32 => QuestionMetadata) public metadata;
+    mapping(bytes32 => QuestionMetadata) public metadata;
 
-    constructor(
-        address _realitio
-    ) {
+    constructor(address _realitio) {
         realitio = _realitio;
     }
 
@@ -32,20 +29,23 @@ contract RealityRegistry {
         string calldata language
     ) external {
         {
-            string memory question = getQuestion(
-                templateId,
-                title,
-                outcomes,
-                category,
-                language
-            );
+            string memory question = getQuestion(templateId, title, outcomes, category, language);
 
             bytes32 content_hash = keccak256(abi.encodePacked(templateId, openingTs, question));
 
-            require (content_hash == RealityETH_v3_0(realitio).getContentHash(questionId), "Wrong content hash");
+            require(
+                content_hash == RealityETH_v3_0(realitio).getContentHash(questionId),
+                "Wrong content hash"
+            );
         }
 
-        metadata[questionId] = QuestionMetadata({title: title, outcomes: outcomes, category: category, language: language, templateId: templateId});
+        metadata[questionId] = QuestionMetadata({
+            title: title,
+            outcomes: outcomes,
+            category: category,
+            language: language,
+            templateId: templateId
+        });
     }
 
     function getQuestion(
@@ -55,30 +55,21 @@ contract RealityRegistry {
         string calldata category,
         string calldata language
     ) public pure returns (string memory question) {
-
         if (templateId == 2 || templateId == 3) {
-            return string(
-                abi.encodePacked(
+            return
+                string(
+                    abi.encodePacked(
                         title,
-                        '\u241f',
+                        "\u241f",
                         outcomes,
-                        '\u241f',
+                        "\u241f",
                         category,
-                        '\u241f',
+                        "\u241f",
                         language
                     )
-            );
+                );
         }
 
-
-        return string(
-            abi.encodePacked(
-                title,
-                '\u241f',
-                category,
-                '\u241f',
-                language
-            )
-        );
+        return string(abi.encodePacked(title, "\u241f", category, "\u241f", language));
     }
 }
