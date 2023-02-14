@@ -262,11 +262,11 @@ contract MarketView {
         RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            bytes32 question_id = market.questionIDs(i);
-            if (realitio.isFinalized(question_id)) {
-                if (realitio.isSettledTooSoon(question_id)) {
-                    bytes32 replacement_id = realitio.reopened_questions(question_id);
-                    if (replacement_id != bytes32(0x0) && realitio.isFinalized(replacement_id) && !realitio.isSettledTooSoon(replacement_id)) {
+            bytes32 questionId = market.questionIDs(i);
+            if (realitio.getFinalizeTS(questionId) > 0) {
+                if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
+                    bytes32 replacementId = realitio.reopened_questions(questionId);
+                    if (realitio.getFinalizeTS(replacementId) > 0) {
                         count += 1;
                     }
                 } else {
@@ -297,13 +297,13 @@ contract MarketView {
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
             bytes32 questionId = market.questionIDs(i);
-
-            try realitio.resultForOnceSettled(questionId) returns (bytes32 result) {
-                if (result == predictions[i]) {
+            if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
+                bytes32 replacementId = realitio.reopened_questions(questionId);
+                if (realitio.getFinalizeTS(replacementId) > 0 && predictions[i] == realitio.getBestAnswer(replacementId)) {
                     totalPoints += 1;
                 }
-            } catch {
-                continue;
+            } else if (realitio.getFinalizeTS(questionId) > 0 && predictions[i] == realitio.getBestAnswer(questionId)) {
+                totalPoints += 1;
             }
         }
     }
