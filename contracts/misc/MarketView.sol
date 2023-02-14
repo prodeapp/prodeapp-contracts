@@ -206,16 +206,24 @@ contract MarketView {
         EventInfo[] memory eventInfo = new EventInfo[](_numberOfQuestions);
 
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            eventInfo[i].id = market.questionIDs(i);
-            eventInfo[i].arbitrator = realitio.getArbitrator(eventInfo[i].id);
-            eventInfo[i].answer = realitio.getBestAnswer(eventInfo[i].id);
-            eventInfo[i].openingTs = realitio.getOpeningTS(eventInfo[i].id);
-            eventInfo[i].answerFinalizedTimestamp = realitio.getFinalizeTS(eventInfo[i].id);
-            eventInfo[i].isPendingArbitration = realitio.isPendingArbitration(eventInfo[i].id);
-            eventInfo[i].timeout = realitio.getTimeout(eventInfo[i].id);
-            eventInfo[i].minBond = realitio.getMinBond(eventInfo[i].id);
-            eventInfo[i].lastBond = realitio.getBond(eventInfo[i].id);
-            eventInfo[i].bounty = realitio.getBounty(eventInfo[i].id);
+            bytes32 questionId = market.questionIDs(i);
+            if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
+                bytes32 replacementId = realitio.reopened_questions(questionId);
+                if (replacementId != bytes32(0)) {
+                    questionId = replacementId;
+                }
+            }
+
+            eventInfo[i].id = questionId;
+            eventInfo[i].arbitrator = realitio.getArbitrator(questionId);
+            eventInfo[i].answer = realitio.getBestAnswer(questionId);
+            eventInfo[i].openingTs = realitio.getOpeningTS(questionId);
+            eventInfo[i].answerFinalizedTimestamp = realitio.getFinalizeTS(questionId);
+            eventInfo[i].isPendingArbitration = realitio.isPendingArbitration(questionId);
+            eventInfo[i].timeout = realitio.getTimeout(questionId);
+            eventInfo[i].minBond = realitio.getMinBond(questionId);
+            eventInfo[i].lastBond = realitio.getBond(questionId);
+            eventInfo[i].bounty = realitio.getBounty(questionId);
 
             (
                 eventInfo[i].title,
