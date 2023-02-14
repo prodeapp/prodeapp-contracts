@@ -235,7 +235,7 @@ contract MarketView {
     }
 
     function getBetByToken(IMarket market, uint256 tokenId, string memory marketName)
-        internal
+        public
         view
         returns (
             BetInfo memory betInfo
@@ -250,7 +250,7 @@ contract MarketView {
         betInfo.points = getScore(market, tokenId);
     }
 
-    function getPool(IMarket market, uint256 managementReward, uint256 fee) internal view returns (uint256 pool) {
+    function getPool(IMarket market, uint256 managementReward, uint256 fee) public view returns (uint256 pool) {
         if (market.resultSubmissionPeriodStart() == 0) {
             return address(market).balance;
         }
@@ -258,7 +258,7 @@ contract MarketView {
         return managementReward * DIVISOR / fee;
     }
 
-    function getNumOfEventsWithAnswer(IMarket market) internal view returns (uint256 count) {
+    function getNumOfEventsWithAnswer(IMarket market) public view returns (uint256 count) {
         RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
@@ -277,7 +277,7 @@ contract MarketView {
     }
 
     //backwards compatibility with older Markets
-    function getPredictions(IMarket market, uint256 _tokenID) internal view returns (bytes32[] memory predictions) {
+    function getPredictions(IMarket market, uint256 _tokenID) public view returns (bytes32[] memory predictions) {
         try market.getPredictions(_tokenID) returns (bytes32[] memory _predictions) {
             predictions = _predictions;
         } catch {
@@ -285,7 +285,7 @@ contract MarketView {
         }
     }
 
-    function getScore(IMarket market, uint256 _tokenID) internal view returns (uint256 totalPoints) {
+    function getScore(IMarket market, uint256 _tokenID) public view returns (uint256 totalPoints) {
         RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
         bytes32[] memory predictions = getPredictions(market, _tokenID);
 
@@ -309,7 +309,7 @@ contract MarketView {
     }
 
     //backwards compatibility with older Markets
-    function getPrizes(IMarket market) internal view returns (uint256[] memory) {
+    function getPrizes(IMarket market) public view returns (uint256[] memory) {
         try market.getPrizes() returns (uint256[] memory prizes) {
             return prizes;
         } catch {
@@ -328,7 +328,7 @@ contract MarketView {
     }
 
     //backwards compatibility with older Markets
-    function numberOfQuestions(IMarket market) internal view returns (uint256 count) {
+    function numberOfQuestions(IMarket market) public view returns (uint256 count) {
         try market.numberOfQuestions() returns (uint256 _count) {
             count = _count;
         } catch {
