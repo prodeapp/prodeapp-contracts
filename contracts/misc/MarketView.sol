@@ -43,6 +43,8 @@ interface IKeyValue {
 
 contract MarketView {
     uint256 public constant DIVISOR = 10000;
+    bytes32 public constant SETTLED_TO_SOON =
+        0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe;
 
     struct BaseInfo {
         string name;
@@ -206,13 +208,7 @@ contract MarketView {
         EventInfo[] memory eventInfo = new EventInfo[](_numberOfQuestions);
 
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            bytes32 questionId = market.questionIDs(i);
-            if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
-                bytes32 replacementId = realitio.reopened_questions(questionId);
-                if (replacementId != bytes32(0)) {
-                    questionId = replacementId;
-                }
-            }
+            bytes32 questionId = getQuestionId(market.questionIDs(i), realitio);
 
             eventInfo[i].id = questionId;
             eventInfo[i].arbitrator = realitio.getArbitrator(questionId);
@@ -267,16 +263,9 @@ contract MarketView {
         RealityETH_v3_0 realitio = RealityETH_v3_0(market.realitio());
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            bytes32 questionId = market.questionIDs(i);
+            bytes32 questionId = getQuestionId(market.questionIDs(i), realitio);
             if (realitio.getFinalizeTS(questionId) > 0) {
-                if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
-                    bytes32 replacementId = realitio.reopened_questions(questionId);
-                    if (realitio.getFinalizeTS(replacementId) > 0) {
-                        count += 1;
-                    }
-                } else {
-                    count += 1;
-                }
+                count += 1;
             }
         }
     }
@@ -305,18 +294,11 @@ contract MarketView {
 
         uint256 _numberOfQuestions = numberOfQuestions(market);
         for (uint256 i = 0; i < _numberOfQuestions; i++) {
-            bytes32 questionId = market.questionIDs(i);
-            if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
-                bytes32 replacementId = realitio.reopened_questions(questionId);
-                if (
-                    realitio.getFinalizeTS(replacementId) > 0 &&
-                    predictions[i] == realitio.getBestAnswer(replacementId)
-                ) {
-                    totalPoints += 1;
-                }
-            } else if (
+            bytes32 questionId = getQuestionId(market.questionIDs(i), realitio);
+            if (
                 realitio.getFinalizeTS(questionId) > 0 &&
-                predictions[i] == realitio.getBestAnswer(questionId)
+                predictions[i] == realitio.getBestAnswer(questionId) &&
+                predictions[i] != SETTLED_TO_SOON
             ) {
                 totalPoints += 1;
             }
@@ -355,5 +337,19 @@ contract MarketView {
                 }
             }
         }
+    }
+
+    function getQuestionId(bytes32 questionId, RealityETH_v3_0 realitio)
+        public
+        view
+        returns (bytes32)
+    {
+        if (realitio.isFinalized(questionId) && realitio.isSettledTooSoon(questionId)) {
+            bytes32 replacementId = realitio.reopened_questions(questionId);
+            if (replacementId != bytes32(0)) {
+                questionId = replacementId;
+            }
+        }
+        return questionId;
     }
 }
