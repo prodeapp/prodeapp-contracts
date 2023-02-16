@@ -4,7 +4,7 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import '@openzeppelin/contracts/utils/Strings.sol';
 import 'base64-sol/base64.sol';
-import "./IMarket.sol";
+import "./interfaces/IMarket.sol";
 
 interface ICurate {
     function isRegistered(bytes32 questionsHash) external view returns(bool);

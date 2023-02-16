@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
-import "./IMarket.sol";
+import "../interfaces/IMarket.sol";
 
 contract VoucherManager {
     address public owner = msg.sender;
