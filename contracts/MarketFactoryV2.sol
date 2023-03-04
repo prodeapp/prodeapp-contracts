@@ -45,10 +45,7 @@ contract MarketFactoryV2 {
         string language;
     }
 
-    uint256 public version;
     address public governor = msg.sender;
-    // marketPoolContract[market], empty if market doesn't have a liquidity pool.
-    mapping(address => address) public marketPoolContract;
 
     // On-chain data contract helpers
     IRealityRegistry public realityRegistry;
@@ -58,21 +55,16 @@ contract MarketFactoryV2 {
     IMarketFactory public marketFactory;
     LiquidityFactory public liquidityFactory;
 
-    constructor() {}
-
-    function initialize(
+    constructor(
         IRealityRegistry _realityRegistry,
         IKeyValue _keyValue,
         IMarketFactory _marketFactory,
         LiquidityFactory _liquidityFactory
-    ) external {
-        require(version == 0, "Already initialized");
+    ) {
         realityRegistry = _realityRegistry;
         keyValue = _keyValue;
         marketFactory = _marketFactory;
         liquidityFactory = _liquidityFactory;
-
-        version++;
     }
 
     function changeGovernor(address _governor) external {
@@ -119,7 +111,7 @@ contract MarketFactoryV2 {
 
         registerQuestions(market, questionsMetadata);
 
-        return address(market);
+        return market;
     }
 
     function createMarketWithLiquidityPool(
@@ -132,7 +124,7 @@ contract MarketFactoryV2 {
         QuestionMetadata[] memory questionsMetadata,
         uint16[] memory prizeWeights,
         LiquidityFactory.LiquidityParameters memory liquidityParameters
-    ) external returns (address) {
+    ) external returns (address, address) {
         IMarketFactory.RealitioQuestion[] memory questionsData = getQuestionsData(
             questionsMetadata
         );
@@ -152,17 +144,15 @@ contract MarketFactoryV2 {
             marketParameters,
             liquidityParameters
         );
-        marketPoolContract[market] = liquidityPool;
 
         registerQuestions(market, questionsMetadata);
 
-        return address(market);
+        return (market, liquidityPool);
     }
 
-    function registerQuestions(
-        address market,
-        QuestionMetadata[] memory questionsMetadata
-    ) internal {
+    function registerQuestions(address market, QuestionMetadata[] memory questionsMetadata)
+        internal
+    {
         for (uint256 i = 0; i < questionsMetadata.length; i++) {
             realityRegistry.registerQuestion(
                 IMarket(market).questionIDs(i),
