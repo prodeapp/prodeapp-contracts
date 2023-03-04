@@ -2,8 +2,8 @@
 pragma solidity 0.8.9;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import "./../MarketFactoryV2.sol";
 import "./../interfaces/IMarket.sol";
+import "./../interfaces/IMarketFactory.sol";
 import "./LiquidityPool.sol";
 
 contract LiquidityFactory {
@@ -23,13 +23,13 @@ contract LiquidityFactory {
         uint256 closingTime;
         uint256 price;
         uint256 minBond;
-        MarketFactoryV2.QuestionMetadata[] questionsMetadata;
+        IMarketFactory.RealitioQuestion[] questionsData;
         uint16[] prizeWeights;
     }
 
     LiquidityPool[] public pools;
     mapping(address => bool) public exists;
-    address public immutable marketFactoryV2;
+    IMarketFactory public immutable marketFactory;
 
     address public governor;
     address public liquidityPool;
@@ -38,16 +38,16 @@ contract LiquidityFactory {
 
     /**
      *  @dev Constructor.
-     *  @param _marketFactoryV2 Address of the marketFactoryV2 contract used to create the new markets.
+     *  @param _marketFactory Address of the marketFactory contract used to create the new markets.
      *  @param _liquidityPool Address of the liquidity pool contract that is going to be used for each new deployment.
      *  @param _governor Address of the governor of this contract.
      */
     constructor(
-        address _marketFactoryV2,
+        address _marketFactory,
         address _liquidityPool,
         address _governor
     ) {
-        marketFactoryV2 = _marketFactoryV2;
+        marketFactory = IMarketFactory(_marketFactory);
         liquidityPool = _liquidityPool;
         governor = _governor;
     }
@@ -72,7 +72,7 @@ contract LiquidityFactory {
         pools.push(LiquidityPool(payable(newPool)));
 
         // Create new market
-        address newMarket = MarketFactoryV2(marketFactoryV2).createMarket(
+        address newMarket = marketFactory.createMarket(
             _marketParameters.marketName,
             _marketParameters.marketSymbol,
             newPool,
@@ -80,7 +80,7 @@ contract LiquidityFactory {
             _marketParameters.closingTime,
             _marketParameters.price,
             _marketParameters.minBond,
-            _marketParameters.questionsMetadata,
+            _marketParameters.questionsData,
             _marketParameters.prizeWeights
         );
 
