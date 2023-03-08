@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./../interfaces/IMarket.sol";
+import "./../interfaces/IManager.sol";
 
 contract LiquidityPool {
     uint256 public constant DIVISOR = 10000;
@@ -73,12 +74,16 @@ contract LiquidityPool {
     }
 
     function claimLiquidityRewards(address _account) external {
-        require(market.resultSubmissionPeriodStart() != 0, "Withdraw not allowed");
+        (, , address _manager, , ) = market.marketInfo();
+        IManager manager = IManager(_manager);
+        require(manager.managerRewardDistributed(), "Rewards not available yet");
         require(
             block.timestamp > market.resultSubmissionPeriodStart() + market.submissionTimeout(),
             "Submission period not over"
         );
         require(balances[_account] > 0, "Not enough balance");
+
+        if (manager.creatorReward() > 0) manager.executeCreatorRewards();
 
         uint256 marketPayment;
         if (market.ranking(0).points >= pointsToWin) {
