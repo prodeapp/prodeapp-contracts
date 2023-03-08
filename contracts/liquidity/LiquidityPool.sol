@@ -83,9 +83,7 @@ contract LiquidityPool {
         uint256 marketPayment;
         if (market.ranking(0).points >= pointsToWin) {
             // there's at least one winner
-            uint256 maxPayment = market.price() * market.nextTokenID();
-            maxPayment = mulCap(maxPayment, betMultiplier);
-            marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
+            marketPayment = getMarketPaymentIfWon();
         }
 
         uint256 amount = poolReward + totalDeposits - marketPayment;
@@ -132,10 +130,7 @@ contract LiquidityPool {
             cumWeigths += prizes[i];
         }
 
-        uint256 maxPayment = market.price() * market.nextTokenID();
-        maxPayment = mulCap(maxPayment, betMultiplier);
-        uint256 marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
-
+        uint256 marketPayment = getMarketPaymentIfWon();
         uint256 reward = (marketPayment * cumWeigths) / (DIVISOR * sharedBetween);
         claims[_rankIndex] = true;
         payable(market.ownerOf(market.ranking(_rankIndex).tokenID)).transfer(reward);
@@ -173,6 +168,12 @@ contract LiquidityPool {
             uint256 c = _a * _b;
             return c / _a == _b ? c : UINT_MAX;
         }
+    }
+
+    function getMarketPaymentIfWon() public view returns(uint256 marketPayment) {
+        uint256 maxPayment = market.price() * market.nextTokenID();
+        maxPayment = mulCap(maxPayment, betMultiplier);
+        marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
     }
 
     receive() external payable {
