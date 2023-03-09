@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import "./../interfaces/IMarket.sol";
+import "./../interfaces/IManager.sol";
 
 contract LiquidityPool {
     uint256 public constant DIVISOR = 10000;
@@ -73,19 +74,21 @@ contract LiquidityPool {
     }
 
     function claimLiquidityRewards(address _account) external {
-        require(market.resultSubmissionPeriodStart() != 0, "Withdraw not allowed");
+        (, , address _manager, , ) = market.marketInfo();
+        IManager manager = IManager(_manager);
+        require(manager.managerRewardDistributed(), "Rewards not available yet");
         require(
             block.timestamp > market.resultSubmissionPeriodStart() + market.submissionTimeout(),
             "Submission period not over"
         );
         require(balances[_account] > 0, "Not enough balance");
 
+        if (manager.creatorReward() > 0) manager.executeCreatorRewards();
+
         uint256 marketPayment;
         if (market.ranking(0).points >= pointsToWin) {
             // there's at least one winner
-            uint256 maxPayment = market.price() * market.nextTokenID();
-            maxPayment = mulCap(maxPayment, betMultiplier);
-            marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
+            marketPayment = getMarketPaymentIfWon();
         }
 
         uint256 amount = poolReward + totalDeposits - marketPayment;
@@ -132,10 +135,7 @@ contract LiquidityPool {
             cumWeigths += prizes[i];
         }
 
-        uint256 maxPayment = market.price() * market.nextTokenID();
-        maxPayment = mulCap(maxPayment, betMultiplier);
-        uint256 marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
-
+        uint256 marketPayment = getMarketPaymentIfWon();
         uint256 reward = (marketPayment * cumWeigths) / (DIVISOR * sharedBetween);
         claims[_rankIndex] = true;
         payable(market.ownerOf(market.ranking(_rankIndex).tokenID)).transfer(reward);
@@ -173,6 +173,12 @@ contract LiquidityPool {
             uint256 c = _a * _b;
             return c / _a == _b ? c : UINT_MAX;
         }
+    }
+
+    function getMarketPaymentIfWon() public view returns(uint256 marketPayment) {
+        uint256 maxPayment = market.price() * market.nextTokenID();
+        maxPayment = mulCap(maxPayment, betMultiplier);
+        marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
     }
 
     receive() external payable {
