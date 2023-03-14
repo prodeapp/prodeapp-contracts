@@ -63,6 +63,8 @@ interface ILiquidityPool {
     function betMultiplier() external view returns (uint256);
 
     function totalDeposits() external view returns (uint256);
+
+    function getMarketPaymentIfWon() external view returns (uint256);
 }
 
 contract MarketView {
@@ -218,17 +220,15 @@ contract MarketView {
 
         if (liquidityFactory.exists(managerInfo.managerId)) {
             liquidityInfo.id = managerInfo.managerId;
-            liquidityInfo.creator = ILiquidityPool(liquidityInfo.id).creator();
-            liquidityInfo.creatorFee = ILiquidityPool(liquidityInfo.id).creatorFee();
-            liquidityInfo.pointsToWin = ILiquidityPool(liquidityInfo.id).pointsToWin();
-            liquidityInfo.betMultiplier = ILiquidityPool(liquidityInfo.id).betMultiplier();
-            liquidityInfo.totalDeposits = ILiquidityPool(liquidityInfo.id).totalDeposits();
 
-            uint256 maxPayment = baseInfo.price * baseInfo.numOfBets * liquidityInfo.betMultiplier;
+            ILiquidityPool liquidityPool = ILiquidityPool(liquidityInfo.id);
 
-            liquidityInfo.prizePool = liquidityInfo.totalDeposits < maxPayment
-                ? liquidityInfo.totalDeposits
-                : maxPayment;
+            liquidityInfo.creator = liquidityPool.creator();
+            liquidityInfo.creatorFee = liquidityPool.creatorFee();
+            liquidityInfo.pointsToWin = liquidityPool.pointsToWin();
+            liquidityInfo.betMultiplier = liquidityPool.betMultiplier();
+            liquidityInfo.totalDeposits = liquidityPool.totalDeposits();
+            liquidityInfo.prizePool = liquidityPool.getMarketPaymentIfWon();
         }
     }
 
