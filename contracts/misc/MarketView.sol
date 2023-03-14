@@ -41,6 +41,30 @@ interface IKeyValue {
     function marketDeleted(address) external view returns (bool);
 }
 
+interface IMarketFactory {
+    function QUESTION_TIMEOUT() external view returns (uint32);
+
+    function arbitrator() external view returns (address);
+
+    function realitio() external view returns (address);
+}
+
+interface ILiquidityFactory {
+    function exists(address) external view returns (bool);
+}
+
+interface ILiquidityPool {
+    function creator() external view returns (address);
+
+    function creatorFee() external view returns (uint256);
+
+    function pointsToWin() external view returns (uint256);
+
+    function betMultiplier() external view returns (uint256);
+
+    function totalDeposits() external view returns (uint256);
+}
+
 contract MarketView {
     uint256 public constant DIVISOR = 10000;
     bytes32 public constant SETTLED_TO_SOON =
@@ -104,14 +128,30 @@ contract MarketView {
         uint256 templateId;
     }
 
+    struct LiquidityInfo {
+        address id;
+        address creator;
+        uint256 creatorFee;
+        uint256 pointsToWin;
+        uint256 betMultiplier;
+        uint256 totalDeposits;
+        uint256 prizePool;
+    }
+
     IRealityRegistry public realityRegistry;
     IKeyValue public keyValue;
+    ILiquidityFactory public liquidityFactory;
 
     address public owner = msg.sender;
 
-    constructor(IRealityRegistry _realityRegistry, IKeyValue _keyValue) {
+    constructor(
+        IRealityRegistry _realityRegistry,
+        IKeyValue _keyValue,
+        ILiquidityFactory _liquidityFactory
+    ) {
         realityRegistry = _realityRegistry;
         keyValue = _keyValue;
+        liquidityFactory = _liquidityFactory;
     }
 
     function changeOwner(address _owner) external {
@@ -137,11 +177,12 @@ contract MarketView {
             BaseInfo memory baseInfo,
             ManagerInfo memory managerInfo,
             PeriodsInfo memory periodsInfo,
-            EventsInfo memory eventsInfo
+            EventsInfo memory eventsInfo,
+            LiquidityInfo memory liquidityInfo
         )
     {
         if (keyValue.marketDeleted(marketId)) {
-            return (address(0), baseInfo, managerInfo, periodsInfo, eventsInfo);
+            return (address(0), baseInfo, managerInfo, periodsInfo, eventsInfo, liquidityInfo);
         }
 
         IMarket market = IMarket(marketId);
@@ -174,6 +215,21 @@ contract MarketView {
         eventsInfo.numOfEvents = numberOfQuestions(market);
         eventsInfo.numOfEventsWithAnswer = getNumOfEventsWithAnswer(market);
         eventsInfo.hasPendingAnswers = eventsInfo.numOfEvents > eventsInfo.numOfEventsWithAnswer;
+
+        if (liquidityFactory.exists(managerInfo.managerId)) {
+            liquidityInfo.id = managerInfo.managerId;
+            liquidityInfo.creator = ILiquidityPool(liquidityInfo.id).creator();
+            liquidityInfo.creatorFee = ILiquidityPool(liquidityInfo.id).creatorFee();
+            liquidityInfo.pointsToWin = ILiquidityPool(liquidityInfo.id).pointsToWin();
+            liquidityInfo.betMultiplier = ILiquidityPool(liquidityInfo.id).betMultiplier();
+            liquidityInfo.totalDeposits = ILiquidityPool(liquidityInfo.id).totalDeposits();
+
+            uint256 maxPayment = baseInfo.price * baseInfo.numOfBets * liquidityInfo.betMultiplier;
+
+            liquidityInfo.prizePool = liquidityInfo.totalDeposits < maxPayment
+                ? liquidityInfo.totalDeposits
+                : maxPayment;
+        }
     }
 
     function getMarketBets(address marketId) external view returns (BetInfo[] memory) {
@@ -245,6 +301,20 @@ contract MarketView {
         betInfo.ownerName = keyValue.username(betInfo.owner);
         betInfo.predictions = getPredictions(market, tokenId);
         betInfo.points = getScore(market, tokenId);
+    }
+
+    function getMarketFactoryAttrs(IMarketFactory marketFactory)
+        external
+        view
+        returns (
+            address arbitrator,
+            address realitio,
+            uint256 timeout
+        )
+    {
+        arbitrator = marketFactory.arbitrator();
+        realitio = marketFactory.realitio();
+        timeout = marketFactory.QUESTION_TIMEOUT();
     }
 
     function getPool(
