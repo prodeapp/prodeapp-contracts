@@ -3,26 +3,8 @@ pragma solidity 0.8.9;
 
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./interfaces/IMarket.sol";
-
-interface IMarketFactory {
-    struct RealitioQuestion {
-        uint256 templateID;
-        string question;
-        uint32 openingTS;
-    }
-
-    function createMarket(
-        string memory marketName,
-        string memory marketSymbol,
-        address creator,
-        uint256 creatorFee,
-        uint256 closingTime,
-        uint256 price,
-        uint256 minBond,
-        RealitioQuestion[] memory questionsData,
-        uint16[] memory prizeWeights
-    ) external returns (address);
-}
+import "./interfaces/IMarketFactory.sol";
+import "./liquidity/LiquidityFactory.sol";
 
 interface IRealityRegistry {
     function registerQuestion(
@@ -48,6 +30,11 @@ interface IKeyValue {
     function setMarketCreator(address marketId, address creator) external;
 }
 
+/**
+ *  @dev MarketFactoryV2.
+ *  Factory proxy that stores all data on-chain.
+ *  Supports legacy markets and markets with liquidity pools.
+ */
 contract MarketFactoryV2 {
     struct QuestionMetadata {
         uint256 templateID;
@@ -58,34 +45,40 @@ contract MarketFactoryV2 {
         string language;
     }
 
-    IMarketFactory public marketFactory;
+    address public governor = msg.sender;
+
+    // On-chain data contract helpers
     IRealityRegistry public realityRegistry;
     IKeyValue public keyValue;
 
-    address public owner = msg.sender;
+    // Factories
+    IMarketFactory public marketFactory;
+    LiquidityFactory public liquidityFactory;
 
     constructor(
-        IMarketFactory _marketFactory,
         IRealityRegistry _realityRegistry,
-        IKeyValue _keyValue
+        IKeyValue _keyValue,
+        IMarketFactory _marketFactory,
+        LiquidityFactory _liquidityFactory
     ) {
-        marketFactory = _marketFactory;
         realityRegistry = _realityRegistry;
         keyValue = _keyValue;
+        marketFactory = _marketFactory;
+        liquidityFactory = _liquidityFactory;
     }
 
-    function changeOwner(address _owner) external {
-        require(msg.sender == owner, "Not authorized");
-        owner = _owner;
+    function changeGovernor(address _governor) external {
+        require(msg.sender == governor, "Not authorized");
+        governor = _governor;
     }
 
     function changeKeyValue(IKeyValue _keyValue) external {
-        require(msg.sender == owner, "Not authorized");
+        require(msg.sender == governor, "Not authorized");
         keyValue = _keyValue;
     }
 
     function changeRealityRegistry(IRealityRegistry _realityRegistry) external {
-        require(msg.sender == owner, "Not authorized");
+        require(msg.sender == governor, "Not authorized");
         realityRegistry = _realityRegistry;
     }
 
@@ -116,8 +109,51 @@ contract MarketFactoryV2 {
             prizeWeights
         );
 
-        uint256 length = questionsData.length;
-        for (uint256 i = 0; i < length; i++) {
+        registerQuestions(market, questionsMetadata);
+
+        return market;
+    }
+
+    function createMarketWithLiquidityPool(
+        string memory marketName,
+        string memory marketSymbol,
+        uint256 creatorFee,
+        uint256 closingTime,
+        uint256 price,
+        uint256 minBond,
+        QuestionMetadata[] memory questionsMetadata,
+        uint16[] memory prizeWeights,
+        LiquidityFactory.LiquidityParameters memory liquidityParameters
+    ) external returns (address, address) {
+        IMarketFactory.RealitioQuestion[] memory questionsData = getQuestionsData(
+            questionsMetadata
+        );
+
+        LiquidityFactory.MarketParameters memory marketParameters = LiquidityFactory
+            .MarketParameters({
+                marketName: marketName,
+                marketSymbol: marketSymbol,
+                creatorFee: creatorFee,
+                closingTime: closingTime,
+                price: price,
+                minBond: minBond,
+                questionsData: questionsData,
+                prizeWeights: prizeWeights
+            });
+        (address market, address liquidityPool) = liquidityFactory.createMarketWithLiquidityPool(
+            marketParameters,
+            liquidityParameters
+        );
+
+        registerQuestions(market, questionsMetadata);
+
+        return (market, liquidityPool);
+    }
+
+    function registerQuestions(address market, QuestionMetadata[] memory questionsMetadata)
+        internal
+    {
+        for (uint256 i = 0; i < questionsMetadata.length; i++) {
             realityRegistry.registerQuestion(
                 IMarket(market).questionIDs(i),
                 questionsMetadata[i].templateID,
@@ -130,8 +166,6 @@ contract MarketFactoryV2 {
         }
 
         keyValue.setMarketCreator(address(market), msg.sender);
-
-        return address(market);
     }
 
     function getQuestionsData(QuestionMetadata[] memory questionsMetadata)

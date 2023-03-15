@@ -4,6 +4,12 @@ pragma solidity 0.8.9;
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface IMarket is IERC721 {
+    struct Result {
+        uint256 tokenID;
+        uint248 points;
+        bool claimed;
+    }
+
     function marketInfo()
         external
         view
@@ -51,6 +57,8 @@ interface IMarket is IERC721 {
         returns (uint256);
 
     function bets(bytes32 _tokenHash) external view returns (uint256);
+
+    function ranking(uint256 index) external view returns (Result memory);
 
     function fundMarket(string calldata _message) external payable;
 
