@@ -129,12 +129,7 @@ contract LiquidityPool {
         );
         uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
-        uint256 cumWeigths = 0;
-        uint256[] memory prizes = market.getPrizes();
-        for (uint256 i = _firstSharedIndex; i < prizes.length && i <= _lastSharedIndex; i++) {
-            cumWeigths += prizes[i];
-        }
-
+        uint256 cumWeigths = getPrizeWeight(_firstSharedIndex, _lastSharedIndex);
         uint256 marketPayment = getMarketPaymentIfWon();
         uint256 reward = (marketPayment * cumWeigths) / (DIVISOR * sharedBetween);
         claims[_rankIndex] = true;
@@ -175,7 +170,29 @@ contract LiquidityPool {
         }
     }
 
-    function getMarketPaymentIfWon() public view returns(uint256 marketPayment) {
+    function getPrizeWeight(uint256 _firstSharedIndex, uint256 _lastSharedIndex)
+        internal
+        view
+        returns (uint256 cumWeigths)
+    {
+        uint256[] memory prizes = market.getPrizes();
+        uint256 i = _firstSharedIndex;
+        while (i < prizes.length && i <= _lastSharedIndex) {
+            cumWeigths += prizes[i];
+            i++;
+        }
+        if (i < prizes.length) {
+            uint256 vacantPrizesWeight = 0;
+            uint256 j = prizes.length - 1;
+            while (market.ranking(j).points < pointsToWin) {
+                vacantPrizesWeight += prizes[j];
+                j--;
+            }
+            cumWeigths += vacantPrizesWeight / (j + 1); // Rounding errors are expected, but should be small.
+        }
+    }
+
+    function getMarketPaymentIfWon() public view returns (uint256 marketPayment) {
         uint256 maxPayment = market.price() * market.nextTokenID();
         maxPayment = mulCap(maxPayment, betMultiplier);
         marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
