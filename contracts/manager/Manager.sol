@@ -23,6 +23,12 @@ contract Manager {
     uint256 public creatorReward;
     uint256 public protocolReward;
 
+    event ManagerRewardClaimed(address _manager, uint256 _amount);
+
+    event ProtocolRewardClaimed(address _protocolTreasury, uint256 _amount);
+
+    event ReferralRewardClaimed(address _referral, uint256 _reward);
+
     constructor() {}
 
     function initialize(
@@ -71,12 +77,16 @@ contract Manager {
         uint256 creatorRewardToSend = creatorReward;
         creatorReward = 0;
         requireSendXDAI(creator, creatorRewardToSend);
+
+        emit ManagerRewardClaimed(creator, creatorRewardToSend);
     }
 
     function executeProtocolRewards() external {
         uint256 protocolRewardToSend = protocolReward;
         protocolReward = 0;
         requireSendXDAI(protocolTreasury, protocolRewardToSend);
+
+        emit ProtocolRewardClaimed(protocolTreasury, protocolRewardToSend);
     }
 
     function claimReferralReward(address _referral) external {
@@ -96,6 +106,8 @@ contract Manager {
         claimed[_referral] = true;
         amountClaimed += rewardFromCreator + rewardFromProtocol;
         requireSendXDAI(payable(_referral), rewardFromCreator + rewardFromProtocol);
+
+        emit ReferralRewardClaimed(_referral, rewardFromCreator + rewardFromProtocol);
     }
 
     function distributeSurplus() external {
