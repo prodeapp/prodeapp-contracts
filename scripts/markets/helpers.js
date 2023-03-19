@@ -1,5 +1,63 @@
 const ethers = hre.ethers;
 
+// ----  V2  ----
+
+function buildQuestionHomevsAwayV2(team1, team2, market, openingTS) {
+  return {
+    templateID: 2,
+    openingTS: openingTS,
+    title: `What will be the result of the ${team1} vs ${team2} match at ${market}?`,
+    outcomes: JSON.stringify([team1, team2, 'Draw']).replace(/^\[/, '').replace(/\]$/, ''),
+    category: 'football',
+    language: 'en_US'
+  };
+}
+
+function buildQuestionSingleSelectV2(question, answers, openingTS, category) {
+  return {
+    templateID: 2,
+    openingTS: openingTS,
+    title: question,
+    outcomes: JSON.stringify(answers).replace(/^\[/, '').replace(/\]$/, ''),
+    category: category,
+    language: 'en_US'
+  };
+}
+
+function buildQuestionMultipleSelectV2(question, answers, openingTS, category) {
+  return {
+    templateID: 3,
+    openingTS: openingTS,
+    title: question,
+    outcomes: JSON.stringify(answers).replace(/^\[/, '').replace(/\]$/, ''),
+    category: category,
+    language: 'en_US'
+  };
+}
+
+function buildQuestionPositionV2(position, answers, market, openingTS) {
+  return {
+    templateID: 2,
+    openingTS: openingTS,
+    title: `Who will finish in the position #${position} at ${market} race?`,
+    outcomes: JSON.stringify(answers).replace(/^\[/, '').replace(/\]$/, ''),
+    category: 'F1',
+    language: 'en_US'
+  };
+}
+
+function buildQuestionTeamMostPointsV2(answers, market, openingTS) {
+  return {
+    templateID: 3,
+    openingTS: openingTS,
+    title: `Which team will earn more points at ${market}?`,
+    outcomes: JSON.stringify(answers).replace(/^\[/, '').replace(/\]$/, ''),
+    category: 'F1',
+    language: 'en_US'
+  };
+}
+
+// ----  V1  ----
 function buildQuestionHomevsAway(team1, team2, market, openingTS) {
   return {
     templateID: 2,
@@ -68,6 +126,24 @@ function encodeQuestionText(
   return qText;
 }
 
+function encodeQuestionTextV2(
+  templateId/*: numer*/,
+  txt/*: string*/,
+  outcomes/*: string[]*/,
+  category/*: string*/,
+  lang/*?: string*/
+) {
+  let qText = JSON.stringify(txt).replace(/^"|"$/g, '');
+  const delim = '\u241f';
+  //console.log('using template_id', template_id);
+  if (templateId == 2 || templateId == 3) {
+    qText = qText + delim + outcomes;
+    //console.log('made qtext', qtext);
+  }
+  qText = qText + delim + category + delim + lang;
+  return qText;
+}
+
 function getQuestionID(
   _templateID,
   _openingTS,
@@ -112,6 +188,29 @@ function orderQuestions(marketData, timeout, arbitrator, realityEth, factory) {
     ) ? 1 : -1)
 }
 
+function orderQuestionsV2(marketData, timeout, arbitrator, realityEth, factory) {
+  return marketData.questions
+    .sort((a, b) => getQuestionID(
+      a.templateID,
+      a.openingTS,
+      encodeQuestionTextV2(a.templateID, a.title, a.outcomes, a.category, a.language),
+      arbitrator,
+      timeout,
+      marketData.minBond,
+      realityEth,
+      factory,
+    ) > getQuestionID(
+      b.templateID,
+      b.openingTS,
+      encodeQuestionTextV2(b.templateID, b.title, b.outcomes, b.category, b.language),
+      arbitrator,
+      timeout,
+      marketData.minBond,
+      realityEth,
+      factory,
+    ) ? 1 : -1)
+}
+
 const params = {
   42: {
     arbitrator: "0xDEd12537dA82C1019b3CA1714A5d58B7c5c19A04",
@@ -121,7 +220,8 @@ const params = {
   100: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
-    factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b"
+    factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b",
+    factoryV2: "0x364Bc6fCdF1D2Ce014010aB4f479a892a8736014"
   },
   31337: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
@@ -150,10 +250,16 @@ module.exports = {
   buildQuestionTeamMostPoints,
   buildQuestionSingleSelect,
   buildQuestionMultipleSelect,
+  buildQuestionHomevsAwayV2,
+  buildQuestionPositionV2,
+  buildQuestionTeamMostPointsV2,
+  buildQuestionSingleSelectV2,
+  buildQuestionMultipleSelectV2,
   toTimestamp,
   encodeQuestionText,
   getQuestionID,
   orderQuestions,
+  orderQuestionsV2,
   getChain,
   SOCCER_MATCH_DURATION,
   TENNIS_MATCH_DURATION,
