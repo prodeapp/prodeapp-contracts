@@ -39,6 +39,14 @@ const marketData = {
   prizeWeights: [5000, 3500, 1500]
 };
 
+const liquidityParameters = {
+  creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
+  creatorFee: 0,
+  betMultiplier: "0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+  pointsToWin: marketData.questions.length,
+};
+
+
 async function main() {
   const chainId = hre.network.config.chainId;
   const [deployer] = await ethers.getSigners();
@@ -46,9 +54,9 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
   console.log("Account balance:", (await deployer.getBalance()).toString());
   console.log("Chain Id:", chainId);
-  console.log(marketData)
 
   const chainConfig = getChain(chainId);
+
   // Sort questions by Realitio's question ID.
   const orderedQuestions = orderQuestionsV2(
     marketData,
@@ -59,17 +67,17 @@ async function main() {
   );
 
   const MarketFactoryV2 = await ethers.getContractFactory("MarketFactoryV2");
-  const marketFactoryv2 = MarketFactoryV2.attach(chainConfig.factoryV2);
-  await marketFactoryv2.createMarket(
+  const marketFactoryV2 = await MarketFactoryV2.attach(chainConfig.factoryV2);
+  await marketFactoryV2.createMarketWithLiquidityPool(
     marketData.marketName,
     marketData.marketSymbol,
-    marketData.creator,
     marketData.creatorFee,
     marketData.closingTime,
     marketData.price,
     marketData.minBond,
     orderedQuestions,
-    marketData.prizeWeights
+    marketData.prizeWeights,
+    liquidityParameters
   );
 }
 
