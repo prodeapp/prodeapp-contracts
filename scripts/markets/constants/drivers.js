@@ -9,18 +9,21 @@ const DRIVERS = {
     OCON: 'Esteban Ocon',
     ALONSO: 'Fernando Alonso',
     NORRIS: 'Lando Norris',
-    RICCIARDO: 'Daniel Ricciardo',
+    // RICCIARDO: 'Daniel Ricciardo',
     ZHOU: 'Zhou Guanyu',
     BOTTAS: 'Valtteri Bottas',
     MAGNUSSEN: 'Kevin Magnussen',
-    SCHUMACHER: 'Mick Schumacher',
+    // SCHUMACHER: 'Mick Schumacher',
     GASLY: 'Pier Gasly',
     TSUNODA: 'Yuki Tsunoda',
-    VETTEL: 'Sebastian Vettel',
+    // VETTEL: 'Sebastian Vettel',
     STROLL: 'Lance Stroll',
     ALBON: 'Alexander Albon',
-    LATIFI: 'Nicholas Latifi',
-    HULKENBERG: 'Nico Hulkenberg'
+    // LATIFI: 'Nicholas Latifi',
+    HULKENBERG: 'Nico Hulkenberg',
+    PIASTRI: 'Oscar Piastri',
+    SARGEANT: 'Logan Sargeant',
+    DEVRIES: 'Nyck De Vries'
   }
 };
 
