@@ -28,6 +28,8 @@ const TEAMS = {
     TIGRE: 'Tigre',
     UNION: 'Unión',
     VELEZ: 'Vélez',
+    INSTITUTO: 'Instituto',
+    BELGRANO: 'Belgrano',
   },
   EN: {
     ARSENAL: 'Arsenal',

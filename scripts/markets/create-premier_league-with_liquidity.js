@@ -5,29 +5,28 @@ const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days
 
-const marketName = "English Premier League - Matchday 29";
+const marketName = "English Premier League - Matchday 30";
 
 const marketData = {
   marketName: marketName,
   marketSymbol: "PRODE",
-  closingTime: toTimestamp("2023-04-01 08:00:00 GMT-3"),
-  price: ethers.utils.parseUnits("5.0", "ether"), // 5 xDAI
+  closingTime: toTimestamp("2023-04-08 08:00:00 GMT-3"),
+  price: ethers.utils.parseUnits("4.0", "ether"), // 4 xDAI
   creatorFee: 4850,
   minBond: ethers.utils.parseUnits("5.0", "ether"),
   questions: [
     // Day 1
-    buildQuestionHomevsAwayV2(TEAMS.EN.MANCHESTER_CITY, TEAMS.EN.LIVERPOOL, marketName, toTimestamp("2023-04-01 08:30:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.BOURNEMOUTH, TEAMS.EN.FULHAM, marketName, toTimestamp("2023-04-01 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.NOTTINGHAM, TEAMS.EN.WOLVES, marketName, toTimestamp("2023-04-01 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.CRYSTAL_PALACE, TEAMS.EN.LEICESTER, marketName, toTimestamp("2023-04-01 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.ARSENAL, TEAMS.EN.LEEDS, marketName, toTimestamp("2023-04-01 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.BRIGHTON, TEAMS.EN.BRENTFORD, marketName, toTimestamp("2023-04-01 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.CHELSEA, TEAMS.EN.ASTON_VILLA, marketName, toTimestamp("2023-04-01 13:30:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.MANCHESTER_UTD, TEAMS.EN.EVERTON, marketName, toTimestamp("2023-04-08 08:30:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.ASTON_VILLA, TEAMS.EN.NOTTINGHAM, marketName, toTimestamp("2023-04-08 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.BRENTFORD, TEAMS.EN.NEWCASTLE, marketName, toTimestamp("2023-04-08 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.FULHAM, TEAMS.EN.WEST_HAM, marketName, toTimestamp("2023-04-08 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.WOLVES, TEAMS.EN.CHELSEA, marketName, toTimestamp("2023-04-08 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.TOTTENHAM, TEAMS.EN.BRIGHTON, marketName, toTimestamp("2023-04-08 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.LEICESTER, TEAMS.EN.BOURNEMOUTH, marketName, toTimestamp("2023-04-08 11:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.SOUTHAMPTON, TEAMS.EN.MANCHESTER_CITY, marketName, toTimestamp("2023-04-08 13:30:00 GMT-3") + SOCCER_MATCH_DURATION),
     // Day 2
-    buildQuestionHomevsAwayV2(TEAMS.EN.WEST_HAM, TEAMS.EN.SOUTHAMPTON, marketName, toTimestamp("2023-04-02 10:00:00 GMT-3") + SOCCER_MATCH_DURATION),
-    buildQuestionHomevsAwayV2(TEAMS.EN.NEWCASTLE, TEAMS.EN.MANCHESTER_UTD, marketName, toTimestamp("2023-04-02 12:30:00 GMT-3") + SOCCER_MATCH_DURATION),
-    // Day 3
-    buildQuestionHomevsAwayV2(TEAMS.EN.EVERTON, TEAMS.EN.TOTTENHAM, marketName, toTimestamp("2023-04-03 16:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.LEEDS, TEAMS.EN.CRYSTAL_PALACE, marketName, toTimestamp("2023-04-09 10:00:00 GMT-3") + SOCCER_MATCH_DURATION),
+    buildQuestionHomevsAwayV2(TEAMS.EN.LIVERPOOL, TEAMS.EN.ARSENAL, marketName, toTimestamp("2023-04-09 12:30:00 GMT-3") + SOCCER_MATCH_DURATION),
   ],
   prizeWeights: [8000, 2000]
 };
