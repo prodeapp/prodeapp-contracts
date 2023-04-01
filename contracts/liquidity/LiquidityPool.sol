@@ -40,7 +40,7 @@ contract LiquidityPool {
         require(!initialized, "Already initialized.");
         require(_creatorFee < DIVISOR, "Creator fee too big");
         require(
-            _pointsToWin > 0 && _pointsToWin <= IMarket(_market).numberOfQuestions(),
+            _pointsToWin > 0,
             "Invalid pointsToWin value"
         );
 
