@@ -39,10 +39,7 @@ contract LiquidityPool {
     ) external {
         require(!initialized, "Already initialized.");
         require(_creatorFee < DIVISOR, "Creator fee too big");
-        require(
-            _pointsToWin > 0,
-            "Invalid pointsToWin value"
-        );
+        require(_pointsToWin > 0, "Invalid pointsToWin value");
 
         creator = _creator;
         creatorFee = _creatorFee;
