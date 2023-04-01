@@ -4,27 +4,8 @@ pragma solidity 0.8.9;
 import "@reality.eth/contracts/development/contracts/RealityETH-3.0.sol";
 import "./interfaces/IMarket.sol";
 import "./interfaces/IMarketFactory.sol";
+import "./interfaces/IRealityRegistry.sol";
 import "./liquidity/LiquidityFactory.sol";
-
-interface IRealityRegistry {
-    function registerQuestion(
-        bytes32 question_id,
-        uint256 template_id,
-        uint32 opening_ts,
-        string calldata title,
-        string calldata outcomes,
-        string calldata category,
-        string calldata language
-    ) external;
-
-    function getQuestion(
-        uint256 templateId,
-        string calldata title,
-        string calldata outcomes,
-        string calldata category,
-        string calldata language
-    ) external view returns (string memory question);
-}
 
 interface IKeyValue {
     function setMarketCreator(address marketId, address creator) external;
