@@ -54,6 +54,7 @@ contract Market is ERC721, IERC2981 {
     mapping(uint256 => bytes32) public tokenIDtoTokenHash; // tokenIDtoTokenHash[tokenID]
     mapping(uint256 => bool) public isRanked; // isRanked[tokenID]
     mapping(address => uint256) public attributionBalance; // attributionBalance[attribution]
+    uint256[] public scoreTypes;
 
     event FundingReceived(address indexed _funder, uint256 _amount, string _message);
 
@@ -192,9 +193,15 @@ contract Market is ERC721, IERC2981 {
         bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         uint248 totalPoints;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
-                totalPoints += 1;
-            }
+            uint256 scoreType;
+            if (scoreTypes.length > 0) scoreType = scoreTypes[i];
+            totalPoints += uint248(
+                getPoints(
+                    uint256(realitio.resultForOnceSettled(questionIDs[i])),
+                    uint256(predictions[i]),
+                    scoreType
+                )
+            );
         }
 
         require(totalPoints > 0, "You are not a winner");
@@ -251,7 +258,11 @@ contract Market is ERC721, IERC2981 {
             BetData storage betData = bets[tokenIDtoTokenHash[tokenID]];
             uint256 totalPoints;
             for (uint256 i = 0; i < totalQuestions; i++) {
-                if (betData.predictions[i] == results[i]) totalPoints += 1;
+                uint256 scoreType;
+                if (scoreTypes.length > 0) scoreType = scoreTypes[i];
+                totalPoints += uint248(
+                    getPoints(uint256(results[i]), uint256(betData.predictions[i]), scoreType)
+                );
             }
 
             if (totalPoints == 0 || (totalPoints < currentMin && freePos >= prizeWeights.length))
@@ -400,6 +411,59 @@ contract Market is ERC721, IERC2981 {
         emit FundingReceived(msg.sender, msg.value, _message);
     }
 
+    /** @dev Sets questions score types.
+     *  @param _scoreTypes Array of score types for all the questions.
+     */
+    function setScoreTypes(uint256[] calldata _scoreTypes) external {
+        require(nextTokenID == 0, "Market already active");
+        require(_scoreTypes.length == questionIDs.length, "Invalid score types");
+        require(scoreTypes.length == 0, "Score types already set");
+        for (uint256 i = 0; i < _scoreTypes.length; i++) {
+            scoreTypes.push(_scoreTypes[i]);
+        }
+    }
+
+    /** @dev Returns the score obtain at a given question.
+     *  @param _result Result provided by realitio.
+     *  @param _prediction Prediction given by the user.
+     *  @param _scoreType Score type of the question. If not set, defaults to 0.
+     */
+    function getPoints(
+        uint256 _result,
+        uint256 _prediction,
+        uint256 _scoreType
+    ) public view returns (uint256 points) {
+        if (_scoreType < 10) {
+            // Default. 1 point if correct.
+            if (_prediction == _result) {
+                points = 1 + _scoreType;
+            }
+        } else if (_scoreType >= 12 && _scoreType <= 99) {
+            uint256 outcomesPerParty = _scoreType % 10;
+            uint256 bonusIfExactPrediction = _scoreType / 10;
+            uint256 winTotalOutcomes = ((outcomesPerParty * 2) - outcomesPerParty) / 2;
+            if (
+                // Win A
+                (_result < winTotalOutcomes && _prediction < winTotalOutcomes) ||
+                // Draw
+                ((_result >= winTotalOutcomes && _result < winTotalOutcomes + outcomesPerParty) &&
+                    (_prediction >= winTotalOutcomes &&
+                        _prediction < winTotalOutcomes + outcomesPerParty)) ||
+                // Win B
+                ((_result >= winTotalOutcomes + outcomesPerParty &&
+                    _result < outcomesPerParty**2) &&
+                    (_result >= winTotalOutcomes + outcomesPerParty &&
+                        _result < outcomesPerParty**2))
+            ) {
+                if (_result == _prediction) {
+                    points = 1 + bonusIfExactPrediction;
+                } else {
+                    points = 1;
+                }
+            }
+        }
+    }
+
     /**
      * @dev See {IERC721Metadata-name}.
      */
@@ -446,9 +510,15 @@ contract Market is ERC721, IERC2981 {
 
         bytes32[] memory predictions = bets[tokenIDtoTokenHash[_tokenID]].predictions;
         for (uint256 i = 0; i < questionIDs.length; i++) {
-            if (predictions[i] == realitio.resultForOnceSettled(questionIDs[i])) {
-                totalPoints += 1;
-            }
+            uint256 scoreType;
+            if (scoreTypes.length > 0) scoreType = scoreTypes[i];
+            totalPoints += uint248(
+                getPoints(
+                    uint256(realitio.resultForOnceSettled(questionIDs[i])),
+                    uint256(predictions[i]),
+                    scoreType
+                )
+            );
         }
     }
 
