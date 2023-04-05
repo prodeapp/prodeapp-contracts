@@ -432,7 +432,7 @@ contract Market is ERC721, IERC2981 {
         uint256 _result,
         uint256 _prediction,
         uint256 _scoreType
-    ) public view returns (uint256 points) {
+    ) public pure returns (uint256 points) {
         if (_scoreType < 10) {
             // Default. 1 point if correct.
             if (_prediction == _result) {
