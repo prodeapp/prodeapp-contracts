@@ -19,6 +19,8 @@ interface IVoucherManager {
         bytes32[] calldata _results
     ) external payable returns (uint256);
 
+    function fundAddress(address _to) external payable;
+
     function balance(address _owner) external view returns (uint256);
 }
 
@@ -145,6 +147,7 @@ contract GnosisChainReceiver {
 
         if (voucherBalance[user] >= price && voucherManager.balance(address(this)) >= price) {
             // Use voucher
+            voucherBalance[user] -= price;
             uint256 tokenId = voucherManager.placeBet(market, attribution, predictions);
             market.transferFrom(address(this), user, tokenId);
         } else {
@@ -164,6 +167,7 @@ contract GnosisChainReceiver {
     }
 
     /** @dev Updates the balance of the vouchers available for a specific address.
+     *  @param _account Address of the voucher receiver.
      *  @param _newBalance Address of the voucher receiver.
      */
     function registerVoucher(address _account, uint256 _newBalance) external {
@@ -175,6 +179,19 @@ contract GnosisChainReceiver {
         require(voucherTotalSupply <= voucherManager.balance(address(this)));
 
         emit VoucherAmountChanged(_account, _newBalance);
+    }
+
+    /** @dev Updates the balance of the vouchers available for a specific address.
+     *  @param _account Address of the voucher receiver.
+     */
+    function fundAndRegisterVoucher(address _account) external payable {
+        voucherBalance[_account] += msg.value;
+        voucherTotalSupply += msg.value;
+
+        voucherManager.fundAddress{value: msg.value}(address(this));
+        require(voucherTotalSupply <= voucherManager.balance(address(this)));
+
+        emit VoucherAmountChanged(_account, voucherBalance[_account]);
     }
 
     /** @dev Using the parameters stored by the requester, this function buys WETH with the xDAI contract balance and freezes on this contract.
