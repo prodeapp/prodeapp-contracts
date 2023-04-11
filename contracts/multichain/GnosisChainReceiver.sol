@@ -2,44 +2,24 @@
 pragma solidity 0.8.9;
 
 import "../interfaces/IMarket.sol";
+import "../interfaces/IUniswapV2Router.sol";
 import "../misc/KeyValue.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /* Interfaces */
-
-/**
- * @title UniswapV2Router Interface
- * @dev See https://uniswap.org/docs/v2/smart-contracts/router02/#swapExactTokensForETH. This will allow us to import swapExactETHForTokens function into our contract and the getAmountsOut function to calculate the token amount we will swap
- */
-interface IUniswapV2Router {
-    function swapExactTokensForETH(
-        uint256 amountIn,
-        uint256 amountOutMin,
-        address[] calldata path,
-        address to,
-        uint256 deadline
-    ) external returns (uint256[] memory amounts);
-
-    function getAmountsOut(
-        uint256 amountIn, //amount of input token
-        address[] memory path //the different hops between tokens to be made by the exchange
-    )
-        external
-        view
-        returns (
-            uint256[] memory amounts //amounts of tokens output calculated to be received
-        );
-}
 
 interface IMarketFactoryV2 {
     function keyValue() external view returns (address);
 }
 
-interface IERC20 {
-    function balanceOf(address _owner) external view returns (uint256);
+interface IVoucherManager {
+    function placeBet(
+        IMarket _market,
+        address _attribution,
+        bytes32[] calldata _results
+    ) external payable returns (uint256);
 
-    function transfer(address to, uint256 amount) external returns (bool);
-
-    function approve(address spender, uint256 amount) external returns (bool);
+    function balance(address _owner) external view returns (uint256);
 }
 
 contract GnosisChainReceiver {
@@ -58,17 +38,32 @@ contract GnosisChainReceiver {
     /// @dev address of Connext BridgeFacet contract on Gnosis chain.
     address private constant Connext = 0x5bB83e95f63217CDa6aE3D181BA580Ef377D2109;
 
+    /// @dev address of Prode's market factory contract on Gnosis chain.
     address private constant marketFactoryV2 = 0x364Bc6fCdF1D2Ce014010aB4f479a892a8736014;
+
+    /// @dev address of Prode's VoucherManager contract on Gnosis chain.
+    IVoucherManager private constant voucherManager =
+        IVoucherManager(0x10Df43e85261df385B2b865705738233626a21Ad);
 
     /* Storage */
 
     address public owner = msg.sender;
+
+    address public voucherController = msg.sender;
+
+    /// @dev voucherBalance[user] contains the amount of xDAI entitled to use from the voucherManager on the user bahalf.
+    mapping(address => uint256) public voucherBalance;
+
+    /// @dev total supply of xDAIs worth of betting vouchers. The contract actually holding the funds is the voucherManager.
+    uint256 public voucherTotalSupply;
 
     /// @dev An array of token addresses. Any swap needs to have a starting and end path, path.length must be >= 2. Pools for each consecutive pair of addresses must exist and have liquidity.
     address[] public path = [USDC, WXDAI];
 
     /// @dev New users that don't have xDAI are given a small amount.
     uint256 public faucetAmountPerNewUser = 0.0025 ether;
+
+    event VoucherAmountChanged(address indexed _account, uint256 _newBalance);
 
     constructor() {}
 
@@ -77,6 +72,11 @@ contract GnosisChainReceiver {
     function changeOwner(address _owner) external {
         require(msg.sender == owner, "Not authorized");
         owner = _owner;
+    }
+
+    function changeVoucherController(address _voucherController) external {
+        require(msg.sender == owner, "Not authorized");
+        voucherController = _voucherController;
     }
 
     function changeFaucetAmountPerNewUser(uint256 _amount) external {
@@ -142,17 +142,39 @@ contract GnosisChainReceiver {
         }
 
         uint256 price = market.price();
-        // USDC uses 6 decimals instead of 18.
-        require(_amount * 10**12 >= price, "Insufficient USDC received");
 
-        swapUSDCtoXDAI();
+        if (voucherBalance[user] >= price && voucherManager.balance(address(this)) >= price) {
+            // Use voucher
+            uint256 tokenId = voucherManager.placeBet(market, attribution, predictions);
+            market.transferFrom(address(this), user, tokenId);
+        } else {
+            // USDC uses 6 decimals instead of 18.
+            require(_amount * 10**12 >= price, "Insufficient USDC received");
 
-        uint256 tokenId = market.placeBet{value: price}(attribution, predictions);
-        market.transferFrom(address(this), user, tokenId);
+            swapUSDCtoXDAI();
+
+            uint256 tokenId = market.placeBet{value: price}(attribution, predictions);
+            market.transferFrom(address(this), user, tokenId);
+        }
+
         if (user.balance == 0 && address(this).balance > faucetAmountPerNewUser)
             payable(user).send(faucetAmountPerNewUser);
 
         return "";
+    }
+
+    /** @dev Updates the balance of the vouchers available for a specific address.
+     *  @param _newBalance Address of the voucher receiver.
+     */
+    function registerVoucher(address _account, uint256 _newBalance) external {
+        require(msg.sender == voucherController, "Not authorized");
+        uint256 previousBalance = voucherBalance[_account];
+        voucherBalance[_account] = _newBalance;
+        voucherTotalSupply = voucherTotalSupply - previousBalance + _newBalance;
+
+        require(voucherTotalSupply <= voucherManager.balance(address(this)));
+
+        emit VoucherAmountChanged(_account, _newBalance);
     }
 
     /** @dev Using the parameters stored by the requester, this function buys WETH with the xDAI contract balance and freezes on this contract.
