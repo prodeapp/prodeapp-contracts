@@ -24,6 +24,37 @@ interface IVoucherManager {
     function balance(address _owner) external view returns (uint256);
 }
 
+/**
+ * @title GnosisChainReceiver
+ * @dev This contract receives transactions from the Connext BridgeFacet and places bets in the specified market on behalf of users.
+ *
+ * Payment Assumptions:
+ * The xReceive() function expects at least an amount of USDC equal to the price of the bet. However, the USDC-xDAI exchange rate is
+ * not exactly 1:1. On the background, xReceive() swaps USDC for xDAI, expecting to receive at least 95% of it, and then uses the xDAI
+ * to place the bet. If the xDAI obtained is greater than the bet price, the difference stays in this contract. If the xDAI obtained 
+ * is smaller than the bet price but the contract was holding enough xDAI to cover the difference, the bet is placed anyway. If the amount
+ * is not enough, the operation reverts and the USDC received stays in the contract. This should happen rarely and in this case the owner
+ * of the contract can recover the USDC and reimburse the affected user.
+ *
+ * Bets placed through this contract are expected to be small (0-100 xDAI). The contract is expected to hold a small amount of xDAI to
+ * potentially subsidize underfunded bets because of exchange rate volatility and slippage. This should help the user experience at a
+ * very small cost and ~0 risk.
+ *
+ * User Account Assumptions:
+ * The user specified in the xReceive() transaction must be an address that the user controls on Gnosis chain. If the user is bridging
+ * his bet form another chain using a smart contract wallet which address cannot be replicated on Gnosis chain, then the user will lose
+ * the bet NFT.
+ *
+ * Additional Features and Considerations:
+ *  1. If a bridged bet wins a prize, the prize is not bridged back. The owner of the bet will receive the prize on Gnosis chain.
+ *  2. In order to onboard users to Gnosis chain smoothly, users holding 0 xDAI will receive `faucetAmountPerNewUser` xDAI if available
+ *     in the contract balance. This amount should be enough to make a few transactions.
+ *  3. This contract supports bet vouchers. This means that users bridging bets don't need to pay if they received a voucher.
+ *  4. This receiver contract utilizes Connext fast path. There is a risk of routers behaving maliciously. Nevertheless, for each bet
+ *     a router could at most steal the USDC bridged which will likely be around 0-100 USDC at the cost of losing the router's bond.
+ *     Also notice that it isn't straight forward to steal the USDC. The router would need to create a fake Prode market or steal the bet
+ *     instead of the money. In other words, this shouldn't be concerning.
+ */
 contract GnosisChainReceiver {
     /* Constants */
 
