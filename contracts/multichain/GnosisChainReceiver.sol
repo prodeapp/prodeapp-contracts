@@ -171,6 +171,7 @@ contract GnosisChainReceiver is IXReceiver {
         ) {
             // Use voucher
             voucherBalance[user] -= price;
+            voucherTotalSupply -= price;
             uint256 tokenId = voucherManager.placeBet(market, attribution, predictions);
             market.transferFrom(address(this), user, tokenId);
         } else {
