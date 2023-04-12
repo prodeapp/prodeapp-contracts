@@ -68,6 +68,12 @@ module.exports = {
       accounts: [PK],
       chainId: 100,
       gasPrice: 5000000000
+    },
+    xdai: {
+      url: 'https://rpc.gnosischain.com/',
+      accounts: [PK],
+      chainId: 100,
+      gasPrice: 5000000000
     }
   },
   etherscan: {
