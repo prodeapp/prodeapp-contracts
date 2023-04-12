@@ -26,6 +26,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.24"
   },
   "dependencies": {
+    "@connext/interfaces": "^2.0.3",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@reality.eth/contracts": "^3.0.2",

@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@connext/interfaces@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@connext/interfaces/-/interfaces-2.0.3.tgz#ee98506992d83e5c317cadef34092abe4ea8f348"
+  integrity sha512-2qEDgNOX6OFJM6A5cMbqB7Di3U5L2v+a8lAUgoYUCiLoZ7M4mlKvKj+fDapPvZXsZiQeFSXs5TZHbnvy8dbqEw==
+
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
   resolved "https://registry.yarnpkg.com/@ensdomains/ens/-/ens-0.4.5.tgz#e0aebc005afdc066447c6e22feb4eda89a5edbfc"
