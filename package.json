@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@nomiclabs/hardhat-etherscan": "^3.1.0",
+    "@nomiclabs/hardhat-etherscan": "3.0.1",
     "@nomiclabs/hardhat-waffle": "^2.0.3",
     "@openzeppelin/hardhat-upgrades": "^1.17.0",
     "chai": "^4.3.6",
@@ -26,6 +26,7 @@
     "prettier-plugin-solidity": "^1.0.0-beta.24"
   },
   "dependencies": {
+    "@connext/interfaces": "^2.0.3",
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.6.0",
     "@reality.eth/contracts": "^3.0.2",
