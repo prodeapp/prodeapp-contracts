@@ -217,7 +217,7 @@ contract GnosisChainReceiver is IXReceiver {
         emit VoucherAmountChanged(_account, voucherBalance[_account]);
     }
 
-    /** @dev Using the parameters stored by the requester, this function buys xDAI with the USDC contract balance.
+    /** @dev This function buys xDAI with the USDC contract balance. A 2.5% depeg is tolerated.
      */
     function swapUSDCtoXDAI() internal {
         uint256 USDCbalance = IERC20(USDC).balanceOf(address(this));
