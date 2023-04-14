@@ -131,7 +131,7 @@ contract GnosisChainReceiver is IXReceiver {
         bytes memory _callData
     ) external returns (bytes memory) {
         require(msg.sender == Connext, "Not authorized");
-        require(_asset == USDC, "Invalid token");
+        
 
         address user;
         IMarket market;
@@ -175,6 +175,7 @@ contract GnosisChainReceiver is IXReceiver {
             uint256 tokenId = voucherManager.placeBet(market, attribution, predictions);
             market.transferFrom(address(this), user, tokenId);
         } else {
+            require(_asset == USDC, "Invalid token");
             // USDC uses 6 decimals instead of 18.
             require(_amount * 10**12 >= price, "Insufficient USDC received");
 
