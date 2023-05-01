@@ -203,6 +203,8 @@ contract LiquidityPool {
         if (msg.sender == manager) {
             creatorReward = (msg.value * creatorFee) / DIVISOR;
             poolReward = msg.value - creatorReward;
+        } else {
+            creatorReward = msg.value;
         }
     }
 }
