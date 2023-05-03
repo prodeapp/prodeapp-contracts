@@ -4,6 +4,12 @@ pragma solidity 0.8.9;
 import "./../interfaces/IMarket.sol";
 import "./../interfaces/IManager.sol";
 
+interface IERC20 {
+    function balanceOf(address _owner) external view returns (uint256);
+
+    function transfer(address _to, uint256 _amount) external returns (bool);
+}
+
 contract LiquidityPool {
     uint256 public constant DIVISOR = 10000;
     uint256 private constant UINT_MAX = type(uint256).max;
@@ -148,6 +154,11 @@ contract LiquidityPool {
         }
         creatorReward = 0;
         requireSendXDAI(payable(creator), creatorRewardToSend);
+    }
+
+    function retrieveTokenBalance(IERC20 _token) external {
+        uint256 tokenBalance = _token.balanceOf(address(this));
+        _token.transfer(creator, tokenBalance);
     }
 
     function requireSendXDAI(address payable _to, uint256 _value) internal {
