@@ -128,6 +128,42 @@ contract Market is ERC721, IERC2981 {
         require(_results.length == questionIDs.length, "Results mismatch");
         require(block.timestamp < closingTime, "Bets not allowed");
 
+        return _placeBet(_attribution, _results);
+    }
+
+    /** @dev Places multiple bets by providing predictions to each question.
+     *  @param _attributions Addresses that sent the referral. If 0x0, it's ignored.
+     *  @param _resultsArray Answer predictions to the questions asked in Realitio.
+     *  @return the last minted token id.
+     */
+    function placeBets(address[] calldata _attributions, bytes32[][] calldata _resultsArray)
+        external
+        payable
+        returns (uint256)
+    {
+        uint256 numberOfBets = _attributions.length;
+        require(msg.value == price * numberOfBets, "Wrong value sent");
+        require(_resultsArray.length == numberOfBets, "Attributions mismatch");
+        require(block.timestamp < closingTime, "Bets not allowed");
+
+        uint256 currentTokenID;
+        for (uint256 i = 0; i < numberOfBets; i++) {
+            require(_resultsArray[i].length == questionIDs.length, "Results mismatch");
+            currentTokenID = _placeBet(_attributions[i], _resultsArray[i]);
+        }
+
+        return currentTokenID;
+    }
+
+    /** @dev Places a bet by providing predictions to each question. A bet NFT is minted.
+     *  @param _attribution Address that sent the referral. If 0x0, it's ignored.
+     *  @param _results Answer predictions to the questions asked in Realitio.
+     *  @return the minted token id.
+     */
+    function _placeBet(address _attribution, bytes32[] calldata _results)
+        internal
+        returns (uint256)
+    {
         if (_attribution != address(0x0)) {
             attributionBalance[_attribution] += 1;
             totalAttributions += 1;
