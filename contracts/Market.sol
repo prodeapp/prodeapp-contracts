@@ -429,6 +429,13 @@ contract Market is ERC721, IERC2981 {
     }
 
     /**
+     * @dev See {ERC721Enumerable-totalSupply}.
+     */
+    function totalSupply() external view returns (uint256) {
+        return nextTokenID;
+    }
+
+    /**
      * @dev See {IERC721Metadata-name}.
      */
     function name() public view override returns (string memory) {
