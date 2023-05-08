@@ -301,6 +301,7 @@ contract MarketView {
         betInfo.ownerName = keyValue.username(betInfo.owner);
         betInfo.predictions = getPredictions(market, tokenId);
         betInfo.points = getScore(market, tokenId);
+        betInfo.closingTime = market.closingTime();
     }
 
     function getMarketFactoryAttrs(IMarketFactory marketFactory)
