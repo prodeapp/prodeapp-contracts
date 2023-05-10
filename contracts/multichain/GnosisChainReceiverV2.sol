@@ -101,14 +101,15 @@ contract GnosisChainReceiver is IXReceiver {
         voucherController = _voucherController;
     }
 
-    function retrieveXDAI(address payable _to) external {
-        require(msg.sender == owner, "Not authorized");
-        (bool success, ) = _to.call{value: address(this).balance}(new bytes(0));
+    function retrieveXDAI(address payable _to, uint256 _amount) external {
+        uint256 amount = _amount == 0 ? address(this).balance : _amount;
+
+        require(msg.sender == owner || msg.sender == voucherController, "Not authorized");
+        (bool success, ) = _to.call{value: amount}(new bytes(0));
         require(success, "Send XDAI failed");
     }
 
-    function withdrawWXDAI(address payable _to) external {
-        require(msg.sender == owner, "Not authorized");
+    function withdrawWXDAI() external {
         uint256 WXDAIbalance = IWXDAI(WXDAI).balanceOf(address(this));
         IWXDAI(WXDAI).withdraw(WXDAIbalance);
     }
@@ -222,15 +223,6 @@ contract GnosisChainReceiver is IXReceiver {
         voucherBalance[_to] += _amount;
 
         emit VoucherTransfered(_from, _to, _amount);
-    }
-
-    /** @dev Transfers balance from an address to another.
-     *  @param _amount Amount of funds to withdraw.
-     */
-    function withdrawFunds(uint256 _amount) external {
-        require(msg.sender == voucherController, "Not authorized");
-        (bool success, ) = voucherController.call{value: _amount}(new bytes(0));
-        require(success, "Send XDAI failed");
     }
 
     /** @dev Transfers balance from an address to another.
