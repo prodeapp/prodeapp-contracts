@@ -133,14 +133,12 @@ contract LiquidityPool {
             _firstSharedIndex == 0 || points < market.ranking(_firstSharedIndex - 1).points,
             "Wrong start index"
         );
-        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
-        uint256 cumWeigths = getPrizeWeight(_firstSharedIndex, _lastSharedIndex);
         uint256 marketPayment = getMarketPaymentIfWon();
-        uint256 reward = (marketPayment * cumWeigths) / (DIVISOR * sharedBetween);
+        uint256 reward = getReward(_firstSharedIndex, _lastSharedIndex, marketPayment);
         claims[_rankIndex] = true;
-        payable(market.ownerOf(market.ranking(_rankIndex).tokenID)).transfer(reward);
         emit BetReward(market.ranking(_rankIndex).tokenID, reward);
+        requireSendXDAI(payable(market.ownerOf(market.ranking(_rankIndex).tokenID)), reward);
     }
 
     function executeCreatorRewards() external {
@@ -181,13 +179,15 @@ contract LiquidityPool {
         }
     }
 
-    function getPrizeWeight(uint256 _firstSharedIndex, uint256 _lastSharedIndex)
-        internal
-        view
-        returns (uint256 cumWeigths)
-    {
+    function getReward(
+        uint256 _firstSharedIndex,
+        uint256 _lastSharedIndex,
+        uint256 _totalPrize
+    ) internal view returns (uint256 reward) {
+        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
         uint256[] memory prizes = market.getPrizes();
         uint256 i = _firstSharedIndex;
+        uint256 cumWeigths;
         while (i < prizes.length && i <= _lastSharedIndex) {
             cumWeigths += prizes[i];
             i++;
@@ -199,8 +199,9 @@ contract LiquidityPool {
                 vacantPrizesWeight += prizes[j];
                 j--;
             }
-            cumWeigths += vacantPrizesWeight / (j + 1); // Rounding errors are expected, but should be small.
+            cumWeigths += (sharedBetween * vacantPrizesWeight) / (j + 1);
         }
+        reward = (_totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
     }
 
     function getMarketPaymentIfWon() public view returns (uint256 marketPayment) {

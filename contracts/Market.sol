@@ -199,8 +199,7 @@ contract Market is ERC721, IERC2981 {
         totalPrize = marketBalance - managementReward;
 
         // Once the Market is created, the manager contract is immutable, created by the MarketFactory and will never block a transfer of funds.
-        (bool success, ) = marketInfo.manager.call{value: managementReward}(new bytes(0));
-        require(success, "Send XDAI failed");
+        requireSendXDAI(marketInfo.manager, managementReward);
 
         emit ManagementReward(marketInfo.manager, managementReward);
     }
@@ -367,17 +366,11 @@ contract Market is ERC721, IERC2981 {
             _firstSharedIndex == 0 || points < ranking[_firstSharedIndex - 1].points,
             "Wrong start index"
         );
-        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
-        uint256 cumWeigths = 0;
-        for (uint256 i = _firstSharedIndex; i < prizeWeights.length && i <= _lastSharedIndex; i++) {
-            cumWeigths += prizeWeights[i];
-        }
-
-        uint256 reward = (totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
+        uint256 reward = getReward(_firstSharedIndex, _lastSharedIndex, totalPrize);
         ranking[_rankIndex].claimed = true;
-        payable(ownerOf(ranking[_rankIndex].tokenID)).transfer(reward);
         emit BetReward(ranking[_rankIndex].tokenID, reward);
+        requireSendXDAI(payable(ownerOf(ranking[_rankIndex].tokenID)), reward);
     }
 
     /** @dev Edge case in which no one won or winners were not registered. All players who own a token
@@ -395,37 +388,31 @@ contract Market is ERC721, IERC2981 {
         uint256 reimbursement = totalPrize / nextTokenID;
         address player = ownerOf(_tokenID);
         _burn(_tokenID); // Can only be reimbursed once.
-        payable(player).transfer(reimbursement);
+        requireSendXDAI(payable(player), reimbursement);
     }
 
-    /** @dev Edge case in which there is a winner but one or more prizes are vacant.
-     *  Vacant prizes are distributed equally among registered winner/s.
-     */
-    function distributeRemainingPrizes() external {
-        require(resultSubmissionPeriodStart != 0, "Not in claim period");
-        require(
-            block.timestamp > resultSubmissionPeriodStart + submissionTimeout,
-            "Submission period not over"
-        );
-        require(ranking[0].points > 0, "No winners");
-
-        uint256 cumWeigths = 0;
-        uint256 nWinners = 0;
-        for (uint256 i = 0; i < prizeWeights.length; i++) {
-            if (ranking[i].points == 0) {
-                if (nWinners == 0) nWinners = i;
-                require(!ranking[i].claimed, "Already claimed");
-                ranking[i].claimed = true;
-                cumWeigths += prizeWeights[i];
+    function getReward(
+        uint256 _firstSharedIndex,
+        uint256 _lastSharedIndex,
+        uint256 _totalPrize
+    ) internal view returns (uint256 reward) {
+        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
+        uint256 i = _firstSharedIndex;
+        uint256 cumWeigths;
+        while (i < prizeWeights.length && i <= _lastSharedIndex) {
+            cumWeigths += prizeWeights[i];
+            i++;
+        }
+        if (i < prizeWeights.length) {
+            uint256 vacantPrizesWeight = 0;
+            uint256 j = prizeWeights.length - 1;
+            while (ranking[j].points == 0) {
+                vacantPrizesWeight += prizeWeights[j];
+                j--;
             }
+            cumWeigths += (sharedBetween * vacantPrizesWeight) / (j + 1);
         }
-
-        require(cumWeigths > 0, "No vacant prizes");
-        uint256 vacantPrize = (totalPrize * cumWeigths) / (DIVISOR * nWinners);
-        for (uint256 rank = 0; rank < nWinners; rank++) {
-            payable(ownerOf(ranking[rank].tokenID)).send(vacantPrize);
-            emit BetReward(ranking[rank].tokenID, vacantPrize);
-        }
+        reward = (_totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
     }
 
     /** @dev Increases the balance of the market without participating. Only callable during the betting period.
@@ -434,6 +421,18 @@ contract Market is ERC721, IERC2981 {
     function fundMarket(string calldata _message) external payable {
         require(resultSubmissionPeriodStart == 0, "Results already available");
         emit FundingReceived(msg.sender, msg.value, _message);
+    }
+
+    function requireSendXDAI(address payable _to, uint256 _value) internal {
+        (bool success, ) = _to.call{value: _value}(new bytes(0));
+        require(success, "Market: Send XDAI failed");
+    }
+
+    /**
+     * @dev See {ERC721Enumerable-totalSupply}.
+     */
+    function totalSupply() external view returns (uint256) {
+        return nextTokenID;
     }
 
     /**
