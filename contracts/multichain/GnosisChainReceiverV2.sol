@@ -187,6 +187,24 @@ contract GnosisChainReceiver is IXReceiver {
         emit FundingReceived(msg.sender, _to, msg.value);
     }
 
+    /** @dev Increases the balance of the vouchers available for a specific address.
+     *  @param _tos Address of the receiver.
+     *  @param _amounts Amount to assign to each address.
+     */
+    function fundAddresses(address[] calldata _tos, uint256[] calldata _amounts) external payable {
+        uint256 totalAmount;
+        for (uint256 i = 0; i < _tos.length; i++) {
+            totalAmount += _amounts[i];
+            voucherBalance[_tos[i]] += _amounts[i];
+            voucherTotalSupply += _amounts[i];
+            emit FundingReceived(msg.sender, _tos[i], _amounts[i]);
+        }
+
+        if (msg.sender != voucherController) {
+            require(msg.value == totalAmount, "Not enough funds");
+        }
+    }
+
     /** @dev Transfers balance from an address to another.
      *  @param _from Address of the current vocher owner.
      *  @param _to Address of the new voucher owner.
@@ -207,17 +225,25 @@ contract GnosisChainReceiver is IXReceiver {
     }
 
     /** @dev Transfers balance from an address to another.
-     *  @param _from Address of the current vocher owner.
+     *  @param _amount Amount of funds to withdraw.
      */
-    function removeVoucher(address _from) external {
+    function withdrawFunds(uint256 _amount) external {
+        require(msg.sender == voucherController, "Not authorized");
+        (bool success, ) = voucherController.call{value: _amount}(new bytes(0));
+        require(success, "Send XDAI failed");
+    }
+
+    /** @dev Transfers balance from an address to another.
+     *  @param _froms Address of the current vocher owner.
+     */
+    function removeVouchers(address[] calldata _froms) external {
         require(msg.sender == voucherController, "Not authorized");
 
-        uint256 amount = voucherBalance[_from];
-        voucherBalance[_from] = 0;
-        voucherTotalSupply -= amount;
-
-        (bool success, ) = voucherController.call{value: amount}(new bytes(0));
-        require(success, "Send XDAI failed");
+        for (uint256 i = 0; i < _froms.length; i++) {
+            uint256 amount = voucherBalance[_froms[i]];
+            voucherBalance[_froms[i]] = 0;
+            voucherTotalSupply -= amount;
+        }
     }
 
     /** @dev Places a bet using the voucher balance and transfers the NFT to the sender.
