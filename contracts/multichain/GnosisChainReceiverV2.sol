@@ -77,6 +77,9 @@ contract GnosisChainReceiver is IXReceiver {
 
     mapping(address => bool) public marketsWhitelist;
 
+    /// @dev New users that don't have xDAI are given a small amount.
+    uint256 public faucetAmountPerNewUser = 0.0025 ether;
+
     event VoucherAmountChanged(address indexed _account, uint256 _newBalance);
 
     event VoucherUsed(address indexed _player, address indexed _market, uint256 indexed _tokenId);
@@ -99,6 +102,11 @@ contract GnosisChainReceiver is IXReceiver {
     function changeVoucherController(address _voucherController) external {
         require(msg.sender == owner, "Not authorized");
         voucherController = _voucherController;
+    }
+
+    function changeFaucetAmountPerNewUser(uint256 _amount) external {
+        require(msg.sender == owner, "Not authorized");
+        faucetAmountPerNewUser = _amount;
     }
 
     function retrieveXDAI(address payable _to, uint256 _amount) external {
@@ -175,6 +183,9 @@ contract GnosisChainReceiver is IXReceiver {
 
         if (remainder > 0)
             payable(user).send(remainder);
+
+        if (user.balance == 0 && address(this).balance > faucetAmountPerNewUser)
+            payable(user).send(faucetAmountPerNewUser);
 
         return "";
     }
