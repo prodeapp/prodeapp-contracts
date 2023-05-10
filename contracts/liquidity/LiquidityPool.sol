@@ -4,6 +4,12 @@ pragma solidity 0.8.9;
 import "./../interfaces/IMarket.sol";
 import "./../interfaces/IManager.sol";
 
+interface IERC20 {
+    function balanceOf(address _owner) external view returns (uint256);
+
+    function transfer(address _to, uint256 _amount) external returns (bool);
+}
+
 contract LiquidityPool {
     uint256 public constant DIVISOR = 10000;
     uint256 private constant UINT_MAX = type(uint256).max;
@@ -127,14 +133,12 @@ contract LiquidityPool {
             _firstSharedIndex == 0 || points < market.ranking(_firstSharedIndex - 1).points,
             "Wrong start index"
         );
-        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
 
-        uint256 cumWeigths = getPrizeWeight(_firstSharedIndex, _lastSharedIndex);
         uint256 marketPayment = getMarketPaymentIfWon();
-        uint256 reward = (marketPayment * cumWeigths) / (DIVISOR * sharedBetween);
+        uint256 reward = getReward(_firstSharedIndex, _lastSharedIndex, marketPayment);
         claims[_rankIndex] = true;
-        payable(market.ownerOf(market.ranking(_rankIndex).tokenID)).transfer(reward);
         emit BetReward(market.ranking(_rankIndex).tokenID, reward);
+        requireSendXDAI(payable(market.ownerOf(market.ranking(_rankIndex).tokenID)), reward);
     }
 
     function executeCreatorRewards() external {
@@ -148,6 +152,11 @@ contract LiquidityPool {
         }
         creatorReward = 0;
         requireSendXDAI(payable(creator), creatorRewardToSend);
+    }
+
+    function retrieveTokenBalance(IERC20 _token) external {
+        uint256 tokenBalance = _token.balanceOf(address(this));
+        _token.transfer(creator, tokenBalance);
     }
 
     function requireSendXDAI(address payable _to, uint256 _value) internal {
@@ -170,13 +179,15 @@ contract LiquidityPool {
         }
     }
 
-    function getPrizeWeight(uint256 _firstSharedIndex, uint256 _lastSharedIndex)
-        internal
-        view
-        returns (uint256 cumWeigths)
-    {
+    function getReward(
+        uint256 _firstSharedIndex,
+        uint256 _lastSharedIndex,
+        uint256 _totalPrize
+    ) internal view returns (uint256 reward) {
+        uint256 sharedBetween = _lastSharedIndex - _firstSharedIndex + 1;
         uint256[] memory prizes = market.getPrizes();
         uint256 i = _firstSharedIndex;
+        uint256 cumWeigths;
         while (i < prizes.length && i <= _lastSharedIndex) {
             cumWeigths += prizes[i];
             i++;
@@ -188,8 +199,9 @@ contract LiquidityPool {
                 vacantPrizesWeight += prizes[j];
                 j--;
             }
-            cumWeigths += vacantPrizesWeight / (j + 1); // Rounding errors are expected, but should be small.
+            cumWeigths += (sharedBetween * vacantPrizesWeight) / (j + 1);
         }
+        reward = (_totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
     }
 
     function getMarketPaymentIfWon() public view returns (uint256 marketPayment) {
@@ -203,6 +215,8 @@ contract LiquidityPool {
         if (msg.sender == manager) {
             creatorReward = (msg.value * creatorFee) / DIVISOR;
             poolReward = msg.value - creatorReward;
+        } else {
+            creatorReward = msg.value;
         }
     }
 }

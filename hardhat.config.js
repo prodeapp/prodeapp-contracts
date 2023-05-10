@@ -2,7 +2,7 @@ require("@nomiclabs/hardhat-waffle");
 require("@reality.eth/contracts")
 require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
-const { mnemonic, etherscanApiKey, alchemyKey, PK } = require('./secrets.json');
+const { mnemonic, etherscanApiKey, alchemyKey, blockscoutApiKey, PK } = require('./secrets.json');
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -77,10 +77,26 @@ module.exports = {
     }
   },
   etherscan: {
+    customChains: [
+      {
+        network: "gnosis",
+        chainId: 100,
+        urls: {
+          // 3) Select to what explorer verify the contracts
+          // Gnosisscan
+          //apiURL: "https://api.gnosisscan.io/api",
+          //browserURL: "https://gnosisscan.io/",
+          // Blockscout
+          apiURL: "https://blockscout.com/xdai/mainnet/api",
+          browserURL: "https://blockscout.com/xdai/mainnet",
+        },
+      },
+    ],
     apiKey: {
       mainnet: etherscanApiKey,
       kovan: etherscanApiKey,
-      xdai: "no-api-key-needed",
+      xdai: blockscoutApiKey,
+      gnosis: blockscoutApiKey,
       sokol: "no-api-key-needed"
     }
   }
