@@ -90,6 +90,8 @@ contract GnosisChainReceiver is IXReceiver {
 
     event MarketWhitelisted(address indexed _market);
 
+    event MarketBanned(address indexed _market);
+
     constructor() {}
 
     receive() external payable {}
@@ -181,8 +183,7 @@ contract GnosisChainReceiver is IXReceiver {
         uint256 tokenId = market.placeBet{value: price}(attribution, predictions);
         market.transferFrom(address(this), user, tokenId);
 
-        if (remainder > 0)
-            payable(user).send(remainder);
+        if (remainder > 0) payable(user).send(remainder);
 
         if (user.balance == 0 && address(this).balance > faucetAmountPerNewUser)
             payable(user).send(faucetAmountPerNewUser);
@@ -286,5 +287,16 @@ contract GnosisChainReceiver is IXReceiver {
         marketsWhitelist[_market] = true;
 
         emit MarketWhitelisted(_market);
+    }
+
+    /** @dev Removes a market from the whitelist.
+     *  @param _market Address of the market.
+     */
+    function banMarket(address _market) external {
+        require(msg.sender == voucherController, "Not authorized");
+
+        marketsWhitelist[_market] = false;
+
+        emit MarketBanned(_market);
     }
 }
