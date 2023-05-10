@@ -521,9 +521,6 @@ describe("Market", () => {
       await expect(
         market.reimbursePlayer(0)
       ).to.be.revertedWith("Not in claim period");
-      await expect(
-        market.distributeRemainingPrizes()
-      ).to.be.revertedWith("Not in claim period");
       
       const tx = await market.connect(user1).fundMarket("Brrrrr", { value: 1000});
       const receipt = await tx.wait();
@@ -961,13 +958,11 @@ describe("Market", () => {
 
       await expect(market.claimRewards(0, 0, 0)).to.be.revertedWith("Submission period not over");
       await expect(market.reimbursePlayer(0)).to.be.revertedWith("Submission period not over");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Submission period not over");
 
       await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
       await ethers.provider.send('evm_mine');
 
       await expect(market.reimbursePlayer(0)).to.be.revertedWith("Can't reimburse if there are winners");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No vacant prizes");
 
       const totalPrize = await market.totalPrize();
       let rankIndex = 0;
@@ -1024,7 +1019,6 @@ describe("Market", () => {
       await market.registerAll();
 
       await expect(market.reimbursePlayer(0)).to.be.revertedWith("Can't reimburse if there are winners");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No vacant prizes");
 
       const totalPrize = await market.totalPrize();
       let rankIndex = 0;
@@ -1062,7 +1056,6 @@ describe("Market", () => {
       await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
       await ethers.provider.send('evm_mine');
 
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No winners");
       const totalPrize = await market.totalPrize();
       const totalTokens = players.length;
       const individualReimbursement = totalPrize.div(BigNumber.from(totalTokens));
@@ -1079,7 +1072,7 @@ describe("Market", () => {
       }
     });
 
-    it("Should distribute vacant prices.", async () => {
+    it("Should distribute vacant prizes.", async () => {
       // Register only one player's results
       const tokenID = 0;
       await market.registerPoints(tokenID, 0, 0);
@@ -1094,21 +1087,10 @@ describe("Market", () => {
       [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
       expect(_tokenID).to.eq(BigNumber.from(tokenID));
       const totalPrize = await market.totalPrize();
-      expectedReward = totalPrize.mul(marketData.prizeWeights[0]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
-
-      tx = await market.distributeRemainingPrizes();
-      receipt = await tx.wait();
-      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(tokenID));
-      const cumWeights = marketData.prizeWeights[1] + marketData.prizeWeights[2];
-      expectedReward = totalPrize.mul(cumWeights).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
-      
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Already claimed");
+      expect(_reward).to.eq(totalPrize);
     });
 
-    it("Should distribute vacant prices 2.", async () => {
+    it("Should distribute vacant prizes when there are 2 winners registered.", async () => {
       // Register only two player's results
       await market.registerPoints(1, 0, 0);
       await market.registerPoints(2, 1, 0);
@@ -1119,29 +1101,60 @@ describe("Market", () => {
       await expect(market.reimbursePlayer(1)).to.be.revertedWith("Can't reimburse if there are winners");
       await expect(market.reimbursePlayer(2)).to.be.revertedWith("Can't reimburse if there are winners");
 
+      const totalPrize = await market.totalPrize();
+      vacantPrizeReward = totalPrize.mul(marketData.prizeWeights[2]).div(10000 * 2);
+
       tx = await market.claimRewards(0, 0, 0);
       receipt = await tx.wait();
       [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
       expect(_tokenID).to.eq(BigNumber.from(1));
-      const totalPrize = await market.totalPrize();
       expectedReward = totalPrize.mul(marketData.prizeWeights[0]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      expect(_reward).to.eq(expectedReward.add(vacantPrizeReward));
 
       tx = await market.claimRewards(1, 1, 1);
       receipt = await tx.wait();
       [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
       expect(_tokenID).to.eq(BigNumber.from(2));
       expectedReward = totalPrize.mul(marketData.prizeWeights[1]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
+      expect(_reward).to.eq(expectedReward.add(vacantPrizeReward));
+    });
 
-      tx = await market.distributeRemainingPrizes();
+    it("Should distribute vacant prizes when rank position is shared.", async () => {
+      let score = await market.getScore(0);
+      console.log(score);
+      score = await market.getScore(1);
+      console.log(score);
+      score = await market.getScore(2);
+      console.log(score);
+      score = await market.getScore(3);
+      console.log(score);
+      // Register only two player's results
+      await market.registerPoints(0, 0, 0);
+      await market.registerPoints(2, 0, 1);
+
+      await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
+      await ethers.provider.send('evm_mine');
+
+      await expect(market.reimbursePlayer(1)).to.be.revertedWith("Can't reimburse if there are winners");
+      await expect(market.reimbursePlayer(2)).to.be.revertedWith("Can't reimburse if there are winners");
+
+      const totalPrize = await market.totalPrize();
+      const sharedWeight = (marketData.prizeWeights[0] + marketData.prizeWeights[1]) / 2;
+      vacantPrizeReward = totalPrize.mul(marketData.prizeWeights[2]).div(10000 * 2);
+
+      tx = await market.claimRewards(0, 0, 1);
       receipt = await tx.wait();
-      expectedReward = totalPrize.mul(marketData.prizeWeights[2]).div(10000 * 2);
-      for (let i = 0; i < receipt.events.length; i++) {
-        [_tokenID, _reward] = receipt.events[i].args;
-        expect(_tokenID).to.eq(BigNumber.from(i + 1));
-        expect(_reward).to.eq(BigNumber.from(expectedReward));
-      }
+      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
+      expect(_tokenID).to.eq(BigNumber.from(0));
+      expectedReward = totalPrize.mul(sharedWeight).div(10000);
+      expect(_reward).to.eq(expectedReward.add(vacantPrizeReward));
+
+      tx = await market.claimRewards(1, 0, 1);
+      receipt = await tx.wait();
+      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
+      expect(_tokenID).to.eq(BigNumber.from(2));
+      expectedReward = totalPrize.mul(sharedWeight).div(10000);
+      expect(_reward).to.eq(expectedReward.add(vacantPrizeReward));
     });
   });
 
@@ -1296,13 +1309,11 @@ describe("Market", () => {
 
       await expect(market.claimRewards(0, 0, 0)).to.be.revertedWith("Submission period not over");
       await expect(market.reimbursePlayer(0)).to.be.revertedWith("Submission period not over");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Submission period not over");
 
       await ethers.provider.send('evm_increaseTime', [7 * 24 * 60 * 60]);
       await ethers.provider.send('evm_mine');
 
       await expect(market.reimbursePlayer(0)).to.be.revertedWith("Can't reimburse if there are winners");
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("No vacant prizes");
 
       const totalPrize = await market.totalPrize();
       let rankIndex = 0;
@@ -1347,18 +1358,7 @@ describe("Market", () => {
       [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
       expect(_tokenID).to.eq(BigNumber.from(tokenID));
       const totalPrize = await market.totalPrize();
-      expectedReward = totalPrize.mul(marketData.prizeWeights[0]).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
-
-      tx = await market.distributeRemainingPrizes();
-      receipt = await tx.wait();
-      [_tokenID, _reward] = getEmittedEvent('BetReward', receipt).args;
-      expect(_tokenID).to.eq(BigNumber.from(tokenID));
-      const cumWeights = marketData.prizeWeights[1] + marketData.prizeWeights[2];
-      expectedReward = totalPrize.mul(cumWeights).div(10000);
-      expect(_reward).to.eq(BigNumber.from(expectedReward));
-      
-      await expect(market.distributeRemainingPrizes()).to.be.revertedWith("Already claimed");
+      expect(_reward).to.eq(totalPrize);
     });
   });
 

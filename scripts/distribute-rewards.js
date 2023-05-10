@@ -232,12 +232,6 @@ async function processMarket(marketAddress, totalClaimed, managerAddress, signer
     return {datas: [], liquidityDatas: liquidityDatas};
   }
 
-  if (endSharedIndex < marketData.prizes.length) {
-    console.log("Distributing remaining prizes for this market")
-    const remainingPrizes = (await market.populateTransaction.distributeRemainingPrizes()).data;
-    datas.push(remainingPrizes);
-  }
-
   return {datas: datas, liquidityDatas: liquidityDatas};
 }
 
