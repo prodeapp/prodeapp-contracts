@@ -77,9 +77,6 @@ contract GnosisChainReceiver is IXReceiver {
 
     mapping(address => bool) public marketsWhitelist;
 
-    /// @dev New users that don't have xDAI are given a small amount.
-    uint256 public faucetAmountPerNewUser = 0.0025 ether;
-
     event VoucherAmountChanged(address indexed _account, uint256 _newBalance);
 
     event VoucherUsed(address indexed _player, address indexed _market, uint256 indexed _tokenId);
@@ -104,11 +101,6 @@ contract GnosisChainReceiver is IXReceiver {
         voucherController = _voucherController;
     }
 
-    function changeFaucetAmountPerNewUser(uint256 _amount) external {
-        require(msg.sender == owner, "Not authorized");
-        faucetAmountPerNewUser = _amount;
-    }
-
     function retrieveXDAI(address payable _to) external {
         require(msg.sender == owner, "Not authorized");
         (bool success, ) = _to.call{value: address(this).balance}(new bytes(0));
@@ -131,6 +123,9 @@ contract GnosisChainReceiver is IXReceiver {
     ) external returns (bytes memory) {
         require(msg.sender == Connext, "Not authorized");
         require(_asset == WXDAI, "Invalid token");
+        if (_amount > 0) {
+            IWXDAI(WXDAI).withdraw(_amount);
+        }
 
         address user;
         IMarket market;
@@ -162,21 +157,23 @@ contract GnosisChainReceiver is IXReceiver {
         }
 
         uint256 price = market.price();
+        uint256 remainder;
 
         if (voucherBalance[user] >= price && marketsWhitelist[address(market)]) {
             // Use voucher
             voucherBalance[user] -= price;
             voucherTotalSupply -= price;
+            remainder = _amount;
             emit VoucherUsed(user, address(market), market.nextTokenID());
         } else {
             require(_amount >= price, "Insufficient wxDAI received");
-            IWXDAI(WXDAI).withdraw(_amount);
+            remainder = _amount - price;
         }
         uint256 tokenId = market.placeBet{value: price}(attribution, predictions);
         market.transferFrom(address(this), user, tokenId);
 
-        if (user.balance == 0 && address(this).balance > faucetAmountPerNewUser)
-            payable(user).send(faucetAmountPerNewUser);
+        if (remainder > 0)
+            payable(user).send(remainder);
 
         return "";
     }
