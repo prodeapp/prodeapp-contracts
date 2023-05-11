@@ -88,9 +88,7 @@ contract GnosisChainReceiver is IXReceiver {
 
     event VoucherTransfered(address indexed _from, address indexed _to, uint256 _amount);
 
-    event MarketWhitelisted(address indexed _market);
-
-    event MarketBanned(address indexed _market);
+    event WhitelistChanged(address indexed _market, bool whitelisted);
 
     constructor() {}
 
@@ -134,9 +132,7 @@ contract GnosisChainReceiver is IXReceiver {
     ) external returns (bytes memory) {
         require(msg.sender == Connext, "Not authorized");
         require(_asset == WXDAI, "Invalid token");
-        if (_amount > 0) {
-            IWXDAI(WXDAI).withdraw(_amount);
-        }
+        IWXDAI(WXDAI).withdraw(_amount);
 
         address user;
         IMarket market;
@@ -209,9 +205,9 @@ contract GnosisChainReceiver is IXReceiver {
         for (uint256 i = 0; i < _tos.length; i++) {
             totalAmount += _amounts[i];
             voucherBalance[_tos[i]] += _amounts[i];
-            voucherTotalSupply += _amounts[i];
             emit FundingReceived(msg.sender, _tos[i], _amounts[i]);
         }
+        voucherTotalSupply += totalAmount;
 
         if (msg.sender != voucherController) {
             require(msg.value == totalAmount, "Not enough funds");
@@ -280,23 +276,13 @@ contract GnosisChainReceiver is IXReceiver {
 
     /** @dev Adds a market to the whitelist.
      *  @param _market Address of the market.
+     *  @param _whitelist True to whitelist _market.
      */
-    function whitelistMarket(address _market) external {
+    function whitelistMarket(address _market, bool _whitelist) external {
         require(msg.sender == voucherController, "Not authorized");
 
-        marketsWhitelist[_market] = true;
+        marketsWhitelist[_market] = _whitelist;
 
-        emit MarketWhitelisted(_market);
-    }
-
-    /** @dev Removes a market from the whitelist.
-     *  @param _market Address of the market.
-     */
-    function banMarket(address _market) external {
-        require(msg.sender == voucherController, "Not authorized");
-
-        marketsWhitelist[_market] = false;
-
-        emit MarketBanned(_market);
+        emit WhitelistChanged(_market, _whitelist);
     }
 }
