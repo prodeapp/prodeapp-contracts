@@ -131,7 +131,6 @@ contract GnosisChainReceiver is IXReceiver {
         bytes memory _callData
     ) external returns (bytes memory) {
         require(msg.sender == Connext, "Not authorized");
-        
 
         address user;
         IMarket market;
