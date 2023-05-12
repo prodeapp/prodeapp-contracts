@@ -138,6 +138,7 @@ contract GnosisChainReceiver is IXReceiver {
         IMarket market;
         address attribution;
         uint8 elementSize;
+        uint8 numberOfBets;
         assembly {
             // _callData layout:
             // length (32 bytes) + user (20 bytes) + market (20 bytes) + attribution (20 bytes) + elementSize (1 byte) + predictions
@@ -145,6 +146,7 @@ contract GnosisChainReceiver is IXReceiver {
             market := mload(add(_callData, 40)) // First 12 bytes are dropped
             attribution := mload(add(_callData, 60)) // First 12 bytes are dropped
             elementSize := mload(add(_callData, 61)) // First 31 bytes are dropped
+            numberOfBets := mload(add(_callData, 62)) // First 31 bytes are dropped
         }
 
         KeyValue keyValue = KeyValue(IMarketFactoryV2(marketFactoryV2).keyValue());
@@ -152,32 +154,31 @@ contract GnosisChainReceiver is IXReceiver {
         require(elementSize > 0 && elementSize <= 32, "Invalid number of bytes");
         require(user != address(0), "Invalid user address");
 
+        uint256 price = market.price();
+        uint256 remainder = _amount;
         uint256 numberOfQuestions = market.numberOfQuestions();
         bytes32[] memory predictions = new bytes32[](numberOfQuestions);
-        for (uint256 i = 0; i < numberOfQuestions; i++) {
-            bytes32 prediction;
-            uint256 offset = 289 + i * elementSize;
-            assembly {
-                prediction := calldataload(offset)
+        for (uint256 j = 0; j < numberOfBets; j++) {
+            for (uint256 i = 0; i < numberOfQuestions; i++) {
+                bytes32 prediction;
+                uint256 offset = 297 + (j * numberOfQuestions + i) * elementSize;
+                assembly {
+                    prediction := calldataload(offset)
+                }
+                predictions[i] = prediction >> (8 * (32 - elementSize));
             }
-            predictions[i] = prediction >> (8 * (32 - elementSize));
-        }
 
-        uint256 price = market.price();
-        uint256 remainder;
-
-        if (voucherBalance[user] >= price && marketsWhitelist[address(market)]) {
-            // Use voucher
-            voucherBalance[user] -= price;
-            voucherTotalSupply -= price;
-            remainder = _amount;
-            emit VoucherUsed(user, address(market), market.nextTokenID());
-        } else {
-            require(_amount >= price, "Insufficient wxDAI received");
-            remainder = _amount - price;
+            if (voucherBalance[user] >= price && marketsWhitelist[address(market)]) {
+                // Use voucher
+                voucherBalance[user] -= price;
+                voucherTotalSupply -= price;
+                emit VoucherUsed(user, address(market), market.nextTokenID());
+            } else {
+                remainder -= price;
+            }
+            uint256 tokenId = market.placeBet{value: price}(attribution, predictions);
+            market.transferFrom(address(this), user, tokenId);
         }
-        uint256 tokenId = market.placeBet{value: price}(attribution, predictions);
-        market.transferFrom(address(this), user, tokenId);
 
         if (remainder > 0) payable(user).send(remainder);
 
