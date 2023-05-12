@@ -261,13 +261,9 @@ contract GnosisChainReceiver is IXReceiver {
         require(marketsWhitelist[_market] == true, "Market not whitelisted");
 
         uint256 price = IMarket(_market).price();
-
-        require(voucherBalance[msg.sender] >= price, "Insufficient voucher balance");
-
         voucherBalance[msg.sender] -= price;
 
         uint256 tokenId = IMarket(_market).placeBet{value: price}(_attribution, _results);
-
         IMarket(_market).transferFrom(address(this), msg.sender, tokenId);
 
         emit VoucherUsed(msg.sender, _market, tokenId);
