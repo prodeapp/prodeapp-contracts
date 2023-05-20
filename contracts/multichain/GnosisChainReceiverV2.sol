@@ -169,7 +169,11 @@ contract GnosisChainReceiver is IXReceiver {
                 predictions[i] = prediction >> (8 * (32 - elementSize));
             }
 
-            if (voucherBalance[user] >= price && marketsWhitelist[address(market)]) {
+            if (
+                voucherBalance[user] >= price &&
+                address(this).balance >= price &&
+                marketsWhitelist[address(market)]
+            ) {
                 // Use voucher
                 voucherBalance[user] -= price;
                 voucherTotalSupply -= price;
