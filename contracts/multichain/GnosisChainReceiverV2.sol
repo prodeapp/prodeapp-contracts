@@ -18,7 +18,7 @@ interface IWXDAI {
 }
 
 /**
- * @title GnosisChainReceiver
+ * @title GnosisChainReceiverV2
  * @dev This contract receives transactions from the Connext BridgeFacet and places bets in the specified market on behalf of users.
  *
  * Payment Assumptions:
@@ -43,7 +43,7 @@ interface IWXDAI {
  *     Also notice that it isn't straight forward to steal the DAI. The router would need to create a fake Prode market or steal the bet
  *     instead of the money. In other words, this shouldn't be concerning.
  */
-contract GnosisChainReceiver is IXReceiver {
+contract GnosisChainReceiverV2 is IXReceiver {
     struct AirdropData {
         uint256 voucherPrice;
         uint256 value;
