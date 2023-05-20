@@ -22,19 +22,11 @@ interface IWXDAI {
  * @dev This contract receives transactions from the Connext BridgeFacet and places bets in the specified market on behalf of users.
  *
  * Payment Assumptions:
- * The xReceive() function expects at least an amount of USDC equal to the price of the bet, except when the user has a voucher assigned
- * and the market is whitelisted. In the latter scenario, USDC is not needed.
+ * The xReceive() function expects at least an amount of DAI equal to the price of the bet, except when the user has a voucher assigned
+ * and the market is whitelisted. In the latter scenario, DAI is not needed. Multiple bets are supported.
  *
- * Prode markets only accept xDAI as payment. When USDC is used to bet, it must first be swapped for xDAI. the USDC-xDAI exchange rate is
- * not exactly 1:1. On the background, xReceive() swaps USDC for xDAI, expecting to receive at least 97.5% of it, and then uses the xDAI
- * to place the bet. If the xDAI obtained is greater than the bet price, the difference stays in this contract. If the xDAI obtained
- * is smaller than the bet price but the contract was holding enough xDAI to cover the difference, the bet is placed anyway. If the amount
- * is not enough, the operation reverts and the USDC received stays in the contract. This should happen rarely and in this case the owner
- * of the contract can recover the USDC and reimburse the affected user.
- *
- * Bets placed through this contract are expected to be small (0-100 xDAI). The contract is expected to hold a small amount of xDAI to
- * potentially subsidize underfunded bets because of exchange rate volatility and slippage. This should improve UX at a very small cost
- * and ~0 risk.
+ * If the amount received is not enough to cover the bet price, the transaction fails and the DAI remains in this contract. The owner of
+ * this contract can withdraw the locked DAI.
  *
  * User Account Assumptions:
  * The user specified in the xReceive() transaction must be an address that the user controls on Gnosis chain. If the user is bridging
@@ -47,14 +39,14 @@ interface IWXDAI {
  *     in the contract balance. This amount should be enough to make a few transactions.
  *  3. This contract supports bet vouchers. This means that users bridging bets don't need to pay if they received a voucher.
  *  4. This receiver contract utilizes Connext fast path. There is a risk of routers behaving maliciously. Nevertheless, for each bet
- *     a router could at most steal the USDC bridged, which will likely be around 0-100 USDC, at the cost of losing the router's bond.
- *     Also notice that it isn't straight forward to steal the USDC. The router would need to create a fake Prode market or steal the bet
+ *     a router could at most steal the DAI bridged, which will likely be around 0-100 DAI, at the cost of losing the router's bond.
+ *     Also notice that it isn't straight forward to steal the DAI. The router would need to create a fake Prode market or steal the bet
  *     instead of the money. In other words, this shouldn't be concerning.
  */
 contract GnosisChainReceiver is IXReceiver {
     /* Constants */
 
-    /// @dev address of WXDAI token. In Uniswap v2 there are no more direct xDAI pairs, all xDAI must be converted to wxDAI first.
+    /// @dev address of WXDAI token.
     address private constant WXDAI = 0xe91D153E0b41518A2Ce8Dd3D7944Fa863463a97d;
 
     /// @dev address of Connext BridgeFacet contract on Gnosis chain.
