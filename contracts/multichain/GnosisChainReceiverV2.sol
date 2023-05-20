@@ -44,6 +44,11 @@ interface IWXDAI {
  *     instead of the money. In other words, this shouldn't be concerning.
  */
 contract GnosisChainReceiver is IXReceiver {
+    struct AirdropData {
+        uint256 voucherPrice;
+        uint256 value;
+    }
+
     /* Constants */
 
     /// @dev address of WXDAI token.
@@ -68,6 +73,10 @@ contract GnosisChainReceiver is IXReceiver {
     uint256 public voucherTotalSupply;
 
     mapping(address => bool) public marketsWhitelist;
+
+    /// @dev secret vouchers
+    mapping(bytes32 => AirdropData) public data;
+    mapping(bytes32 => bool) claims;
 
     /// @dev New users that don't have xDAI are given a small amount.
     uint256 public faucetAmountPerNewUser = 0.0025 ether;
@@ -237,6 +246,54 @@ contract GnosisChainReceiver is IXReceiver {
             voucherBalance[_froms[i]] = 0;
             voucherTotalSupply -= amount;
         }
+    }
+
+    /** @dev Allocates a secret bet voucher that can be later assigned to anyone holding the password.
+     *  @param _key key of the voucher.
+     *  @param _voucherPrice price of each voucher.
+     */
+    function addSecretVoucher(bytes32 _key, uint256 _voucherPrice) external payable {
+        require(msg.value > 0 && msg.value >= _voucherPrice, "Not enough funds");
+        require(data[_key].value == 0, "Already funded");
+        data[_key] = AirdropData({voucherPrice: _voucherPrice, value: msg.value});
+    }
+
+    /** @dev Assigns a secret voucher to the caller of this function.
+     *  @param _superSecretCode password to get a free voucher.
+     */
+    function claimSecretVoucher(string calldata _superSecretCode) external {
+        bytes32 key = keccak256(abi.encodePacked(_superSecretCode));
+        bytes32 claimKey = keccak256(abi.encodePacked(_superSecretCode, msg.sender));
+
+        require(!claims[claimKey], "Already claimed");
+        require(data[key].value > 0, "Secret voucher not available");
+
+        data[key].value -= data[key].voucherPrice;
+        claims[claimKey] = true;
+
+        voucherBalance[msg.sender] += data[key].voucherPrice;
+        voucherTotalSupply += data[key].voucherPrice;
+        emit FundingReceived(address(this), msg.sender, data[key].voucherPrice);
+    }
+
+    /** @dev Allows the owner of the contract to remove a secret voucher if it was not already claimed.
+     *  @param _keys keys of the vouchers.
+     */
+    function removeSecretVouchers(bytes32[] calldata _keys) external {
+        require(msg.sender == voucherController, "Not authorized");
+
+        uint256 totalValue;
+        for (uint256 i = 0; i < _keys.length; i++) {
+            bytes32 _key = _keys[i];
+            require(data[_key].value > 0, "Invalid code or already claimed");
+
+            totalValue += data[_key].value;
+            data[_key].value = 0;
+            data[_key].voucherPrice = 0;
+        }
+
+        (bool success, ) = payable(msg.sender).call{value: totalValue}(new bytes(0));
+        require(success, "Send XDAI failed");
     }
 
     /** @dev Places a bet using the voucher balance and transfers the NFT to the sender.
