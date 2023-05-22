@@ -44,7 +44,7 @@ interface IWXDAI {
  *     instead of the money. In other words, this shouldn't be concerning.
  */
 contract GnosisChainReceiverV2 is IXReceiver {
-    struct AirdropData {
+    struct SecretVoucher {
         uint256 voucherPrice;
         uint256 value;
     }
@@ -75,7 +75,7 @@ contract GnosisChainReceiverV2 is IXReceiver {
     mapping(address => bool) public marketsWhitelist;
 
     /// @dev secret vouchers
-    mapping(bytes32 => AirdropData) public data;
+    mapping(bytes32 => SecretVoucher) public secretVouchers;
     mapping(bytes32 => bool) claims;
 
     /// @dev New users that don't have xDAI are given a small amount.
@@ -111,9 +111,9 @@ contract GnosisChainReceiverV2 is IXReceiver {
     }
 
     function retrieveXDAI(address payable _to, uint256 _amount) external {
-        uint256 amount = _amount == 0 ? address(this).balance : _amount;
-
         require(msg.sender == owner || msg.sender == voucherController, "Not authorized");
+
+        uint256 amount = _amount == 0 ? address(this).balance : _amount;
         (bool success, ) = _to.call{value: amount}(new bytes(0));
         require(success, "Send XDAI failed");
     }
@@ -202,7 +202,9 @@ contract GnosisChainReceiverV2 is IXReceiver {
         emit FundingReceived(msg.sender, _to, msg.value);
     }
 
-    /** @dev Increases the balance of the vouchers available for a specific address.
+    /** @dev Increases the balance of the voucher available for a specific list of addresses.
+     *  The voucher controller can add unbacked vouchers. This could be useful for things like
+     *  whitelisting N addresses while having a stock of M < N vouchers.
      *  @param _tos Address of the receiver.
      *  @param _amounts Amount to assign to each address.
      */
@@ -239,15 +241,16 @@ contract GnosisChainReceiverV2 is IXReceiver {
         emit VoucherTransfered(_from, _to, _amount);
     }
 
-    /** @dev Transfers balance from an address to another.
-     *  @param _froms Address of the current vocher owner.
+    /** @dev The voucher controller can remove vouchers from any account. xDAI assigned to these
+     *  vouchers is not withdrawn in this method and should be dealt with separately.
+     *  @param _accounts Addresses of the vocher owners to remove.
      */
-    function removeVouchers(address[] calldata _froms) external {
+    function removeVouchers(address[] calldata _accounts) external {
         require(msg.sender == voucherController, "Not authorized");
 
-        for (uint256 i = 0; i < _froms.length; i++) {
-            uint256 amount = voucherBalance[_froms[i]];
-            voucherBalance[_froms[i]] = 0;
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            uint256 amount = voucherBalance[_accounts[i]];
+            voucherBalance[_accounts[i]] = 0;
             voucherTotalSupply -= amount;
         }
     }
@@ -258,8 +261,8 @@ contract GnosisChainReceiverV2 is IXReceiver {
      */
     function addSecretVoucher(bytes32 _key, uint256 _voucherPrice) external payable {
         require(msg.value > 0 && msg.value >= _voucherPrice, "Not enough funds");
-        require(data[_key].value == 0, "Already funded");
-        data[_key] = AirdropData({voucherPrice: _voucherPrice, value: msg.value});
+        require(secretVouchers[_key].value == 0, "Already funded");
+        secretVouchers[_key] = SecretVoucher({voucherPrice: _voucherPrice, value: msg.value});
     }
 
     /** @dev Assigns a secret voucher to the caller of this function.
@@ -270,14 +273,14 @@ contract GnosisChainReceiverV2 is IXReceiver {
         bytes32 claimKey = keccak256(abi.encodePacked(_superSecretCode, msg.sender));
 
         require(!claims[claimKey], "Already claimed");
-        require(data[key].value > 0, "Secret voucher not available");
+        require(secretVouchers[key].value > 0, "Secret voucher not available");
 
-        data[key].value -= data[key].voucherPrice;
+        secretVouchers[key].value -= secretVouchers[key].voucherPrice;
         claims[claimKey] = true;
 
-        voucherBalance[msg.sender] += data[key].voucherPrice;
-        voucherTotalSupply += data[key].voucherPrice;
-        emit FundingReceived(address(this), msg.sender, data[key].voucherPrice);
+        voucherBalance[msg.sender] += secretVouchers[key].voucherPrice;
+        voucherTotalSupply += secretVouchers[key].voucherPrice;
+        emit FundingReceived(address(this), msg.sender, secretVouchers[key].voucherPrice);
     }
 
     /** @dev Allows the owner of the contract to remove a secret voucher if it was not already claimed.
@@ -289,11 +292,11 @@ contract GnosisChainReceiverV2 is IXReceiver {
         uint256 totalValue;
         for (uint256 i = 0; i < _keys.length; i++) {
             bytes32 _key = _keys[i];
-            require(data[_key].value > 0, "Invalid code or already claimed");
+            require(secretVouchers[_key].value > 0, "Invalid code or already claimed");
 
-            totalValue += data[_key].value;
-            data[_key].value = 0;
-            data[_key].voucherPrice = 0;
+            totalValue += secretVouchers[_key].value;
+            secretVouchers[_key].value = 0;
+            secretVouchers[_key].voucherPrice = 0;
         }
 
         (bool success, ) = payable(msg.sender).call{value: totalValue}(new bytes(0));
@@ -310,7 +313,7 @@ contract GnosisChainReceiverV2 is IXReceiver {
         address _market,
         address _attribution,
         bytes32[] calldata _results
-    ) external payable returns (uint256) {
+    ) external returns (uint256) {
         require(marketsWhitelist[_market] == true, "Market not whitelisted");
 
         uint256 price = IMarket(_market).price();
@@ -322,6 +325,42 @@ contract GnosisChainReceiverV2 is IXReceiver {
         emit VoucherUsed(msg.sender, _market, tokenId);
 
         return tokenId;
+    }
+
+    /** @dev Places multiple bets using the voucher balance + msg.value and transfers the NFT to the sender.
+     *  @param _market Address of the market.
+     *  @param _attributions Addresses that sent the referral. If 0x0, it's ignored.
+     *  @param _resultsArray Answer predictions to the questions asked in Realitio.
+     *  @return the last minted token id.
+     */
+    function placeBets(
+        address _market,
+        address[] calldata _attributions,
+        bytes32[][] calldata _resultsArray
+    ) external payable returns (uint256) {
+        require(marketsWhitelist[_market] == true, "Market not whitelisted");
+
+        uint256 price = IMarket(_market).price() * _attributions.length;
+        if (voucherBalance[msg.sender] >= price) {
+            voucherBalance[msg.sender] -= price;
+        } else {
+            require(msg.value + voucherBalance[msg.sender] == price, "Wrong value sent");
+            voucherBalance[msg.sender] = 0;
+        }
+
+        uint256 tokenId = IMarket(_market).nextTokenID();
+        uint256 lastTokenId = IMarket(_market).placeBets{value: price}(
+            _attributions,
+            _resultsArray
+        );
+
+        for (; tokenId <= lastTokenId; tokenId++) {
+            IMarket(_market).transferFrom(address(this), msg.sender, tokenId);
+        }
+
+        emit VoucherUsed(msg.sender, _market, tokenId);
+
+        return lastTokenId;
     }
 
     /** @dev Adds a market to the whitelist.
