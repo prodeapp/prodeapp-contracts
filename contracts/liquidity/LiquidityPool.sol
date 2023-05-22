@@ -12,7 +12,6 @@ interface IERC20 {
 
 contract LiquidityPool {
     uint256 public constant DIVISOR = 10000;
-    uint256 private constant UINT_MAX = type(uint256).max;
 
     bool public initialized;
     IMarket public market;
@@ -175,7 +174,7 @@ contract LiquidityPool {
 
         unchecked {
             uint256 c = _a * _b;
-            return c / _a == _b ? c : UINT_MAX;
+            return c / _a == _b ? c : type(uint256).max;
         }
     }
 
@@ -204,10 +203,12 @@ contract LiquidityPool {
         reward = (_totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
     }
 
-    function getMarketPaymentIfWon() public view returns (uint256 marketPayment) {
+    function getMarketPaymentIfWon() public view returns (uint256) {
+        if (market.price() == 0) return totalDeposits;
+
         uint256 maxPayment = market.price() * market.nextTokenID();
         maxPayment = mulCap(maxPayment, betMultiplier);
-        marketPayment = totalDeposits < maxPayment ? totalDeposits : maxPayment;
+        return totalDeposits < maxPayment ? totalDeposits : maxPayment;
     }
 
     receive() external payable {
