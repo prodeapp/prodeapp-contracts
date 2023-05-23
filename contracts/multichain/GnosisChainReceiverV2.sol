@@ -358,7 +358,7 @@ contract GnosisChainReceiverV2 is IXReceiver {
             IMarket(_market).transferFrom(address(this), msg.sender, tokenId);
         }
 
-        emit VoucherUsed(msg.sender, _market, tokenId);
+        emit VoucherUsed(msg.sender, _market, lastTokenId);
 
         return lastTokenId;
     }
