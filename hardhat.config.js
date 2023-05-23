@@ -96,7 +96,6 @@ module.exports = {
       mainnet: etherscanApiKey,
       kovan: etherscanApiKey,
       xdai: blockscoutApiKey,
-      gnosis: blockscoutApiKey,
       sokol: "no-api-key-needed"
     }
   }
