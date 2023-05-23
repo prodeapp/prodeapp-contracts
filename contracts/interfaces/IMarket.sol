@@ -56,6 +56,11 @@ interface IMarket is IERC721 {
         payable
         returns (uint256);
 
+    function placeBets(address[] calldata _attributions, bytes32[][] calldata _resultsArray)
+        external
+        payable
+        returns (uint256);
+
     function bets(bytes32 _tokenHash) external view returns (uint256);
 
     function ranking(uint256 index) external view returns (Result memory);
