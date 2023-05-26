@@ -163,7 +163,7 @@ contract GnosisChainReceiverV2 is IXReceiver {
         for (uint256 j = 0; j < numberOfBets; j++) {
             for (uint256 i = 0; i < numberOfQuestions; i++) {
                 bytes32 prediction;
-                uint256 offset = 297 + (j * numberOfQuestions + i) * elementSize;
+                uint256 offset = 290 + (j * numberOfQuestions + i) * elementSize;
                 assembly {
                     prediction := calldataload(offset)
                 }
