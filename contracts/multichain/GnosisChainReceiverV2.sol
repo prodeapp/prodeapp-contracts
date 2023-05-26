@@ -132,7 +132,7 @@ contract GnosisChainReceiverV2 is IXReceiver {
         bytes memory _callData
     ) external returns (bytes memory) {
         require(msg.sender == Connext, "Not authorized");
-        require(_asset == WXDAI, "Invalid token");
+        require(_asset == WXDAI || _asset == address(0), "Invalid token");
         IWXDAI(WXDAI).withdraw(_amount);
 
         address user;
@@ -142,7 +142,8 @@ contract GnosisChainReceiverV2 is IXReceiver {
         uint8 numberOfBets;
         assembly {
             // _callData layout:
-            // length (32 bytes) + user (20 bytes) + market (20 bytes) + attribution (20 bytes) + elementSize (1 byte) + predictions
+            // length   + user     + market   + attribution + elementSize + numberOfBets + predictions
+            // 32 bytes + 20 bytes + 20 bytes + 20 bytes    + 1 byte      + 1 byte       + N bytes
             user := mload(add(_callData, 20)) // First 12 bytes are dropped
             market := mload(add(_callData, 40)) // First 12 bytes are dropped
             attribution := mload(add(_callData, 60)) // First 12 bytes are dropped
