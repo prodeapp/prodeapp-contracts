@@ -47,6 +47,8 @@ interface IMarketFactory {
     function arbitrator() external view returns (address);
 
     function realitio() external view returns (address);
+
+    function allMarkets() external view returns (address[] memory);
 }
 
 interface ILiquidityFactory {
@@ -140,20 +142,32 @@ contract MarketView {
         uint256 prizePool;
     }
 
+    struct MarketInfo {
+        address id;
+        BaseInfo baseInfo;
+        ManagerInfo managerInfo;
+        PeriodsInfo periodsInfo;
+        EventsInfo eventsInfo;
+        LiquidityInfo liquidityInfo;
+    }
+
     IRealityRegistry public realityRegistry;
     IKeyValue public keyValue;
     ILiquidityFactory public liquidityFactory;
+    IMarketFactory public marketFactory;
 
     address public owner = msg.sender;
 
     constructor(
         IRealityRegistry _realityRegistry,
         IKeyValue _keyValue,
-        ILiquidityFactory _liquidityFactory
+        ILiquidityFactory _liquidityFactory,
+        IMarketFactory _marketFactory
     ) {
         realityRegistry = _realityRegistry;
         keyValue = _keyValue;
         liquidityFactory = _liquidityFactory;
+        marketFactory = _marketFactory;
     }
 
     function changeOwner(address _owner) external {
@@ -171,25 +185,28 @@ contract MarketView {
         realityRegistry = _realityRegistry;
     }
 
-    function getMarket(address marketId)
-        external
-        view
-        returns (
-            address id,
-            BaseInfo memory baseInfo,
-            ManagerInfo memory managerInfo,
-            PeriodsInfo memory periodsInfo,
-            EventsInfo memory eventsInfo,
-            LiquidityInfo memory liquidityInfo
-        )
-    {
+    function getMarket(address marketId) public view returns (MarketInfo memory) {
+        BaseInfo memory baseInfo;
+        ManagerInfo memory managerInfo;
+        PeriodsInfo memory periodsInfo;
+        EventsInfo memory eventsInfo;
+        LiquidityInfo memory liquidityInfo;
+
         if (keyValue.marketDeleted(marketId)) {
-            return (address(0), baseInfo, managerInfo, periodsInfo, eventsInfo, liquidityInfo);
+            return
+                MarketInfo({
+                    id: address(0),
+                    baseInfo: baseInfo,
+                    managerInfo: managerInfo,
+                    periodsInfo: periodsInfo,
+                    eventsInfo: eventsInfo,
+                    liquidityInfo: liquidityInfo
+                });
         }
 
         IMarket market = IMarket(marketId);
 
-        id = marketId;
+        address id = marketId;
         baseInfo.name = market.name();
         baseInfo.hash = market.questionsHash();
         baseInfo.price = market.price();
@@ -230,6 +247,36 @@ contract MarketView {
             liquidityInfo.totalDeposits = liquidityPool.totalDeposits();
             liquidityInfo.prizePool = liquidityPool.getMarketPaymentIfWon();
         }
+
+        return
+            MarketInfo({
+                id: id,
+                baseInfo: baseInfo,
+                managerInfo: managerInfo,
+                periodsInfo: periodsInfo,
+                eventsInfo: eventsInfo,
+                liquidityInfo: liquidityInfo
+            });
+    }
+
+    function getMarkets(uint256 count) external view returns (MarketInfo[] memory) {
+        address[] memory allMarkets = marketFactory.allMarkets();
+
+        MarketInfo[] memory marketsInfo = new MarketInfo[](count);
+
+        if (allMarkets.length == 0) {
+            return marketsInfo;
+        }
+
+        uint256 lastIndex = allMarkets.length - 1;
+        uint256 startIndex = allMarkets.length > count ? allMarkets.length - count : 0;
+        uint256 currentIndex = 0;
+
+        for (uint256 j = lastIndex; j >= startIndex; j--) {
+            marketsInfo[currentIndex++] = getMarket(allMarkets[j]);
+        }
+
+        return marketsInfo;
     }
 
     function getMarketBets(address marketId) external view returns (BetInfo[] memory) {
@@ -303,7 +350,7 @@ contract MarketView {
         betInfo.points = getScore(market, tokenId);
     }
 
-    function getMarketFactoryAttrs(IMarketFactory marketFactory)
+    function getMarketFactoryAttrs()
         external
         view
         returns (
