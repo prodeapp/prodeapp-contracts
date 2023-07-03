@@ -4,8 +4,8 @@ const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days
 
-const openingTs = toTimestamp("2023-07-01 00:00:00");
-const marketName = `Argentinean Presidential Primary election 2023`;
+const openingTs = toTimestamp("2023-08-14 00:00:00");
+const marketName = `Argentinean Presidential Primary election (PASO) 2023`;
 const JxCCandidates = [
   "Bullrich - Petri",
   "Rodriguez Larreta - Morales",
@@ -75,14 +75,14 @@ const marketData = {
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),  // 5 xDAI
   questions: [
-    buildQuestionSingleSelectV2(`Who will win the ${marketName} within the Juntos por el Cambio party??`, JxCCandidates, openingTs, 'politics'),
-    buildQuestionSingleSelectV2(`Who will win the ${marketName} within the Union por la Patria party??`, UxPCandidates, openingTs+1, 'politics'),
-    buildQuestionSingleSelectV2(`Who will win the ${marketName} within the Frente de Izquierda party??`, FdICandidates, openingTs+2, 'politics'),
-    buildQuestionSingleSelectV2(`What percentage of votes will get Milei-Villaroel at the ${marketName}?`, ranges, openingTs+3, 'politics'),
-    buildQuestionSingleSelectV2(`What percentage of votes will get Schiaretti-Randazzo at the ${marketName}?`, ranges, openingTs+4, 'politics'),
-    buildQuestionSingleSelectV2(`Which party will get the most votes at the ${marketName}?`, parties, openingTs+5, 'politics'),
-    buildQuestionSingleSelectV2(`Which party will get the second most votes at the ${marketName}?`, parties, openingTs+6, 'politics'),
-    buildQuestionSingleSelectV2(`Which candidate will get the most votes at the ${marketName}?`, candidates, openingTs+7, 'politics'),
+    buildQuestionSingleSelectV2(`Who will win the ${marketName} within the Juntos por el Cambio party?`, JxCCandidates, openingTs, 'Politics'),
+    buildQuestionSingleSelectV2(`Who will win the ${marketName} within the Union por la Patria party?`, UxPCandidates, openingTs+1, 'Politics'),
+    buildQuestionSingleSelectV2(`Who will win the ${marketName} within the Frente de Izquierda party?`, FdICandidates, openingTs+2, 'Politics'),
+    buildQuestionSingleSelectV2(`What percentage of votes will get Milei-Villaroel at the ${marketName}?`, ranges, openingTs+3, 'Politics'),
+    buildQuestionSingleSelectV2(`What percentage of votes will get Schiaretti-Randazzo at the ${marketName}?`, ranges, openingTs+4, 'Politics'),
+    buildQuestionSingleSelectV2(`Which party will get the most votes at the ${marketName}?`, parties, openingTs+5, 'Politics'),
+    buildQuestionSingleSelectV2(`Which party will get the second most votes at the ${marketName}?`, parties, openingTs+6, 'Politics'),
+    buildQuestionSingleSelectV2(`Which candidate will get the most votes at the ${marketName}?`, candidates, openingTs+7, 'Politics'),
   ],
   prizeWeights: [10000]
 };
@@ -109,7 +109,7 @@ async function main() {
   const MarketFactoryV2 = await ethers.getContractFactory("MarketFactoryV2");
   const marketFactoryV2 = await MarketFactoryV2.attach(chainConfig.factoryV2);
 
-  await marketFactoryV2.createMarket(
+  const marketContract = await marketFactoryV2.createMarket(
     marketData.marketName,
     marketData.marketSymbol,
     marketData.creator,
@@ -120,6 +120,7 @@ async function main() {
     orderedQuestions,
     marketData.prizeWeights
   );
+  console.log(`Market deployed at ${marketContract.address.toString()}`)
 }
 
 main()
