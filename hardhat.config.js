@@ -2,7 +2,7 @@ require("@nomiclabs/hardhat-waffle");
 require("@reality.eth/contracts")
 require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
-const { mnemonic, etherscanApiKey, alchemyKey, blockscoutApiKey, PK } = require('./secrets.json');
+const { mnemonic, etherscanApiKey, alchemyKey, blockscoutApiKey, PK, polygonscanApiKey } = require('./secrets.json');
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -75,7 +75,7 @@ module.exports = {
       chainId: 100,
       gasPrice: 5000000000
     },
-    mumbai: {
+    polygonMumbai: {
       url: 'https://rpc-mumbai.maticvigil.com/',
       accounts: [PK],
       chainId: 80001,
@@ -102,6 +102,7 @@ module.exports = {
       mainnet: etherscanApiKey,
       kovan: etherscanApiKey,
       xdai: blockscoutApiKey,
+      polygonMumbai: polygonscanApiKey,
       sokol: "no-api-key-needed"
     }
   }

@@ -221,7 +221,10 @@ const params = {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
     factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b",
-    factoryV2: "0x364Bc6fCdF1D2Ce014010aB4f479a892a8736014"
+    factoryV2: "0x364Bc6fCdF1D2Ce014010aB4f479a892a8736014",
+    keyvalue: "0x47c255d92f6e800312835f08f7906bc9019a210c",
+    realityRegistry: "0xad3aa4da922ab968d8e9733ecf32699756970193",
+    liquidityFactory: "0x6bbe06d775445f052b9684d98f80161921e67d2a"
   },
   31337: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
@@ -232,7 +235,10 @@ const params = {
     factory: "0xfe6bd7451e92deddd1096430e659e8af882d2eb7",
     factoryV2: "0xF25455008BD7a750EBFeEC73d4E64114dA9449F5",
     realityEth: "0x92115220C28e78312cCe86f3d1dE652CFBD0357A",
-    arbitrator: "0x92115220C28e78312cCe86f3d1dE652CFBD0357A"
+    arbitrator: "0x92115220C28e78312cCe86f3d1dE652CFBD0357A",
+    keyvalue: "0xE680Dc6A28674546361531BF4CaaE190E08D6Bad",
+    liquidityFactory: "0x7e0a4b5514a47e0810ae230be7909e898ffe99ac",
+    realityRegistry: "0xfda70aee5616ead5220102bf75b57135dfe35e55"
   }
 };
 
