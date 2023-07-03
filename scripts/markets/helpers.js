@@ -228,6 +228,11 @@ const params = {
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
     factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b"
   },
+  80001: {
+    factoryV2: "0xF25455008BD7a750EBFeEC73d4E64114dA9449F5",
+    realityEth: "0x92115220C28e78312cCe86f3d1dE652CFBD0357A",
+    arbitrator: "0x92115220c28e78312cce86f3d1de652cfbd0357a"
+  }
 };
 
 function getChain(chainId) {

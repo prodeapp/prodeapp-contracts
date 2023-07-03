@@ -74,6 +74,12 @@ module.exports = {
       accounts: [PK],
       chainId: 100,
       gasPrice: 5000000000
+    },
+    mumbai: {
+      url: 'https://rpc-mumbai.maticvigil.com/',
+      accounts: [PK],
+      chainId: 80001,
+      gasPrice: 5000000000
     }
   },
   etherscan: {
