@@ -293,6 +293,20 @@ contract MarketView {
         return betInfo;
     }
 
+    function hasBets(address userId, address marketId) external view returns (bool) {
+        IMarket market = IMarket(marketId);
+
+        uint256 numOfBets = market.nextTokenID();
+
+        for (uint256 tokenId = 0; tokenId < numOfBets; tokenId++) {
+            if (market.ownerOf(tokenId) == userId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function getTokenBet(address marketId, uint256 tokenId)
         external
         view
