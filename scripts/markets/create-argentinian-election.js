@@ -32,16 +32,17 @@ const parties = [
     "Juntos por el Cambio",
     "La Libertad Avanza",
     "Hacemos por Nuestro Pais",
-    "Frente de Izquierda y los Trabajadores-Unidad",
-    "Nuevo MAS",
-    "Politica Obrera",
-    "Libres del Sur",
-    "Frente Principios y Valores",
-    "Frente Patriota Federal",
-    "Demos",
-    "MIJD",
-    "Frente Liber.ar",
-    "Paz, Democracia y Soberania",
+    "Otro"
+    // "Frente de Izquierda y los Trabajadores-Unidad",
+    // "Nuevo MAS",
+    // "Politica Obrera",
+    // "Libres del Sur",
+    // "Frente Principios y Valores",
+    // "Frente Patriota Federal",
+    // "Demos",
+    // "MIJD",
+    // "Frente Liber.ar",
+    // "Paz, Democracia y Soberania",
 ]
 
 const candidates = [
@@ -51,26 +52,27 @@ const candidates = [
     "Bullrich",
     "Milei",
     "Schiaretti",
-    "Bregman",
-    "Solano",
-    "Castañeira",
-    "Ramal",
-    "Escobar",
-    "Moreno",
-    "Biondini",
-    "Etchepare",
-    "Bárbaro",
-    "Castells",
-    "Cúneo",
-    "Gobbi",
-    "Giardinelli",
+    "Otro/a",
+    // "Bregman",
+    // "Solano",
+    // "Castañeira",
+    // "Ramal",
+    // "Escobar",
+    // "Moreno",
+    // "Biondini",
+    // "Etchepare",
+    // "Bárbaro",
+    // "Castells",
+    // "Cúneo",
+    // "Gobbi",
+    // "Giardinelli",
 ]
 
 const marketData = {
   marketName: marketName,
   marketSymbol: "PRODE",
   closingTime: toTimestamp("2023-08-13 08:00:00 GMT-3"),
-  price: ethers.utils.parseUnits("2.0", "ether"), // 10 xDAI
+  price: ethers.utils.parseUnits("0", "ether"), // 10 xDAI
   creator: "0x0029ec18568F96AFE25Ea289Dac6c4703868924d",
   creatorFee: 300,
   minBond: ethers.utils.parseUnits("5.0", "ether"),  // 5 xDAI
@@ -120,7 +122,7 @@ async function main() {
     orderedQuestions,
     marketData.prizeWeights
   );
-  console.log(`Market deployed at ${marketContract.address.toString()}`)
+  console.log(`Market deployed at ${marketContract}`)
 }
 
 main()
