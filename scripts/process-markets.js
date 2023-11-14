@@ -231,9 +231,16 @@ async function processMarketWithLiquidity(marketAddress, totalClaimed, signer) {
     return [];
   }
 
-  const claimLiquidity = (await liquidityPool.populateTransaction.claimLiquidityRewards("0x8DC93c415B1894F811AFb9fe7Dfe17B24D559215")).data;
-  datas.push(claimLiquidity);
-  targets.push(creatorAddress);
+  const stakedEventFilter = liquidityPool.filters.Staked();
+  const stakedEvents = await liquidityPool.queryFilter(stakedEventFilter);
+  const stakers = [...new Set(stakedEvents.map(event => event.args._user))];
+
+  for (let j = 0; j < stakers.length; j++){
+    const claimLiquidity = (await liquidityPool.populateTransaction.claimLiquidityRewards(stakers[j])).data;
+    datas.push(claimLiquidity);
+    targets.push(creatorAddress);
+  }
+
   const executeCreatorRewards = (await liquidityPool.populateTransaction.executeCreatorRewards()).data;
   datas.push(executeCreatorRewards);
   targets.push(creatorAddress);
