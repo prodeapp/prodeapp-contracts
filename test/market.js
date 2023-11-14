@@ -802,6 +802,100 @@ describe("Market", () => {
       expect(_totalPoints).to.eq(BigNumber.from(ranking[3]));
       expect(_index).to.eq(BigNumber.from(2));
     });
+
+    it("Should register all when there are less bets than prizes.", async () => {
+      const bettingTime = 200;
+      const closingTime = await getCurrentTimestamp() + bettingTime;
+      const questions = [
+        {
+          templateID: 2, 
+          question: "Who won the match between Manchester City and Real Madrid at Champions League?␟\"Manchester City\",\"Real Madrid\"␟sports␟en_US", 
+          openingTS: closingTime + 1
+        },
+        {
+          templateID: 2, 
+          question: "Who won the last match between Boca and River?␟\"Boca\",\"River\"␟sports␟en_US", 
+          openingTS: closingTime + 1
+        },
+        {
+          templateID: 2, 
+          question: "Who won the last match between Barcelona and Madrid?␟\"Barcelona\",\"Madrid\"␟sports␟en_US", 
+          openingTS: closingTime + 1
+        }
+      ];
+
+      // Sort questions by Realitio's question ID.
+      const orderedQuestions = questions
+        .sort((a, b) => getQuestionID(
+            a.templateID,
+            a.openingTS,
+            a.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) > getQuestionID(
+            b.templateID,
+            b.openingTS,
+            b.question,
+            arbitrator.address,
+            timeout,
+            marketData.minBond,
+            realitio.address,
+            factory.address,
+          ) ? 1 : -1);
+      await factory.createMarket(
+        marketData.info.marketName,
+        marketData.info.marketSymbol,
+        creator.address,
+        marketData.managementFee,
+        closingTime,
+        marketData.price,
+        marketData.minBond,
+        orderedQuestions,
+        marketData.prizeWeights
+      );
+      const totalMarkets = await factory.marketCount();
+      const marketAddress = await factory.markets(totalMarkets.sub(BigNumber.from(1)));
+      market = await Market.attach(marketAddress);
+  
+      const players = [
+        player1,
+        player2,
+      ];
+      const bets = [
+        [numberToBytes32(1), numberToBytes32(1), numberToBytes32(1)], // 2 points
+        [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)], // 3 points
+      ];
+      const results = [numberToBytes32(1), numberToBytes32(2), numberToBytes32(1)];
+  
+      for (let i = 0; i < bets.length; i++) {
+        await market.connect(players[i]).placeBet(ZERO_ADDRESS, bets[i], { value: 100 });
+      }
+      await ethers.provider.send('evm_increaseTime', [bettingTime]);
+      await ethers.provider.send('evm_mine');
+  
+      for (let i = 0; i < results.length; i++) {
+        const questionID = await market.questionIDs(i);
+        await realitio.submitAnswer(questionID, results[i], 0, { value: 10 });
+      }
+      const poolBalance = await ethers.provider.getBalance(market.address);
+      await ethers.provider.send('evm_increaseTime', [timeout]);
+      await ethers.provider.send('evm_mine');
+      let tx = await market.registerAvailabilityOfResults();
+      let receipt = await tx.wait();
+      const [_manager, _managementReward] = getEmittedEvent('ManagementReward', receipt).args
+      const marketInfo = await market.marketInfo();
+      expect(_manager).to.eq(marketInfo.manager);
+      const managementReward = poolBalance.mul(BigNumber.from(marketData.managementFee + protocolFee)).div(BigNumber.from(10000));
+      expect(_managementReward).to.eq(managementReward);
+      expect(await ethers.provider.getBalance(marketInfo.manager)).to.eq(managementReward);
+      expect(await market.totalPrize()).to.eq(poolBalance.sub(managementReward));
+  
+      // Register ranking
+      await market.registerAll();
+    });
   });
 
   describe("Claims and Reimbursements", () => {
