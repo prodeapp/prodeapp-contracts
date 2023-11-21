@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.9;
 
+import "./IMarket.sol";
+
 interface IMarketFactory {
     struct RealitioQuestion {
         uint256 templateID;
@@ -19,4 +21,6 @@ interface IMarketFactory {
         RealitioQuestion[] memory questionsData,
         uint16[] memory prizeWeights
     ) external returns (address);
+
+    function allMarkets() external view returns (IMarket[] memory);
 }
