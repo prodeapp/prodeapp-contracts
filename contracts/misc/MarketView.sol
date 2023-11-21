@@ -344,7 +344,7 @@ contract MarketView {
                 eventInfo[i].category,
                 ,
                 eventInfo[i].templateId
-            ) = realityRegistry.metadata(eventInfo[i].id);
+            ) = realityRegistry.metadata(market.questionIDs(i));
         }
 
         return eventInfo;
