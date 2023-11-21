@@ -894,7 +894,7 @@ describe("Market", () => {
       expect(await market.totalPrize()).to.eq(poolBalance.sub(managementReward));
   
       // Register ranking
-      await market.registerAll();
+      await expect(market.registerAll()).not.to.be.reverted;
     });
   });
 
