@@ -279,7 +279,8 @@ contract Market is ERC721, IERC2981 {
             results[i] = realitio.resultForOnceSettled(questionIDs[i]);
         }
 
-        uint256[] memory auxRanking = new uint256[](nextTokenID);
+        uint256 rankingLength = nextTokenID < prizeWeights.length ? prizeWeights.length : nextTokenID;
+        uint256[] memory auxRanking = new uint256[](rankingLength);
         uint256 currentMin;
         uint256 freePos;
         for (uint256 tokenID = 0; tokenID < nextTokenID; tokenID++) {
