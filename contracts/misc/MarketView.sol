@@ -362,6 +362,17 @@ contract MarketView {
         betInfo.ownerName = keyValue.username(betInfo.owner);
         betInfo.predictions = getPredictions(market, tokenId);
         betInfo.points = getScore(market, tokenId);
+        betInfo.closingTime = market.closingTime();
+        betInfo.isRanked = market.isRanked(tokenId);
+        bool hasWon = false
+        uint256[] prizes = getPrizes(market);
+        for (uint256 i = 0; i < prizes.length; i++) {
+            if (market.ranking(i).tokenID === tokenId) {
+                hasWon = true
+                break
+            }
+        }
+        betInfo.hasWon = hasWon
     }
 
     function getMarketFactoryAttrs()
