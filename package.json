@@ -14,16 +14,16 @@
     "reimburse:gnosis": "npx hardhat run --network gnosis scripts/reimburse-players.js"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@nomiclabs/hardhat-etherscan": "3.0.1",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
+    "@nomiclabs/hardhat-ethers": "^2.2.3",
+    "@nomiclabs/hardhat-etherscan": "^3.1.7",
+    "@nomiclabs/hardhat-waffle": "^2.0.6",
     "@openzeppelin/hardhat-upgrades": "^1.17.0",
     "chai": "^4.3.6",
     "ethereum-waffle": "^3.4.4",
     "ethers": "^5.6.2",
-    "hardhat": "^2.9.2",
+    "hardhat": "^2.19.1",
     "prettier": "^2.7.1",
-    "prettier-plugin-solidity": "^1.0.0-beta.24"
+    "prettier-plugin-solidity": "^1.2.0"
   },
   "dependencies": {
     "@connext/interfaces": "^2.0.3",
@@ -33,7 +33,6 @@
     "base64-sol": "1.0.1",
     "graphql": "^16.4.0",
     "graphql-request": "^4.2.0",
-    "hardhat": "^2.9.2",
     "solidity-rlp": "^2.0.5"
   }
 }
