@@ -62,15 +62,20 @@ async function main() {
     const marketContract = await Market.attach(market.id);
 
     try {
-      await market.callStatic.registerAvailabilityOfResults();
+      await marketContract.callStatic.registerAvailabilityOfResults();
     } catch (e) {
       console.log(`Market has pending answers`);
       continue;
     }
 
-    const passPeriod = (await market.populateTransaction.registerAvailabilityOfResults()).data;
-    args.targets.push(marketAddress);
+    const passPeriod = (await marketContract.populateTransaction.registerAvailabilityOfResults()).data;
+    args.targets.push(market.id);
     args.datas.push(passPeriod);
+    args.values.push(0);
+
+    const registerAll = (await marketContract.populateTransaction.registerAll()).data;
+    args.targets.push(market.id);
+    args.datas.push(registerAll);
     args.values.push(0);
   
     const marketInfo = await marketContract.marketInfo();
@@ -97,10 +102,9 @@ async function main() {
     const creatorAddress = await manager.creator();
 
     const hasLiquidity = await liquidityFactory.exists(creatorAddress);
-    console.log(hasLiquidity);
     let values;
     if (hasLiquidity) {
-      console.log(creatorAddress)
+      console.log(`Liquidity Pool address: ${creatorAddress}`);
       values = await processMarketWithLiquidity(market.id, market.bets.filter(bet => bet.claim).length, signer);
     } else {
       values = await processMarket(market.id, market.bets.filter(bet => bet.claim).length, signer);
@@ -119,6 +123,7 @@ async function main() {
 
   const batcherContract = new ethers.Contract(transactionBatcher, BATCHER_ABI, signer);
 
+  console.log('');
   console.log(args);
   await batcherContract.batchSend(
     args.targets,
@@ -209,7 +214,6 @@ async function processMarketWithLiquidity(marketAddress, totalClaimed, signer) {
   if (datas.length === 0) {
     console.log('nothing to distribute, reimbursing players');
     const numberOfTokens = (await market.nextTokenID()).toNumber();
-    console.log(numberOfTokens);
     for (let i = 0; i < numberOfTokens; i++) {
       try {
         const reimbursePlayer = (await market.populateTransaction.reimbursePlayer(i)).data;
