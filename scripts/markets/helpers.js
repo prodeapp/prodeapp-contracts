@@ -221,7 +221,8 @@ const params = {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
     realityEth: "0xE78996A233895bE74a66F451f1019cA9734205cc",
     factory: "0x67d3673CF19a6b0Ad70D76b4e9C6f715177eb48b",
-    factoryV2: "0x364Bc6fCdF1D2Ce014010aB4f479a892a8736014"
+    factoryV2: "0x364Bc6fCdF1D2Ce014010aB4f479a892a8736014",
+    realityRegistry: "0xaD3AA4da922Ab968d8e9733Ecf32699756970193"
   },
   31337: {
     arbitrator: "0x29F39dE98D750eb77b5FAfb31B2837f079FcE222",
@@ -243,6 +244,7 @@ function getChain(chainId) {
 const SOCCER_MATCH_DURATION = 60*60*2;
 const TENNIS_MATCH_DURATION = 60*60*5;
 const F1_RACE_DURATION = 60*60*2;
+const BASKET_MATCH_DURATION = 60*60*2;
 
 module.exports = {
   buildQuestionHomevsAway,
@@ -263,5 +265,6 @@ module.exports = {
   getChain,
   SOCCER_MATCH_DURATION,
   TENNIS_MATCH_DURATION,
-  F1_RACE_DURATION
+  F1_RACE_DURATION,
+  BASKET_MATCH_DURATION
 }
