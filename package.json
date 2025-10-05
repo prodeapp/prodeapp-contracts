@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "A betting sports platform.",
   "license": "MIT",
+  "packageManager": "yarn@1.22.19",
   "scripts": {
     "prettier": "prettier --write 'contracts/**/*.sol'",
-    "deploy:kovan": "npx hardhat run --network kovan scripts/deploy.js",
+    "deploy:baseSepolia": "npx hardhat run --network 'base-sepolia' scripts/deploy.js",
     "deploy:gnosis": "npx hardhat run --network gnosis scripts/deploy.js",
     "deploy:burner:gnosis": "npx hardhat run --network gnosis scripts/deploy-burner.js",
     "deploy:distributor:gnosis": "npx hardhat run --network gnosis scripts/deploy-distributor.js",

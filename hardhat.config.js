@@ -1,8 +1,16 @@
 require("@nomiclabs/hardhat-waffle");
-require("@reality.eth/contracts")
+require("@reality.eth/contracts");
 require("@nomiclabs/hardhat-etherscan");
 require("@openzeppelin/hardhat-upgrades");
-const { mnemonic, gnosisscanApiKey,etherscanApiKey, alchemyKey, blockscoutApiKey, PK } = require('./secrets.json');
+const {
+  mnemonic,
+  gnosisscanApiKey,
+  etherscanApiKey,
+  alchemyKey,
+  blockscoutApiKey,
+  basescanApiKey,
+  PK,
+} = require("./secrets.json");
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -32,47 +40,49 @@ module.exports = {
             enabled: true,
             runs: 200,
             details: {
-              yul: false
-            }
-          }
-        }
+              yul: false,
+            },
+          },
+        },
       },
       {
         version: "0.6.12",
         settings: {
           optimizer: {
             enabled: true,
-            runs: 200
-          }
-        }
-      }
-    ]
+            runs: 200,
+          },
+        },
+      },
+    ],
   },
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
       allowUnlimitedContractSize: true,
       chainId: 31337,
-      forking: FORK_GNOSIS ? {
-        url: "https://rpc.gnosischain.com"
-      } : undefined,
+      forking: FORK_GNOSIS
+        ? {
+            url: "https://rpc.gnosischain.com",
+          }
+        : undefined,
       loggingEnabled: FORK_GNOSIS ? true : false,
     },
-    kovan: {
-      url: `https://eth-kovan.alchemyapi.io/v2/${alchemyKey}`,
-      chainId: 42,
-      accounts: [PK]
-    },
     gnosis: {
-      url: 'https://rpc.gnosischain.com/',
+      url: "https://rpc.gnosischain.com/",
       accounts: [PK],
-      chainId: 100
+      chainId: 100,
     },
     xdai: {
-      url: 'https://rpc.gnosischain.com/',
+      url: "https://rpc.gnosischain.com/",
       accounts: [PK],
-      chainId: 100
-    }
+      chainId: 100,
+    },
+    "base-sepolia": {
+      url: "https://sepolia.base.org",
+      chainId: 84532,
+      accounts: [PK],
+    },
   },
   etherscan: {
     customChains: [
@@ -89,14 +99,23 @@ module.exports = {
           // browserURL: "https://blockscout.com/xdai/mainnet",
         },
       },
+      {
+        network: "base-sepolia",
+        chainId: 84532,
+        urls: {
+          // 3) Select to what explorer verify the contracts
+          // BaseScan
+          apiURL: "https://api.etherscan.io/v2/api?chainid=84532",
+          browserURL: "https://sepolia.basescan.org/",
+        },
+      },
     ],
     apiKey: {
       mainnet: etherscanApiKey,
       kovan: etherscanApiKey,
       xdai: blockscoutApiKey,
       gnosis: gnosisscanApiKey,
-    }
-  }
-  
+      "base-sepolia": basescanApiKey,
+    },
+  },
 };
-
