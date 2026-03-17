@@ -4,22 +4,47 @@ const ethers = hre.ethers;
 
 const timeout = 129600; // 1.5 days
 
+// Helper function to convert multiline string to array
+const listToArray = (listString) => {
+  return listString
+    .split('\n')
+    .map(line => line.trim())
+    .filter(line => line.length > 0);
+};
+
 const RUGBY_MATCH_DURATION = 60*60*3;
 const closingTime = toTimestamp("2026-03-21 15:30:00 GMT-3"); // horario de inicio del primer partido
 const openingTs = closingTime + RUGBY_MATCH_DURATION;
-const matchday = "Fecha 2 URBA Primera A 2026"
+const matchday = "Fecha 2 URBA Top 14 2026"
 const marketName = `${matchday} by SIN TMO`;
 
-
 const MATCHES = [
-  {home: 'San Albano', away: 'Olivos'},
-  {home: 'San Cirano', away: 'San Luis'},
-  {home: 'Dep. Francesa', away: 'Curupaytí'},
-  {home: 'San Fernando', away: 'Lomas'},
-  {home: 'Pueyrredón', away: 'Hurling'},
-  {home: 'Universitario (LP)', away: 'Pucará'},
-  {home: 'GEBA', away: 'San Andrés'},
+  {home: 'Belgrano Ath.', away: 'Newman'},
+  {home: 'Buenos Aires', away: 'Alumni'},
+  {home: 'CUBA', away: 'Champagnat'},
+  {home: 'CASI', away: 'Hindú'},
+  {home: 'Los Tilos', away: 'La Plata'},
+  {home: 'Atl. del Rosario', away: 'Regatas'},
+  {home: 'SIC', away: 'Los Matreros'},
 ];
+
+const allPlayers = listToArray(`Gonzalo Gutierrez Taboada
+Juan Akemeier
+Santiago Pavlovsky
+Agustin Sascaro
+Agustín Lamensa
+Juan Ignacio Landó
+Bautista Santamarina
+Fermín Ormaechea
+Justo Camerlinckx
+Francisco Suárez Folch
+Federico Sica
+Manuel Nogues
+Juan Morales
+Santos Panelo
+Rafael Benedit 
+Valentín Mastroizzi
+Bautista Canzani`).sort((a, b) => a.localeCompare(b, 'es'));
 
 const marketData = {
   marketName: marketName,
@@ -45,8 +70,8 @@ const marketData = {
       'sports'
     ),
     buildQuestionSingleSelectV2(
-      `${matchday}: ¿Cuál va a ser el partido con menor diferencia de puntos?`,
-      MATCHES.map(({home, away}) => `${home} vs ${away}`),
+      `${matchday}: ¿Quién va a ser el goleador de la fecha?`,
+      allPlayers.concat(['Otro']),
       openingTs + (MATCHES.length + 2),
       'sports'
     ),
