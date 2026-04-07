@@ -78,4 +78,8 @@ interface IMarket is IERC721 {
     function getPredictions(uint256 _tokenID) external view returns (bytes32[] memory);
 
     function getScore(uint256 _tokenID) external view returns (uint256 totalPoints);
+
+    function claimRewards(uint256 _rankIndex, uint256 _firstSharedIndex, uint256 _lastSharedIndex) external;
+
+    function reimbursePlayer(uint256 _tokenID) external;
 }
