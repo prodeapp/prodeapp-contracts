@@ -36,7 +36,7 @@ contract Billing {
     /** @dev Creates and places a new bid or replaces one that has been removed.
      *  @param _market The address of the market the bid will be placed to.
      */
-    function executePayment(IMarket _market) external payable {
+    function executePayment(IMarket _market) external {
         uint256 revenue = balances[_market];
         balances[_market] = 0;
 

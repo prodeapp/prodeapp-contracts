@@ -204,12 +204,23 @@ contract Market is ERC721, IERC2981 {
         emit ManagementReward(marketInfo.manager, managementReward);
     }
 
-    /** @dev Registers the points obtained by a bet after the results are known. Ranking should be filled
-     *  in descending order. Bets which points were not registered cannot claimed rewards even if they
-     *  got more points than the ones registered.
+    /** @dev Registers the points obtained by a bet after the results are known.
+     *
+     *  The ranking is built incrementally by external callers. It maintains the invariant:
+     *    ranking[N].points >= ranking[N+1].points  (non-increasing order)
+     *
+     *  There are two placement paths:
+     *    1. Overwrite: token has MORE points than the current occupant at _rankIndex.
+     *       The occupant is evicted (isRanked set to false) and can be re-registered lower.
+     *    2. Duplicate: token has the SAME points as _rankIndex. It is appended at the end
+     *       of the contiguous group of equal scores, at position _rankIndex + _duplicates.
+     *
+     *  If neither condition is met (token has fewer points than _rankIndex), the call is a
+     *  no-op: no revert, no state change. The caller should retry with a lower _rankIndex.
+     *
      *  @param _tokenID The token id of the bet which points are going to be registered.
      *  @param _rankIndex The alleged ranking position the bet belongs to.
-     *  @param _duplicates The alleged number of tokens that are already registered and have the same points as _tokenID.
+     *  @param _duplicates The number of tokens already registered with the same score at _rankIndex.
      */
     function registerPoints(
         uint256 _tokenID,
@@ -233,14 +244,14 @@ contract Market is ERC721, IERC2981 {
         }
 
         require(totalPoints > 0, "You are not a winner");
-        // This ensures that ranking[N].points >= ranking[N+1].points always
+        // Enforce non-increasing order: must have strictly fewer points than the rank above.
         require(
             _rankIndex == 0 || totalPoints < ranking[_rankIndex - 1].points,
             "Invalid ranking index"
         );
         if (totalPoints > ranking[_rankIndex].points) {
+            // Path 1: Overwrite — evict the weaker occupant.
             if (ranking[_rankIndex].points > 0) {
-                // Rank position is being overwritten
                 isRanked[ranking[_rankIndex].tokenID] = false;
             }
             ranking[_rankIndex].tokenID = _tokenID;
@@ -248,11 +259,11 @@ contract Market is ERC721, IERC2981 {
             isRanked[_tokenID] = true;
             emit RankingUpdated(_tokenID, totalPoints, _rankIndex);
         } else if (ranking[_rankIndex].points == totalPoints) {
+            // Path 2: Duplicate — place at the end of the equal-score group.
             uint256 realRankIndex = _rankIndex + _duplicates;
             require(totalPoints > ranking[realRankIndex].points, "Wrong _duplicates amount");
             require(totalPoints == ranking[realRankIndex - 1].points, "Wrong _duplicates amount");
             if (ranking[realRankIndex].points > 0) {
-                // Rank position is being overwritten
                 isRanked[ranking[realRankIndex].tokenID] = false;
             }
             ranking[realRankIndex].tokenID = _tokenID;
@@ -262,9 +273,16 @@ contract Market is ERC721, IERC2981 {
         }
     }
 
-    /** @dev Register all winning bets and move the contract state to the claiming phase.
-     *  This function is gas intensive and might not be available for markets in which lots of
-     *  bets have been placed.
+    /** @dev Computes the full ranking in one transaction and skips the submission timeout.
+     *  Gas-intensive: only practical for small markets. For large markets use registerPoints().
+     *
+     *  Algorithm overview:
+     *  - Each element in auxRanking packs points in the lower 128 bits and tokenID in the upper 128.
+     *    CLEAN_TOKEN_ID (uint128.max) is used as a bitmask to extract the points component.
+     *  - Maintains a sorted top-N window (N = prizeWeights.length). Tokens scoring below currentMin
+     *    are skipped once the window is full. Tokens tying with currentMin are kept (for prize sharing).
+     *  - When a new high score appears, the array is re-sorted and elements below currentMin are trimmed.
+     *  - Sets resultSubmissionPeriodStart = 1 (sentinel) to allow immediate claiming.
      */
     function registerAll() external {
         require(resultSubmissionPeriodStart != 0, "Not in submission period");
@@ -280,7 +298,9 @@ contract Market is ERC721, IERC2981 {
         }
 
         uint256 rankingLength = nextTokenID < prizeWeights.length ? prizeWeights.length : nextTokenID;
-        uint256[] memory auxRanking = new uint256[](rankingLength);
+        // +1 provides a zero sentinel so the trim loop below can safely read auxRanking[freePos]
+        // when freePos == rankingLength.
+        uint256[] memory auxRanking = new uint256[](rankingLength + 1);
         uint256 currentMin;
         uint256 freePos;
         for (uint256 tokenID = 0; tokenID < nextTokenID; tokenID++) {
@@ -290,24 +310,30 @@ contract Market is ERC721, IERC2981 {
                 if (betData.predictions[i] == results[i]) totalPoints += 1;
             }
 
+            // Skip tokens with 0 points, or those below the cutoff once the window is full.
             if (totalPoints == 0 || (totalPoints < currentMin && freePos >= prizeWeights.length))
                 continue;
 
             auxRanking[freePos++] = totalPoints | (tokenID << 128);
 
             if (totalPoints > currentMin) {
+                // New high score entered — re-sort descending and update the cutoff.
                 sort(auxRanking, 0, int256(freePos - 1));
 
                 currentMin = auxRanking[prizeWeights.length - 1] & CLEAN_TOKEN_ID;
                 if (freePos > prizeWeights.length) {
+                    // Trim tail entries that fell below the new cutoff. The sentinel at
+                    // auxRanking[rankingLength] is 0, so this loop always enters safely.
                     while (currentMin > auxRanking[freePos] & CLEAN_TOKEN_ID) freePos--;
                     freePos++;
                 }
             } else if (totalPoints < currentMin) {
+                // A score below the current window entered (only happens while window isn't full).
                 currentMin = totalPoints;
             }
         }
 
+        // Write the final ranking to storage.
         for (uint256 rankIndex = 0; rankIndex < freePos; rankIndex++) {
             uint256 tokenID = auxRanking[rankIndex] >> 128;
             uint256 totalPoints = auxRanking[rankIndex] & CLEAN_TOKEN_ID;
@@ -316,9 +342,11 @@ contract Market is ERC721, IERC2981 {
             emit RankingUpdated(tokenID, totalPoints, rankIndex);
         }
 
+        // Sentinel: bypass the submission timeout so claimRewards() is immediately available.
         resultSubmissionPeriodStart = 1;
     }
 
+    /// @dev Quicksort descending by points (lower 128 bits). Token IDs ride along in upper bits.
     function sort(
         uint256[] memory arr,
         int256 left,
@@ -341,10 +369,15 @@ contract Market is ERC721, IERC2981 {
         if (i < right) sort(arr, i, right);
     }
 
-    /** @dev Sends a prize to the token holder if applicable.
+    /** @dev Sends a prize to the current NFT holder for a given ranking position.
+     *
+     *  Callers must specify the maximal contiguous range of equal scores that contains _rankIndex.
+     *  The four require checks enforce this: [_firstSharedIndex, _lastSharedIndex] must be the
+     *  exact boundaries of the score group (no narrowing allowed, which would inflate shares).
+     *
      *  @param _rankIndex The ranking position of the bet which reward is being claimed.
-     *  @param _firstSharedIndex If there are many tokens sharing the same score, this is the first ranking position of the batch.
-     *  @param _lastSharedIndex If there are many tokens sharing the same score, this is the last ranking position of the batch.
+     *  @param _firstSharedIndex First ranking position with the same score as _rankIndex.
+     *  @param _lastSharedIndex Last ranking position with the same score as _rankIndex.
      */
     function claimRewards(
         uint256 _rankIndex,
@@ -359,7 +392,6 @@ contract Market is ERC721, IERC2981 {
         require(!ranking[_rankIndex].claimed, "Already claimed");
 
         uint248 points = ranking[_rankIndex].points;
-        // Check that shared indexes are valid.
         require(points == ranking[_firstSharedIndex].points, "Wrong start index");
         require(points == ranking[_lastSharedIndex].points, "Wrong end index");
         require(points > ranking[_lastSharedIndex + 1].points, "Wrong end index");
@@ -392,6 +424,15 @@ contract Market is ERC721, IERC2981 {
         requireSendXDAI(payable(player), reimbursement);
     }
 
+    /** @dev Calculates the reward for one member of a shared-score group.
+     *
+     *  1. Sum the prizeWeights that fall within [_firstSharedIndex, _lastSharedIndex].
+     *     Positions beyond prizeWeights.length contribute 0.
+     *  2. Vacancy redistribution: if prize positions at the bottom of the ranking are unfilled
+     *     (points == 0), their weight is redistributed equally among ALL filled positions.
+     *     Each filled position gets vacantWeight / (j+1), where j+1 = number of filled positions.
+     *  3. The group's total weight is divided equally among its members (sharedBetween).
+     */
     function getReward(
         uint256 _firstSharedIndex,
         uint256 _lastSharedIndex,
@@ -405,12 +446,14 @@ contract Market is ERC721, IERC2981 {
             i++;
         }
         if (i < prizeWeights.length) {
+            // Some prize positions are beyond this group — check for vacant ones at the tail.
             uint256 vacantPrizesWeight = 0;
             uint256 j = prizeWeights.length - 1;
             while (ranking[j].points == 0) {
                 vacantPrizesWeight += prizeWeights[j];
                 j--;
             }
+            // Distribute vacant weight equally: this group's share is proportional to its size.
             cumWeigths += (sharedBetween * vacantPrizesWeight) / (j + 1);
         }
         reward = (_totalPrize * cumWeigths) / (DIVISOR * sharedBetween);
