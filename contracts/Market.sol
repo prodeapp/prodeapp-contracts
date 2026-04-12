@@ -280,7 +280,9 @@ contract Market is ERC721, IERC2981 {
         }
 
         uint256 rankingLength = nextTokenID < prizeWeights.length ? prizeWeights.length : nextTokenID;
-        uint256[] memory auxRanking = new uint256[](rankingLength);
+        // +1 provides a zero sentinel so the trim loop below can safely read auxRanking[freePos]
+        // when freePos == rankingLength.
+        uint256[] memory auxRanking = new uint256[](rankingLength + 1);
         uint256 currentMin;
         uint256 freePos;
         for (uint256 tokenID = 0; tokenID < nextTokenID; tokenID++) {

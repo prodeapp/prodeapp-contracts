@@ -272,17 +272,15 @@ contract FirstPriceAuction {
     ) external view returns (Bid[] memory) {
         Bid[] memory bidsArray = new Bid[](_to - _from);
         bytes32 startID = keccak256(abi.encode(_market));
-        bytes32 currentID = startID;
         bytes32 nextID = bids[startID].nextBidPointer;
 
-        for (uint256 i = 0; i <= _to; i++) {
+        for (uint256 i = 0; i < _to; i++) {
+            if (nextID == 0x0) break;
+
             if (i >= _from) {
-                bidsArray[i] = bids[nextID];
+                bidsArray[i - _from] = bids[nextID];
             }
 
-            if (bids[nextID].nextBidPointer == 0x0) break;
-
-            currentID = nextID;
             nextID = bids[nextID].nextBidPointer;
         }
 
